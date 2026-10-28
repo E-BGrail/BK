@@ -1,0 +1,858 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>BGL 차량 운행일지</title>
+<style>
+  /* 부산-김해경전철 CI 색 (전자서명 화면과 같음) */
+  :root { --bg:#eef1f7; --card:#fff; --text:#1b2333; --sub:#667085; --pri:#324eb3; --pri2:#22378a; --gray:#9fa9aa; --ok:#12833b; --line:#d8dde8; --warn:#9a5b00; }
+  * { box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  html, body { margin:0; height:100%; }
+  body { font-family:-apple-system,"Noto Sans KR","Malgun Gothic",sans-serif; background:var(--bg); color:var(--text); }
+  .hidden { display:none !important; }
+  button { font-family:inherit; }
+
+  /* ---------- 카메라 화면 ---------- */
+  #cam { position:fixed; inset:0; display:flex; flex-direction:column; background:#111318; color:#fff; }
+  .camTop { display:flex; align-items:center; justify-content:space-between; gap:8px; padding:calc(10px + env(safe-area-inset-top)) 16px 10px; }
+  .camTop b { font-size:17px; }
+  .round { width:44px; height:44px; border-radius:50%; border:0; background:rgba(255,255,255,.14); color:#fff; display:flex; align-items:center; justify-content:center; }
+  .round.on { background:#ffd34d; color:#1b2333; }
+  .view { position:relative; flex:1; overflow:hidden; min-height:0; }
+  #video { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; transform-origin:50% 50%; background:#000; }
+  .guide { position:absolute; left:8%; right:8%; top:34%; height:0; padding-bottom:26%; border:3px dashed #fff; border-radius:14px;
+           box-shadow:0 0 0 9999px rgba(0,0,0,.45); }
+  .guide.hit { border-style:solid; border-color:#5ee08a; }
+  .camHint { position:absolute; z-index:2; left:0; right:0; top:calc(34% - 40px); text-align:center; font-size:15px; margin:0; text-shadow:0 1px 3px #000; }
+  .live { position:absolute; z-index:2; left:0; right:0; text-align:center; font-size:30px; font-weight:800; letter-spacing:2px; text-shadow:0 1px 4px #000; pointer-events:none; }
+  .camCtl { position:absolute; left:0; right:0; bottom:14px; display:flex; flex-direction:column; align-items:center; gap:12px; }
+  .zoom { display:flex; gap:4px; padding:4px; border-radius:999px; background:rgba(20,22,30,.75); }
+  .zoom button { width:48px; height:40px; border-radius:999px; border:0; background:transparent; color:#fff; font-size:14px; }
+  .zoom button.on { background:#fff; color:#1b2333; font-weight:800; font-size:15px; }
+  .exp { display:flex; align-items:center; gap:4px; padding:4px; border-radius:999px; background:rgba(20,22,30,.75); font-size:13px; }
+  .exp button { width:44px; height:40px; border-radius:999px; border:0; background:rgba(255,255,255,.14); color:#fff; font-size:20px; line-height:1; }
+  .exp span { min-width:92px; text-align:center; }
+  .exp b { font-size:15px; }
+  .pill { padding:6px 12px; border-radius:999px; background:rgba(20,22,30,.8); font-size:13px; }
+  .shRow { display:flex; align-items:center; justify-content:center; gap:22px; }
+  .shutter { width:68px; height:68px; border-radius:50%; border:4px solid #fff; background:rgba(255,255,255,.25); }
+  .shutter:active { background:#fff; }
+  .txtBtn { border:0; background:transparent; color:#fff; font-size:14px; text-decoration:underline; min-height:44px; padding:0 6px; }
+  .fallback { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:14px; padding:24px; text-align:center; }
+  .fallback p { margin:0; font-size:15px; line-height:1.6; }
+  .fallback .why { font-size:12px; color:#c9cfdc; line-height:1.5; max-width:320px; }
+  .cropper { position:absolute; inset:0; background:#111318; }
+  .cropStage { position:absolute; left:0; right:0; top:44px; bottom:150px; touch-action:none; overflow:hidden; }
+  .cropStage img { position:absolute; inset:0; width:100%; height:100%; object-fit:contain; user-select:none; -webkit-user-drag:none; pointer-events:none; }
+  .cbox { position:absolute; border:3px solid #5ee08a; border-radius:10px; box-shadow:0 0 0 9999px rgba(0,0,0,.5); pointer-events:none; }
+  .cropCtl { position:absolute; left:0; right:0; bottom:12px; display:flex; flex-direction:column; align-items:center; gap:12px; padding:0 20px; }
+  .cropCtl .sz { display:flex; align-items:center; gap:10px; width:100%; max-width:340px; font-size:13px; }
+  .cropCtl input[type=range] { flex:1; accent-color:#fff; height:32px; }
+  .cropCtl .two { display:grid; grid-template-columns:repeat(2, minmax(0,1fr)); gap:10px; width:100%; max-width:340px; }
+  .sheet { background:#fff; color:var(--text); border-radius:22px 22px 0 0; padding:10px 20px calc(18px + env(safe-area-inset-bottom)); }
+  .sheet .grab { width:40px; height:4px; border-radius:2px; background:var(--line); margin:0 auto 10px; }
+  .sheet .top { display:flex; align-items:center; justify-content:space-between; margin-bottom:8px; }
+  .sheet .no { font-size:20px; font-weight:900; color:var(--pri2); }
+
+  /* ---------- 공통 (확인·완료 화면) ---------- */
+  header { background:#fff; padding:10px 16px; padding-top:calc(10px + env(safe-area-inset-top)); display:flex; align-items:center; justify-content:space-between; gap:10px;
+           border-bottom:3px solid var(--pri); position:relative; }
+  header::after { content:''; position:absolute; left:0; right:0; bottom:-3px; height:3px; background:linear-gradient(90deg, var(--pri) 0 70%, var(--gray) 70% 100%); }
+  .brand img { height:28px; width:auto; max-width:180px; display:block; }
+  .wm { display:none; align-items:center; gap:8px; font-weight:800; font-size:15px; color:var(--pri2); white-space:nowrap; }
+  .wm i { font-style:normal; background:var(--pri); color:#fff; border-radius:7px; padding:3px 6px; font-size:12px; }
+  .brand.noimg img { display:none; } .brand.noimg .wm { display:flex; }
+  header h1 { margin:0; font-size:13px; font-weight:700; color:var(--pri); background:#eef1fb; border:1px solid #cdd6f3; border-radius:20px; padding:4px 10px; white-space:nowrap; }
+  .band { background:linear-gradient(160deg, #3d5cc8 0%, var(--pri) 45%, var(--pri2) 100%); color:#fff; padding:14px 18px; display:flex; align-items:center; justify-content:space-between; }
+  .band b { font-size:18px; }
+  .carChip { background:#fff; color:var(--pri2); font-weight:900; font-size:15px; padding:4px 10px; border-radius:8px; }
+  .steps { display:flex; justify-content:center; gap:90px; padding:14px 22px 0; position:relative; }
+  .steps::before { content:''; position:absolute; left:50%; width:90px; transform:translateX(-50%); top:27px; height:2px; background:var(--line); }
+  .st1 { position:relative; z-index:1; display:flex; flex-direction:column; align-items:center; gap:4px; font-size:12px; color:var(--sub); }
+  .st1 b { width:28px; height:28px; border-radius:50%; background:#fff; border:2px solid var(--line); display:flex; align-items:center; justify-content:center; font-size:13px; }
+  .st1.on { color:var(--pri); font-weight:700; } .st1.on b { background:var(--pri); border-color:var(--pri); color:#fff; box-shadow:0 0 0 4px rgba(50,78,179,.18); }
+  .st1.done { color:var(--pri); } .st1.done b { background:#e7ecfa; border-color:var(--pri); color:var(--pri); }
+  main { padding:14px; max-width:560px; margin:0 auto; }
+  .card { background:#fff; border-radius:16px; padding:16px; box-shadow:0 1px 2px rgba(16,24,40,.05), 0 4px 14px rgba(34,55,138,.07); margin-bottom:12px; }
+  .card h2 { margin:0 0 12px; font-size:19px; }
+  .box { background:#f3f6fd; border-radius:12px; padding:12px 14px; }
+  .kmBox { display:flex; flex-direction:column; gap:8px; }
+  .kmThumb { width:100%; max-height:90px; object-fit:contain; background:#111; border-radius:8px; display:block; }
+  .kmRow { display:flex; align-items:center; gap:8px; }
+  .kmRow label { font-size:14px; color:var(--sub); flex:none; width:64px; }
+  .kmIn { flex:1; min-width:0; font-size:24px; font-weight:800; color:var(--pri2); padding:8px 10px; border:1px solid var(--line); border-radius:10px; text-align:right; }
+  .kmRow span { font-size:15px; color:var(--sub); }
+  .kv { display:flex; justify-content:space-between; gap:10px; font-size:15px; }
+  .kv span:first-child { color:var(--sub); }
+  .kv b { text-align:right; }
+  .cmp { font-size:13px; font-weight:700; display:flex; align-items:center; gap:6px; }
+  .cmp.ok { color:var(--ok); } .cmp.warn { color:var(--warn); }
+  .link { border:0; background:none; color:var(--pri); font-size:14px; font-weight:700; text-decoration:underline; padding:0; min-height:44px; align-self:flex-start; }
+  .grid2 { display:grid; grid-template-columns:repeat(2, minmax(0,1fr)); gap:8px; }
+  .fld { display:flex; flex-direction:column; gap:4px; margin-top:12px; }
+  .fld label, .lbl { font-size:14px; font-weight:700; }
+  .lbl small { font-weight:400; font-size:12px; color:var(--sub); margin-left:4px; }
+  input[type=text], input[type=tel] { width:100%; font-size:17px; padding:11px 12px; border:1px solid var(--line); border-radius:10px; min-width:0; }
+  input:focus { outline:none; border-color:var(--pri); box-shadow:0 0 0 3px rgba(50,78,179,.15); }
+  .secret { -webkit-text-security:disc; letter-spacing:4px; }
+  .saved { display:flex; align-items:center; justify-content:space-between; gap:8px; font-size:13px; color:var(--ok); font-weight:700; }
+  .chk { display:flex; align-items:center; gap:8px; font-size:14px; min-height:44px; }
+  .chk input { width:20px; height:20px; margin:0; accent-color:var(--pri); }
+  .chips { display:grid; grid-template-columns:repeat(4, minmax(0,1fr)); gap:6px; margin-top:6px; }
+  .chips button { height:46px; border-radius:12px; border:1px solid #c9d0ee; background:#fff; color:var(--pri2); font-size:14px; padding:0 2px; }
+  .chips button.on { background:var(--pri); border-color:var(--pri); color:#fff; font-weight:800; }
+  .sec { margin-top:14px; }
+  .rc { margin-top:12px; display:flex; align-items:center; gap:10px; padding:10px 12px; border:1px dashed var(--pri); border-radius:12px; background:#f3f6fd; }
+  .rc img { width:54px; height:54px; object-fit:cover; border-radius:8px; background:#ddd; }
+  .rc .t { flex:1; display:flex; flex-direction:column; font-size:14px; font-weight:700; }
+  .rc .t small { font-size:12px; font-weight:400; color:var(--sub); }
+  .sbtn { height:44px; padding:0 14px; border:0; border-radius:10px; background:var(--pri); color:#fff; font-size:14px; font-weight:700; display:inline-flex; align-items:center; }
+  .setupBox { margin-top:12px; background:#f3f6fd; border:1px solid #d6def5; border-radius:12px; padding:4px 12px 12px; }
+  .setupBox .t { font-weight:800; color:var(--pri); margin-top:10px; }
+  .btn { width:100%; font-size:17px; padding:15px; border:0; border-radius:12px; font-weight:700; }
+  .pri { background:linear-gradient(180deg, #3b58c0, var(--pri)); color:#fff; box-shadow:0 2px 6px rgba(50,78,179,.3); }
+  .pri:disabled { opacity:.45; box-shadow:none; }
+  .gray { background:#e6eaf0; color:var(--text); }
+  .msg { color:#c0392b; font-size:14px; margin-top:10px; min-height:0; white-space:pre-line; }
+  .msg:empty { display:none; }
+  .note { background:#fff7e0; border:1px solid #f0d58a; color:#7a5a00; border-radius:10px; padding:10px 12px; font-size:14px; margin-bottom:12px; }
+  .center { text-align:center; padding:26px 10px 10px; }
+  .check { width:72px; height:72px; margin:0 auto 12px; border-radius:50%; background:var(--pri); color:#fff; display:flex; align-items:center; justify-content:center;
+           box-shadow:0 0 0 10px rgba(50,78,179,.12); animation:pop .45s ease-out; }
+  @keyframes pop { 0% { transform:scale(.4); opacity:0; } 70% { transform:scale(1.08); } 100% { transform:scale(1); opacity:1; } }
+  .rows { display:flex; flex-direction:column; gap:10px; margin-top:14px; padding-top:14px; border-top:1px solid var(--line); text-align:left; }
+  .carList { display:flex; flex-direction:column; gap:8px; margin-top:10px; }
+  .carList a { display:block; padding:14px; border:1px solid var(--line); border-radius:12px; text-decoration:none; color:var(--text); font-size:17px; font-weight:700; }
+  .spin { display:inline-block; width:16px; height:16px; border:2px solid rgba(255,255,255,.5); border-top-color:#fff; border-radius:50%; animation:sp 1s linear infinite; vertical-align:-3px; margin-right:6px; }
+  @keyframes sp { to { transform:rotate(360deg); } }
+  @media (min-width: 600px) and (min-height: 601px) {
+    html { background:#cfd5e1; }
+    body { max-width:430px; margin:0 auto; box-shadow:0 0 0 1px #c3cad8, 0 10px 40px rgba(16,24,48,.18); position:relative; }
+    #cam { left:50%; right:auto; width:430px; transform:translateX(-50%); }
+  }
+</style>
+</head>
+<body>
+
+<!-- ===== 1. 카메라 (QR로 들어오면 바로) ===== -->
+<section id="cam" class="hidden">
+  <div class="camTop">
+    <b id="camTitle">운행 시작 · 탑승 km</b>
+    <button class="round hidden" id="torch" type="button" aria-label="플래시 켜기">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 2 4 14h7l-1 8 9-12h-7z"/></svg>
+    </button>
+  </div>
+  <div class="view" id="view">
+    <video id="video" playsinline muted autoplay></video>
+    <p class="camHint" id="camHint">계기판 주행거리를 박스 안에 맞춰주세요</p>
+    <div class="guide" id="guide"></div>
+    <div class="live" id="live"></div>
+    <div class="camCtl" id="camCtl">
+      <div class="exp hidden" id="expRow" role="group" aria-label="밝기 조절">
+        <button type="button" id="expDn" aria-label="더 어둡게">−</button><span>밝기 <b id="expVal">0</b><small id="expAuto"> 자동</small></span><button type="button" id="expUp" aria-label="더 밝게">＋</button>
+      </div>
+      <div class="zoom" id="zoom" role="group" aria-label="줌">
+        <button type="button" data-z="1" aria-label="줌 1배">1×</button><button type="button" data-z="2" aria-label="줌 2배">2×</button><button type="button" data-z="3" aria-label="줌 3배">3×</button><button type="button" data-z="5" aria-label="줌 5배">5×</button>
+      </div>
+      <span class="pill" id="ocrState">숫자 인식 준비 중…</span>
+      <div class="shRow">
+        <button class="txtBtn" id="manual1" type="button">직접 입력</button>
+        <button class="shutter" id="shutter" type="button" aria-label="지금 촬영"></button>
+        <span style="width:72px"></span>
+      </div>
+    </div>
+    <div class="fallback hidden" id="fallback">
+      <p id="fbText">이 화면에서 카메라를 바로 열 수 없습니다.<br>아래 버튼으로 계기판 주행거리를 찍어 주세요.</p>
+      <label class="btn pri" style="max-width:280px;display:block;text-align:center">카메라로 촬영<input type="file" id="fileKm" accept="image/*" capture="environment" hidden></label>
+      <button class="txtBtn" id="camRetry" type="button">실시간 카메라 다시 시도</button>
+      <button class="txtBtn" id="manual2" type="button">숫자 직접 입력</button>
+      <p class="why" id="fbWhy"></p>
+    </div>
+    <div class="cropper hidden" id="cropper">
+      <p class="camHint" style="top:12px">주행거리 숫자에 박스를 맞춰 주세요 · 끌어서 이동</p>
+      <div class="cropStage" id="cropStage"><img id="cropImg" alt="찍은 계기판 사진"><div class="cbox" id="cbox"></div></div>
+      <div class="cropCtl">
+        <label class="sz">박스 크기<input type="range" id="cSize" min="10" max="95" value="55"></label>
+        <div class="two">
+          <label class="btn gray" style="display:block;text-align:center;padding:14px 6px">다시 찍기<input type="file" id="fileKm2" accept="image/*" capture="environment" hidden></label>
+          <button class="btn pri" id="cropUse" type="button" style="padding:14px 6px">이 영역 사용</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="sheet" id="sheet">
+    <div class="grab"></div>
+    <div class="top"><span class="no" id="shCar"></span><span class="pill" id="shState"></span></div>
+    <div id="shRows" style="display:flex; flex-direction:column; gap:6px"></div>
+  </div>
+</section>
+
+<!-- 확인·완료 화면 공통 머리 -->
+<div id="chrome" class="hidden">
+  <header>
+    <div class="brand" id="brand">
+      <img alt="부산-김해경전철" referrerpolicy="no-referrer" src="https://www.bglrt.com/_res/english/img/inc/logo_bgl%28k%29.png"
+        onerror="if(!this.dataset.alt){this.dataset.alt=1;this.src='https://www.bglrt.com/_res/default/img/sub/p00563_img05_04.png';}else{document.getElementById('brand').className='brand noimg';}">
+      <span class="wm"><i>BGL</i>부산-김해경전철</span>
+    </div>
+    <h1>차량운행</h1>
+  </header>
+  <div class="band"><b id="bandTitle">운행 시작</b><span class="carChip" id="bandCar"></span></div>
+</div>
+
+<!-- ===== 2. 확인 ===== -->
+<section id="cf" class="hidden">
+  <div class="steps"><div class="st1 done"><b>1</b><span id="st1Label">탑승 km</span></div><div class="st1 on"><b>2</b>확인</div></div>
+  <main>
+    <div class="note hidden" id="cfNote"></div>
+    <div class="card">
+      <h2 id="cfTitle">운행 시작 확인</h2>
+      <div class="box kmBox">
+        <img class="kmThumb hidden" id="kmThumb" alt="촬영한 주행거리">
+        <div class="kv hidden" id="startKmRow"><span>탑승 km</span><b id="startKmVal"></b></div>
+        <div class="kmRow"><label for="km" id="kmLabel">탑승 km</label><input type="text" id="km" class="kmIn" inputmode="numeric" autocomplete="off" maxlength="9"><span>km</span></div>
+        <div class="cmp" id="kmCmp"></div>
+        <button class="link" id="retake" type="button">km 다시 촬영</button>
+      </div>
+
+      <div class="grid2" style="margin-top:4px">
+        <div class="fld"><label for="nm">이름</label><input type="text" id="nm" autocomplete="name" maxlength="20"></div>
+        <div class="fld"><label for="pc">개인 코드</label><input type="text" id="pc" class="secret" inputmode="numeric" maxlength="4" autocomplete="off"></div>
+      </div>
+      <div class="fld hidden" id="pinRow"><label for="pin">사번 <span style="font-weight:400;font-size:12px;color:var(--sub)">같은 이름이 있어 사번도 확인합니다</span></label><input type="text" id="pin" autocomplete="off" maxlength="20"></div>
+      <div class="saved hidden" id="savedRow" style="margin-top:6px"><span>✓ 내 휴대폰 이전 기록으로 자동 입력</span><button class="link" id="chgMe" type="button" style="font-size:13px">변경</button></div>
+      <label class="chk" id="saveRow"><input type="checkbox" id="saveMe" checked>이 휴대폰에 내 이름·개인 코드 저장 (다음부터 자동 입력)</label>
+
+      <div class="setupBox hidden" id="setupBox">
+        <div class="t">개인 코드 만들기</div>
+        <div class="hint" style="font-size:13px;color:var(--sub);margin-top:4px">아직 개인 코드가 없습니다. 사번으로 본인 확인 후 숫자 4자리를 정하세요. (전자서명과 같은 코드)</div>
+        <div class="fld"><label for="suPin">사번</label><input type="text" id="suPin" autocomplete="off" maxlength="20"></div>
+        <div class="grid2">
+          <div class="fld"><label for="suC1">새 개인 코드</label><input type="text" id="suC1" class="secret" inputmode="numeric" maxlength="4" autocomplete="off"></div>
+          <div class="fld"><label for="suC2">한 번 더</label><input type="text" id="suC2" class="secret" inputmode="numeric" maxlength="4" autocomplete="off"></div>
+        </div>
+        <button class="btn pri" id="suGo" type="button" style="margin-top:12px">개인 코드 만들고 계속</button>
+      </div>
+
+      <div id="endBox" class="hidden">
+        <div class="sec"><span class="lbl">운행사유<small>이 차량에서 자주 쓰는 항목 자동 선택</small></span><div class="chips" id="reasons" role="group" aria-label="운행사유"></div>
+          <input type="text" id="reasonEtc" class="hidden" placeholder="운행사유 입력" maxlength="30" style="margin-top:8px" aria-label="기타 운행사유"></div>
+        <div class="rc hidden" id="rcBox">
+          <img id="rcThumb" class="hidden" alt="신용카드 전표">
+          <div class="t">신용카드 전표<small id="rcText">주유 시 전표를 찍어 주세요</small></div>
+          <label class="sbtn" id="rcBtn">전표 촬영<input type="file" id="rcFile" accept="image/*" capture="environment" hidden></label>
+        </div>
+        <div class="sec"><span class="lbl">운행구간</span><div class="chips" id="routes" role="group" aria-label="운행구간"></div>
+          <input type="text" id="routeEtc" class="hidden" placeholder="운행구간 입력" maxlength="30" style="margin-top:8px" aria-label="기타 운행구간"></div>
+      </div>
+      <div class="msg" id="msg"></div>
+    </div>
+    <button class="btn pri" id="submit" type="button">운행 시작</button>
+  </main>
+</section>
+
+<!-- ===== 3. 완료 ===== -->
+<section id="done" class="hidden">
+  <main>
+    <div class="card center">
+      <div class="check"><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5 10 17.5 19 7"/></svg></div>
+      <h2 id="doneTitle" style="margin:0">운행이 시작되었습니다</h2>
+      <div class="rows" id="doneRows"></div>
+      <p style="font-size:13px;color:var(--sub);margin:16px 0 0">이 화면은 닫아도 됩니다.</p>
+    </div>
+  </main>
+</section>
+
+<!-- ===== 차량 선택 / 오류 ===== -->
+<section id="pick" class="hidden">
+  <main>
+    <div class="card">
+      <h2>차량을 확인할 수 없습니다</h2>
+      <div style="font-size:14px;color:var(--sub)" id="pickText">차량에 붙은 QR을 다시 찍거나, 아래에서 차량을 고르세요.</div>
+      <div class="carList" id="carList"></div>
+    </div>
+  </main>
+</section>
+
+<script>
+/* ▼▼▼ 여기만 고치세요: 전자서명 웹 앱 배포 주소 (…/exec 로 끝남) ▼▼▼ */
+var API = 'https://script.google.com/macros/s/AKfycbwjudREVuPqSxXknvG5XClW_tQKbD-4wkCJkyeZt0KKY-spuDCymTt9O5j_6L28Z9QK/exec';
+/* ▲▲▲ */
+var INIT = {};
+var S = { mode: 'start', km: '', kmImg: '', receipt: '', reason: '', route: '', needPin: false, busy: false };
+var ME_KEY = 'bglCarMe';
+var $ = function (id) { return document.getElementById(id); };
+function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+function fmt(n) { return (n === '' || n == null || isNaN(n)) ? '' : Number(n).toLocaleString('ko-KR'); }
+function digits(s) { return String(s || '').replace(/\D/g, ''); }
+function device() { return { ua: navigator.userAgent, scr: screen.width + 'x' + screen.height, touch: navigator.maxTouchPoints || 0 }; }
+/** 서버(Apps Script) 호출: text/plain POST (사전 요청 없이 다른 주소에서 호출 가능) */
+function call(fn, p) {
+  return fetch(API, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ fn: fn, p: p }) })
+    .then(function (r) { if (!r.ok) throw new Error('서버 응답 오류 (' + r.status + ')'); return r.json(); })
+    .then(function (j) { if (!j.ok) throw new Error(j.error || '오류가 났습니다.'); return j.data; },
+          function (e) { throw new Error(e && e.message && /서버/.test(e.message) ? e.message : '서버에 연결할 수 없습니다. 인터넷 연결을 확인하세요.'); });
+}
+function errText(e) { return String(e && e.message || e || '오류가 났습니다.').replace(/^Exception:\s*/, ''); }
+function show(id) {
+  ['cam', 'cf', 'done', 'pick'].forEach(function (x) { $(x).classList.toggle('hidden', x !== id); });
+  $('chrome').classList.toggle('hidden', id === 'cam');
+  window.scrollTo(0, 0);
+}
+function loadMe() { try { var v = JSON.parse(localStorage.getItem(ME_KEY) || 'null'); return v && v.name ? v : null; } catch (e) { return null; } }
+function saveMe(v) { try { localStorage.setItem(ME_KEY, JSON.stringify(v)); } catch (e) {} }
+function clearMe() { try { localStorage.removeItem(ME_KEY); } catch (e) {} }
+
+/* ===================== 시작 ===================== */
+/** QR(주소?car=차량번호)로 열리면: 카메라를 먼저 켜고, 그동안 차량 정보를 받아 옴 */
+function boot() {
+  var car = new URLSearchParams(location.search).get('car') || '';
+  $('camTitle').textContent = '차량 정보 불러오는 중…';
+  $('shCar').textContent = car; $('shState').textContent = '확인 중';
+  show('cam');
+  if (car) startCam();
+  fetch(API + '?api=car&fn=init&car=' + encodeURIComponent(car))
+    .then(function (r) { return r.json(); })
+    .then(function (j) {
+      INIT = j.ok ? j.data : { error: j.error };
+      INIT.url = location.origin + location.pathname;
+      if (INIT.error || INIT.needCar) { stopCam(); return showPick(); }
+      setInit(INIT);
+      openCam();
+    })
+    .catch(function () { stopCam(); INIT = { error: '서버에 연결할 수 없습니다. 인터넷 연결 또는 페이지의 API 주소를 확인하세요.', url: location.origin + location.pathname }; showPick(); });
+}
+function setInit(init) {
+  INIT.st = init.st; INIT.mode = init.mode; INIT.car = init.car;
+  if (init.reasons) INIT.reasons = init.reasons;
+  if (init.routes) INIT.routes = init.routes;
+  S.mode = init.mode;
+  S.reason = init.st.freq.reason; S.route = init.st.freq.route;
+}
+function showPick() {
+  show('pick');
+  $('bandTitle').textContent = '차량 운행일지'; $('bandCar').textContent = INIT.car || '-';
+  if (INIT.error) $('pickText').textContent = INIT.error;
+  var base = INIT.url || '';
+  $('carList').innerHTML = (INIT.cars || []).map(function (c) {
+    return '<a href="' + esc(base + '?car=' + encodeURIComponent(c)) + '">' + esc(c) + '</a>';
+  }).join('');
+}
+
+/* ===================== 카메라 ===================== */
+var CAM = { stream: null, track: null, caps: null, hwZoom: 1, dz: 1, zoom: 3, torch: false, on: false };
+var OCR = { worker: null, ready: false, failed: false, busy: false, last: null, hits: 0, timer: null };
+
+function openCam() {
+  var st = INIT.st, end = S.mode === 'end';
+  $('camTitle').textContent = end ? '운행 종료 · 하차 km' : '운행 시작 · 탑승 km';
+  $('shCar').textContent = INIT.car;
+  $('shState').textContent = end ? '운행 중' : '대기 중';
+  $('shState').style.cssText = end ? 'background:#fdebdd;color:#8a3f0a;font-weight:700' : 'background:#e3f4ea;color:#17663a;font-weight:700';
+  var rows = end
+    ? [['운전자', st.run.driver], ['탑승 km', fmt(st.run.startKm) + ' km'], ['시작 시각', st.run.startAt]]
+    : [['이전 종료 km', st.last ? fmt(st.last.km) + ' km' : '기록 없음'], ['최근 운행', st.last ? st.last.at + ' · ' + st.last.driver : '-']];
+  $('shRows').innerHTML = rows.map(function (r) { return '<div class="kv"><span>' + esc(r[0]) + '</span><b>' + esc(r[1]) + '</b></div>'; }).join('');
+  $('live').textContent = ''; $('guide').classList.remove('hit');
+  OCR.last = null; OCR.hits = 0;
+  $('cropper').classList.add('hidden'); $('fallback').classList.add('hidden');
+  $('camCtl').classList.remove('hidden'); $('guide').classList.remove('hidden'); $('camHint').classList.remove('hidden');
+  show('cam');
+  startCam();
+}
+
+function startCam() {
+  if (CAM.on) return;
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) return camFallback({ name: 'NoApi' });
+  try { if (document.featurePolicy && !document.featurePolicy.allowsFeature('camera')) return camFallback({ name: 'Policy' }); } catch (e) {}
+  navigator.mediaDevices.getUserMedia({ audio: false, video: { facingMode: { ideal: 'environment' }, width: { ideal: 1920 }, height: { ideal: 1080 } } })
+    .then(function (stream) {
+      CAM.stream = stream; CAM.track = stream.getVideoTracks()[0]; CAM.on = true;
+      var v = $('video'); v.srcObject = stream;
+      return v.play().catch(function () {});
+    })
+    .then(function () {
+      if (!CAM.on) return;
+      CAM.caps = (CAM.track && CAM.track.getCapabilities) ? CAM.track.getCapabilities() : {};
+      $('torch').classList.toggle('hidden', !CAM.caps.torch);
+      setZoom(3);                                  // 기본 3배
+      initExposure();                              // 야간 빛 번짐 대비 밝기(노출) 조절
+      $('fallback').classList.add('hidden'); $('camCtl').classList.remove('hidden'); $('guide').classList.remove('hidden');
+      loadOcr();
+      ocrLoop();
+    })
+    .catch(function (err) { camFallback(err); });
+}
+function stopCam() {
+  CAM.on = false; clearTimeout(OCR.timer);
+  if (CAM.stream) CAM.stream.getTracks().forEach(function (t) { try { t.stop(); } catch (e) {} });
+  CAM.stream = null; CAM.track = null; CAM.torch = false; $('torch').classList.remove('on');
+}
+function camFallback(err) {
+  stopCam();
+  var n = err && err.name || '', why = {
+    Policy: '이 웹 앱 화면은 실시간 카메라를 허용하지 않습니다 (구글 웹 앱 제한).',
+    NoApi: '이 브라우저는 웹 카메라를 지원하지 않습니다. Chrome이나 삼성 인터넷으로 열어 보세요.',
+    NotAllowedError: '카메라 권한이 막혀 있습니다. 주소창 왼쪽 자물쇠 → 권한 → 카메라 허용 후 다시 시도하세요.',
+    NotFoundError: '사용할 수 있는 카메라를 찾지 못했습니다.',
+    NotReadableError: '다른 앱이 카메라를 쓰고 있습니다. 카메라 앱을 닫고 다시 시도하세요.',
+    OverconstrainedError: '카메라 설정을 맞추지 못했습니다.'
+  }[n] || '';
+  $('fbWhy').textContent = why + (n ? ' [' + n + ']' : '');
+  $('cropper').classList.add('hidden');
+  $('fallback').classList.remove('hidden'); $('camCtl').classList.add('hidden'); $('guide').classList.add('hidden'); $('camHint').classList.add('hidden');
+  loadOcr();
+}
+
+/** 줌: 카메라가 지원하면 카메라 줌, 모자라거나 안 되면 화면 확대(디지털 줌)로 나머지 배율 */
+function setZoom(z) {
+  CAM.zoom = z;
+  var hw = 1, c = CAM.caps && CAM.caps.zoom;
+  if (c && c.max > 1) {
+    hw = Math.min(Math.max(z, c.min || 1), c.max);
+    try { CAM.track.applyConstraints({ advanced: [{ zoom: hw }] }).catch(function () {}); } catch (e) { hw = 1; }
+  }
+  CAM.hwZoom = hw; CAM.dz = Math.max(1, z / hw);
+  $('video').style.transform = CAM.dz > 1 ? 'scale(' + CAM.dz + ')' : '';
+  Array.prototype.forEach.call($('zoom').children, function (b) {
+    var on = Number(b.dataset.z) === z; b.classList.toggle('on', on); b.setAttribute('aria-pressed', on);
+  });
+  OCR.last = null; OCR.hits = 0;
+}
+$('zoom').addEventListener('click', function (e) { var b = e.target.closest('button'); if (b) setZoom(Number(b.dataset.z)); });
+$('torch').addEventListener('click', function () {
+  if (!CAM.track) return;
+  CAM.torch = !CAM.torch;
+  CAM.track.applyConstraints({ advanced: [{ torch: CAM.torch }] }).catch(function () {});
+  this.classList.toggle('on', CAM.torch); this.setAttribute('aria-label', CAM.torch ? '플래시 끄기' : '플래시 켜기');
+});
+
+/* ---------- 밝기(노출) : 야간 계기판 빛 번짐 줄이기 ---------- */
+var EXP = { ok: false, min: 0, max: 0, step: 0.1, v: 0, auto: true, last: 0, warned: false };
+function initExposure() {
+  var c = CAM.caps && CAM.caps.exposureCompensation;
+  EXP.ok = !!(c && c.max > c.min);
+  $('expRow').classList.toggle('hidden', !EXP.ok);
+  EXP.auto = true; EXP.warned = false; $('expAuto').textContent = ' 자동';
+  if (!EXP.ok) return;
+  EXP.min = c.min; EXP.max = c.max; EXP.step = c.step || 0.1;
+  setExposure(Math.max(EXP.min, -1));              // 처음부터 1단계 어둡게 (계기판은 자체 발광)
+}
+function setExposure(v) {
+  v = Math.max(EXP.min, Math.min(EXP.max, Math.round(v / EXP.step) * EXP.step));
+  EXP.v = v;
+  var modes = (CAM.caps && CAM.caps.exposureMode) || [], k = { exposureCompensation: v };
+  if (modes.indexOf('continuous') > -1) k.exposureMode = 'continuous';
+  try { CAM.track.applyConstraints({ advanced: [k] }).catch(function () {}); } catch (e) {}
+  $('expVal').textContent = (v > 0 ? '+' : '') + v.toFixed(1);
+}
+$('expDn').addEventListener('click', function () { EXP.auto = false; $('expAuto').textContent = ''; setExposure(EXP.v - Math.max(EXP.step, 0.3)); });
+$('expUp').addEventListener('click', function () { EXP.auto = false; $('expAuto').textContent = ''; setExposure(EXP.v + Math.max(EXP.step, 0.3)); });
+/** 박스 안이 하얗게 번지면(밝은 점이 많으면) 자동으로 어둡게, 너무 어두우면 조금 밝게 */
+function glareCheck(c) {
+  var x = c.getContext('2d'), d = x.getImageData(0, 0, c.width, c.height).data, n = 0, hot = 0, sum = 0;
+  for (var i = 0; i < d.length; i += 16) { n++; sum += d[i]; if (d[i] >= 245) hot++; }
+  var ratio = hot / n, mean = sum / n, now = Date.now();
+  if (EXP.ok && EXP.auto && now - EXP.last > 700) {
+    if (ratio > 0.08 && EXP.v > EXP.min) { EXP.last = now; setExposure(EXP.v - 0.5); }
+    else if (ratio < 0.003 && mean < 25 && EXP.v < 0) { EXP.last = now; setExposure(EXP.v + 0.3); }
+  }
+  if (ratio > 0.08 && (!EXP.ok || EXP.v <= EXP.min) && !EXP.warned) {
+    EXP.warned = true;
+    setOcrState('빛 번짐이 심해요 · 계기판 조명 다이얼을 낮추거나 조금 비스듬히 찍으세요');
+  }
+}
+
+/** 가이드 박스 영역을 영상에서 잘라 캔버스로 (흑백) */
+function cropGuide(outW) {
+  var v = $('video'), view = $('view'), g = $('guide');
+  var vw = v.videoWidth, vh = v.videoHeight;
+  if (!vw || !vh) return null;
+  var W = view.clientWidth, H = view.clientHeight;
+  var s = Math.max(W / vw, H / vh) * CAM.dz;                    // object-fit:cover + 화면 확대
+  var ox = (W - vw * s) / 2, oy = (H - vh * s) / 2;
+  var vr = view.getBoundingClientRect(), gr = g.getBoundingClientRect();
+  var sx = (gr.left - vr.left - ox) / s, sy = (gr.top - vr.top - oy) / s, sw = gr.width / s, sh = gr.height / s;
+  var outH = Math.round(outW * sh / sw);
+  var c = document.createElement('canvas'); c.width = outW; c.height = outH;
+  var x = c.getContext('2d');
+  x.drawImage(v, sx, sy, sw, sh, 0, 0, outW, outH);
+  return gray(c);
+}
+function gray(c) {
+  var x = c.getContext('2d'), d = x.getImageData(0, 0, c.width, c.height), p = d.data;
+  for (var i = 0; i < p.length; i += 4) { var l = p[i] * .299 + p[i + 1] * .587 + p[i + 2] * .114; p[i] = p[i + 1] = p[i + 2] = l; }
+  x.putImageData(d, 0, 0);
+  return c;
+}
+/** 저장용 JPEG: 셀 한도(48,000자) 안으로 품질·크기를 낮춰 가며 */
+function toJpeg(c, maxW) {
+  var w = Math.min(maxW, c.width), q = 0.75, out = '';
+  for (var k = 0; k < 12; k++) {
+    var t = document.createElement('canvas'); t.width = w; t.height = Math.round(c.height * w / c.width);
+    var x = t.getContext('2d'); x.fillStyle = '#fff'; x.fillRect(0, 0, t.width, t.height); x.drawImage(c, 0, 0, t.width, t.height);
+    out = t.toDataURL('image/jpeg', q);
+    if (out.length <= 47000) return out;
+    if (q > 0.4) q -= 0.12; else w = Math.round(w * 0.85);
+  }
+  return out.length <= 47000 ? out : '';
+}
+
+/* ===================== 숫자 자동 인식 (Tesseract.js) ===================== */
+function loadOcr() {
+  if (OCR.worker || OCR.failed || OCR.loading) return;
+  OCR.loading = true;
+  setOcrState('숫자 인식 준비 중…');
+  var to = setTimeout(function () { if (!OCR.ready) ocrFail(); }, 25000);
+  var s = document.createElement('script');
+  s.src = 'https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js';
+  s.onload = function () {
+    Tesseract.createWorker('eng', 1, {}).then(function (w) {
+      OCR.worker = w;
+      return w.setParameters({ tessedit_char_whitelist: '0123456789', tessedit_pageseg_mode: '7' });
+    }).then(function () { clearTimeout(to); OCR.ready = true; setOcrState('박스 안 숫자를 읽는 중…'); })
+      .catch(function () { clearTimeout(to); ocrFail(); });
+  };
+  s.onerror = function () { clearTimeout(to); ocrFail(); };
+  document.head.appendChild(s);
+}
+function ocrFail() { OCR.failed = true; setOcrState('자동 인식을 쓸 수 없어요 · 가운데 버튼으로 촬영하세요'); }
+function setOcrState(t) { $('ocrState').textContent = t; }
+
+/** 인식용 전처리: 흑백 → 이진화(오츠) → 글자를 검정·배경을 흰색으로, 여백 추가 */
+function prepOcr(c) {
+  var x = c.getContext('2d'), d = x.getImageData(0, 0, c.width, c.height), p = d.data, hist = new Array(256).fill(0), n = p.length / 4, sum = 0;
+  for (var i = 0; i < p.length; i += 4) { var l = p[i] | 0; hist[l]++; sum += l; }
+  var sumB = 0, wB = 0, best = 0, thr = 127;
+  for (var t = 0; t < 256; t++) {
+    wB += hist[t]; if (!wB) continue; var wF = n - wB; if (!wF) break;
+    sumB += t * hist[t]; var mB = sumB / wB, mF = (sum - sumB) / wF, between = wB * wF * (mB - mF) * (mB - mF);
+    if (between > best) { best = between; thr = t; }
+  }
+  var dark = 0;
+  for (i = 0; i < p.length; i += 4) if (p[i] <= thr) dark++;
+  var invert = dark > n / 2;                                         // 배경이 어두우면(계기판) 뒤집음
+  for (i = 0; i < p.length; i += 4) { var on = p[i] > thr; var v = invert ? (on ? 0 : 255) : (on ? 255 : 0); p[i] = p[i + 1] = p[i + 2] = v; }
+  x.putImageData(d, 0, 0);
+  var pad = 20, o = document.createElement('canvas'); o.width = c.width + pad * 2; o.height = c.height + pad * 2;
+  var ox = o.getContext('2d'); ox.fillStyle = '#fff'; ox.fillRect(0, 0, o.width, o.height); ox.drawImage(c, pad, pad);
+  return o;
+}
+/** 기대 범위: 시작은 이전 종료 km 이상, 종료는 탑승 km 이상 (한 번 운행 3,000km 이내) */
+function expectKm() {
+  var st = INIT.st;
+  if (S.mode === 'end') return st.run.startKm;
+  return st.last ? st.last.km : null;
+}
+function pickKm(text) {
+  var runs = String(text || '').match(/\d{3,7}/g) || [];
+  var exp = expectKm(), best = null;
+  runs.forEach(function (r) {
+    var v = Number(r);
+    if (exp != null) { if (v < exp || v > exp + 3000) return; }
+    if (best == null || (exp != null ? Math.abs(v - exp) < Math.abs(best - exp) : r.length > String(best).length)) best = v;
+  });
+  return best;
+}
+function ocrLoop() {
+  clearTimeout(OCR.timer);
+  if (!CAM.on) return;
+  if (!OCR.ready || OCR.busy || !INIT.st) { var g0 = cropGuide(200); if (g0) glareCheck(g0); OCR.timer = setTimeout(ocrLoop, 400); return; }
+  var c = cropGuide(640);
+  if (!c) { OCR.timer = setTimeout(ocrLoop, 300); return; }
+  glareCheck(c);
+  OCR.busy = true;
+  OCR.worker.recognize(prepOcr(c)).then(function (r) {
+    OCR.busy = false;
+    if (!CAM.on) return;
+    var v = pickKm(r && r.data && r.data.text);
+    if (v == null) { OCR.last = null; OCR.hits = 0; $('live').textContent = ''; $('guide').classList.remove('hit'); }
+    else {
+      OCR.hits = (v === OCR.last) ? OCR.hits + 1 : 1; OCR.last = v;
+      $('live').textContent = fmt(v); placeLive();
+      if (OCR.hits >= 2) { $('guide').classList.add('hit'); setOcrState('인식 완료 · 자동 촬영'); return capture(v); }
+    }
+    OCR.timer = setTimeout(ocrLoop, 250);
+  }).catch(function () { OCR.busy = false; OCR.timer = setTimeout(ocrLoop, 800); });
+}
+function placeLive() {
+  var vr = $('view').getBoundingClientRect(), gr = $('guide').getBoundingClientRect();
+  $('live').style.top = (gr.bottom - vr.top + 8) + 'px';
+}
+
+/** 촬영: 박스 영역을 흑백 450px로 저장하고 확인 화면으로 */
+function capture(km) {
+  var c = cropGuide(450);
+  S.kmImg = c ? toJpeg(c, 450) : '';
+  S.km = km == null ? '' : String(km);
+  stopCam();
+  openConfirm();
+}
+$('shutter').addEventListener('click', function () {
+  if (!CAM.on || !INIT.st) return;
+  var c = cropGuide(640);
+  if (OCR.ready && c && !OCR.busy) {
+    setOcrState('숫자 읽는 중…');
+    var done = false, fin = function (v) { if (done) return; done = true; capture(v); };
+    OCR.busy = true;
+    OCR.worker.recognize(prepOcr(c)).then(function (r) { OCR.busy = false; fin(pickKm(r && r.data && r.data.text)); }).catch(function () { OCR.busy = false; fin(null); });
+    setTimeout(function () { fin(null); }, 4000);
+  } else capture(null);
+});
+function manualKm() { if (!INIT.st) return; stopCam(); S.km = ''; S.kmImg = ''; openConfirm(); setTimeout(function () { $('km').focus(); }, 50); }
+$('manual1').addEventListener('click', manualKm);
+$('manual2').addEventListener('click', manualKm);
+
+/** 카메라를 못 열 때: 휴대폰 카메라 앱으로 찍은 사진 → 주행거리 부분에 박스를 맞춰 자르기 */
+var CROP = { img: null, cx: 0.5, cy: 0.5 };
+function onPhoto() {
+  var f = this.files && this.files[0]; this.value = '';
+  if (!f) return;
+  loadImg(f).then(function (img) {
+    var w = Math.min(1600, img.naturalWidth), c = document.createElement('canvas');   // 큰 사진은 줄여서 (메모리)
+    c.width = w; c.height = Math.round(img.naturalHeight * w / img.naturalWidth);
+    c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+    CROP.img = c; CROP.cx = 0.5; CROP.cy = 0.5;
+    $('cropImg').src = c.toDataURL('image/jpeg', 0.85);
+    $('fallback').classList.add('hidden'); $('cropper').classList.remove('hidden');
+    requestAnimationFrame(drawBox);
+  }).catch(function () { alert('사진을 열 수 없습니다. 다시 찍어 주세요.'); });
+}
+$('fileKm').addEventListener('change', onPhoto);
+$('fileKm2').addEventListener('change', onPhoto);
+$('camRetry').addEventListener('click', function () { $('fallback').classList.add('hidden'); $('camCtl').classList.remove('hidden'); $('guide').classList.remove('hidden'); $('camHint').classList.remove('hidden'); startCam(); });
+/** 사진이 화면에 그려진 영역 (object-fit: contain) */
+function imgRect() {
+  var st = $('cropStage'), W = st.clientWidth, H = st.clientHeight, iw = CROP.img.width, ih = CROP.img.height;
+  var s = Math.min(W / iw, H / ih);
+  return { x: (W - iw * s) / 2, y: (H - ih * s) / 2, w: iw * s, h: ih * s, s: s };
+}
+/** 박스: 사진 폭의 (크기)%, 가로:세로 = 3.2:1. 중심(cx, cy)은 사진 안 비율 */
+function boxRect() {
+  var r = imgRect(), bw = r.w * Number($('cSize').value) / 100, bh = bw / 3.2;
+  if (bh > r.h) { bh = r.h; bw = bh * 3.2; }
+  var x = r.x + CROP.cx * r.w - bw / 2, y = r.y + CROP.cy * r.h - bh / 2;
+  x = Math.max(r.x, Math.min(r.x + r.w - bw, x)); y = Math.max(r.y, Math.min(r.y + r.h - bh, y));
+  return { x: x, y: y, w: bw, h: bh, r: r };
+}
+function drawBox() {
+  if (!CROP.img) return;
+  var b = boxRect(), el = $('cbox');
+  el.style.left = b.x + 'px'; el.style.top = b.y + 'px'; el.style.width = b.w + 'px'; el.style.height = b.h + 'px';
+}
+$('cSize').addEventListener('input', drawBox);
+window.addEventListener('resize', drawBox);
+(function () {
+  var st = $('cropStage'), on = false;
+  function move(e) {
+    if (!CROP.img) return;
+    var rr = st.getBoundingClientRect(), r = imgRect();
+    CROP.cx = Math.max(0, Math.min(1, (e.clientX - rr.left - r.x) / r.w));
+    CROP.cy = Math.max(0, Math.min(1, (e.clientY - rr.top - r.y) / r.h));
+    drawBox();
+  }
+  st.addEventListener('pointerdown', function (e) { on = true; try { st.setPointerCapture(e.pointerId); } catch (x) {} move(e); });
+  st.addEventListener('pointermove', function (e) { if (on) move(e); });
+  st.addEventListener('pointerup', function () { on = false; });
+  st.addEventListener('pointercancel', function () { on = false; });
+})();
+/** 박스 영역을 원본 사진에서 잘라 흑백 캔버스로 */
+function cropPhoto(outW) {
+  var b = boxRect(), r = b.r;
+  var sx = (b.x - r.x) / r.s, sy = (b.y - r.y) / r.s, sw = b.w / r.s, sh = b.h / r.s;
+  var c = document.createElement('canvas'); c.width = outW; c.height = Math.round(outW * sh / sw);
+  c.getContext('2d').drawImage(CROP.img, sx, sy, sw, sh, 0, 0, c.width, c.height);
+  return gray(c);
+}
+$('cropUse').addEventListener('click', function () {
+  if (!CROP.img || !INIT.st) return;
+  S.kmImg = toJpeg(cropPhoto(450), 450);
+  var go = function (v) { S.km = v == null ? '' : String(v); $('cropper').classList.add('hidden'); CROP.img = null; openConfirm(); };
+  if (!OCR.ready) return go(null);
+  this.disabled = true; var btn = this; btn.textContent = '숫자 읽는 중…';
+  var done = false, fin = function (v) { if (done) return; done = true; btn.disabled = false; btn.textContent = '이 영역 사용'; go(v); };
+  OCR.worker.recognize(prepOcr(cropPhoto(640))).then(function (r) { fin(pickKm(r && r.data && r.data.text)); }).catch(function () { fin(null); });
+  setTimeout(function () { fin(null); }, 6000);
+});
+function loadImg(file) {
+  return new Promise(function (res, rej) {
+    var u = URL.createObjectURL(file), img = new Image();
+    img.onload = function () { URL.revokeObjectURL(u); res(img); };
+    img.onerror = function () { URL.revokeObjectURL(u); rej(); };
+    img.src = u;
+  });
+}
+document.addEventListener('visibilitychange', function () {
+  if (document.hidden) stopCam();
+  else if (!$('cam').classList.contains('hidden') && $('fallback').classList.contains('hidden') && $('cropper').classList.contains('hidden')) startCam();
+});
+
+/* ===================== 확인 화면 ===================== */
+function openConfirm(note) {
+  var end = S.mode === 'end', st = INIT.st;
+  $('bandTitle').textContent = end ? '운행 종료' : '운행 시작';
+  $('bandCar').textContent = INIT.car;
+  $('st1Label').textContent = end ? '하차 km' : '탑승 km';
+  $('cfTitle').textContent = end ? '운행 종료 확인' : '운행 시작 확인';
+  $('kmLabel').textContent = end ? '하차 km' : '탑승 km';
+  $('submit').textContent = end ? '운행 종료' : '운행 시작';
+  $('cfNote').classList.toggle('hidden', !note); $('cfNote').textContent = note || '';
+  $('kmThumb').classList.toggle('hidden', !S.kmImg); if (S.kmImg) $('kmThumb').src = S.kmImg;
+  $('startKmRow').classList.toggle('hidden', !end);
+  if (end) $('startKmVal').textContent = fmt(st.run.startKm) + ' km · ' + st.run.driver;
+  $('km').value = S.km;
+  kmCheck();
+  // 이름·개인 코드: 내 휴대폰에 저장된 값
+  var me = loadMe();
+  $('nm').value = me ? me.name : ''; $('pc').value = me ? me.pcode : ''; $('pin').value = me && me.pin ? me.pin : '';
+  $('savedRow').classList.toggle('hidden', !me); $('saveRow').classList.toggle('hidden', !!me);
+  $('pinRow').classList.toggle('hidden', !(me && me.pin)); S.needPin = !!(me && me.pin);
+  $('setupBox').classList.add('hidden');
+  // 종료: 운행사유·구간
+  $('endBox').classList.toggle('hidden', !end);
+  if (end) { drawChips('reasons', INIT.reasons, S.reason); drawChips('routes', INIT.routes, S.route); syncEnd(); }
+  msg('');
+  show('cf');
+}
+function kmCheck() {
+  var v = digits($('km').value), st = INIT.st, el = $('kmCmp'), ok = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5 10 17.5 19 7"/></svg>';
+  if ($('km').value !== v) $('km').value = v;
+  el.className = 'cmp';
+  if (!v) { el.innerHTML = S.kmImg ? '숫자를 읽지 못했습니다. 사진을 보고 직접 입력하세요.' : '계기판 주행거리를 입력하세요.'; el.classList.add('warn'); return; }
+  var n = Number(v);
+  if (S.mode === 'end') {
+    var d = n - st.run.startKm;
+    if (d < 0) { el.textContent = '탑승 km보다 작습니다. 숫자를 확인하세요.'; el.classList.add('warn'); }
+    else { el.innerHTML = '운행거리 <b style="font-size:16px;margin-left:4px">' + fmt(d) + ' km</b>'; el.classList.add(d > 500 ? 'warn' : 'ok'); if (d > 500) el.innerHTML += ' · 숫자를 확인하세요'; }
+  } else if (!st.last) { el.textContent = '이 차량의 첫 운행 기록입니다.'; }
+  else if (n === st.last.km) { el.innerHTML = ok + '이전 종료 km와 같음 · 변동 없음'; el.classList.add('ok'); }
+  else { el.textContent = '이전 종료 km(' + fmt(st.last.km) + ')와 ' + fmt(Math.abs(n - st.last.km)) + 'km 다릅니다. 숫자를 확인하세요.'; el.classList.add('warn'); }
+}
+$('km').addEventListener('input', kmCheck);
+$('retake').addEventListener('click', function () { openCam(); });
+$('chgMe').addEventListener('click', function () {
+  clearMe(); $('nm').value = ''; $('pc').value = ''; $('pin').value = '';
+  $('savedRow').classList.add('hidden'); $('saveRow').classList.remove('hidden'); $('saveMe').checked = true;
+  $('pinRow').classList.add('hidden'); S.needPin = false; $('nm').focus();
+});
+['pc', 'suC1', 'suC2'].forEach(function (id) { $(id).addEventListener('input', function () { this.value = digits(this.value).slice(0, 4); }); });
+
+function drawChips(id, list, sel) {
+  $(id).innerHTML = (list || []).map(function (t) {
+    var on = t === sel;
+    return '<button type="button" data-v="' + esc(t) + '" class="' + (on ? 'on' : '') + '" aria-pressed="' + on + '">' + esc(t) + '</button>';
+  }).join('');
+}
+$('reasons').addEventListener('click', function (e) { var b = e.target.closest('button'); if (!b) return; S.reason = b.dataset.v; drawChips('reasons', INIT.reasons, S.reason); syncEnd(); });
+$('routes').addEventListener('click', function (e) { var b = e.target.closest('button'); if (!b) return; S.route = b.dataset.v; drawChips('routes', INIT.routes, S.route); syncEnd(); });
+function syncEnd() {
+  $('reasonEtc').classList.toggle('hidden', S.reason !== '기타');
+  $('routeEtc').classList.toggle('hidden', S.route !== '기타');
+  $('rcBox').classList.toggle('hidden', S.reason !== '주유');
+  $('rcThumb').classList.toggle('hidden', !S.receipt); if (S.receipt) $('rcThumb').src = S.receipt;
+  $('rcText').textContent = S.receipt ? '촬영됨 · 다시 찍으려면 버튼을 누르세요' : '주유 시 전표를 찍어 주세요';
+  $('rcBtn').firstChild.nodeValue = S.receipt ? '다시 촬영' : '전표 촬영';
+}
+/** 신용카드 전표: 흑백, 셀 한도 안으로 줄여서 */
+$('rcFile').addEventListener('change', function () {
+  var f = this.files && this.files[0]; this.value = '';
+  if (!f) return;
+  loadImg(f).then(function (img) {
+    var w = Math.min(900, img.naturalWidth), c = document.createElement('canvas');
+    c.width = w; c.height = Math.round(img.naturalHeight * w / img.naturalWidth);
+    c.getContext('2d').drawImage(img, 0, 0, c.width, c.height); gray(c);
+    S.receipt = toJpeg(c, 900);
+    if (!S.receipt) alert('사진이 너무 큽니다. 전표만 가까이 다시 찍어 주세요.');
+    syncEnd();
+  }).catch(function () { alert('사진을 열 수 없습니다. 다시 찍어 주세요.'); });
+});
+
+/* ===================== 제출 ===================== */
+function msg(t) { $('msg').textContent = t || ''; }
+function busy(on) {
+  S.busy = on; $('submit').disabled = on; $('suGo').disabled = on;
+  $('submit').innerHTML = on ? '<span class="spin"></span>저장 중…' : esc(S.mode === 'end' ? '운행 종료' : '운행 시작');
+}
+function payload() {
+  var p = { car: INIT.car, km: digits($('km').value), img: S.kmImg, name: $('nm').value.trim(), pcode: digits($('pc').value), pin: S.needPin ? $('pin').value.trim() : '', device: device() };
+  if (S.mode === 'end') {
+    p.id = INIT.st.run.id; p.reason = S.reason; p.reasonEtc = $('reasonEtc').value; p.route = S.route; p.routeEtc = $('routeEtc').value;
+    p.receipt = S.reason === '주유' ? S.receipt : '';
+  }
+  return p;
+}
+$('submit').addEventListener('click', submit);
+function submit() {
+  if (S.busy) return;
+  var p = payload();
+  if (!p.km) { msg('주행거리(km)를 입력하세요.'); $('km').focus(); return; }
+  if (!p.name) { msg('이름을 입력하세요.'); $('nm').focus(); return; }
+  if (!$('setupBox').classList.contains('hidden')) { msg('먼저 개인 코드를 만들어 주세요.'); return; }
+  if (p.pcode.length !== 4) { msg('개인 코드 숫자 4자리를 입력하세요.'); $('pc').focus(); return; }
+  if (S.mode === 'end') {
+    if (Number(p.km) < INIT.st.run.startKm) { msg('하차 km가 탑승 km보다 작습니다.'); return; }
+    if (S.reason === '기타' && !p.reasonEtc.trim()) { msg('운행사유를 입력하세요.'); $('reasonEtc').focus(); return; }
+    if (S.route === '기타' && !p.routeEtc.trim()) { msg('운행구간을 입력하세요.'); $('routeEtc').focus(); return; }
+    if (S.reason === '주유' && !S.receipt && !confirm('신용카드 전표 사진 없이 운행을 종료할까요?')) return;
+  }
+  S.km = p.km;
+  msg(''); busy(true);
+  call(S.mode === 'end' ? 'carEnd' : 'carStart', p).then(function (r) {
+    busy(false);
+    if (r.needPin && !r.setup) { S.needPin = true; $('pinRow').classList.remove('hidden'); msg('같은 이름의 직원이 있어 사번도 입력해야 합니다.'); $('pin').focus(); return; }
+    if (r.setup) { openSetup(r.needPin); return; }
+    if (r.running) {                                  // 이미 운행 중 → 종료부터
+      setInit(r.init); S.mode = 'end'; S.receipt = '';
+      return openConfirm('이 차량은 ' + r.init.st.run.driver + ' 님 운행 중(' + r.init.st.run.startAt + ' 시작)으로 기록돼 있습니다. 먼저 운행을 종료해 주세요. 찍은 km를 하차 km로 넣었습니다.');
+    }
+    if (r.notRunning) {                               // 그 사이 다른 사람이 종료 → 새 운행 시작으로
+      setInit(r.init); S.mode = 'start';
+      return openConfirm('이 차량의 운행은 이미 종료되었습니다. 새 운행을 시작하려면 아래 내용을 확인하세요.');
+    }
+    if (r.ok) {
+      if (!$('saveRow').classList.contains('hidden') ? $('saveMe').checked : true) saveMe({ name: p.name, pcode: p.pcode, pin: p.pin });
+      showDone(r);
+    }
+  }).catch(function (e) { busy(false); msg(errText(e)); });
+}
+function openSetup(needPin) {
+  $('setupBox').classList.remove('hidden');
+  $('pc').value = '';
+  if (needPin) { S.needPin = true; }
+  msg('');
+  $('suPin').value = $('pin').value; $('suC1').value = ''; $('suC2').value = '';
+  $('suPin').focus();
+}
+$('suGo').addEventListener('click', function () {
+  if (S.busy) return;
+  var p = { name: $('nm').value.trim(), pin: $('suPin').value.trim(), newCode: digits($('suC1').value), newCode2: digits($('suC2').value), device: device() };
+  if (!p.name) { msg('이름을 입력하세요.'); return; }
+  if (!p.pin) { msg('사번을 입력하세요.'); return; }
+  if (p.newCode.length !== 4) { msg('새 개인 코드 숫자 4자리를 입력하세요.'); return; }
+  if (p.newCode !== p.newCode2) { msg('개인 코드를 두 번 똑같이 입력하세요.'); return; }
+  busy(true); msg('');
+  call('carRegisterPc', p).then(function () {
+    busy(false);
+    $('setupBox').classList.add('hidden');
+    $('pc').value = p.newCode;
+    if (S.needPin) { $('pin').value = p.pin; $('pinRow').classList.remove('hidden'); }
+    submit();
+  }).catch(function (e) { busy(false); msg(errText(e)); });
+});
+
+function showDone(r) {
+  var end = r.mode === 'end';
+  $('bandTitle').textContent = end ? '운행 종료' : '운행 시작';
+  $('doneTitle').textContent = end ? '운행이 종료되었습니다' : '운행이 시작되었습니다';
+  var rows = end
+    ? [['차량', r.car], ['운전자', r.name], ['탑승 → 하차', fmt(r.startKm) + ' → ' + fmt(r.km) + ' km'], ['운행거리', fmt(r.dist) + ' km'], ['사유 · 구간', r.reason + ' · ' + r.route], ['종료 시각', r.at]]
+    : [['차량', r.car], ['운전자', r.name], ['탑승 km', fmt(r.km) + ' km'], ['시작 시각', r.at], ['사유 · 구간', '운행 종료 때 입력']];
+  $('doneRows').innerHTML = rows.map(function (x) { return '<div class="kv"><span>' + esc(x[0]) + '</span><b>' + esc(x[1]) + '</b></div>'; }).join('');
+  show('done');
+}
+
+boot();
+</script>
+</body>
+</html>
