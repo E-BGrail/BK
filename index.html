@@ -129,16 +129,15 @@
            box-shadow:0 0 0 10px rgba(50,78,179,.12); animation:pop .45s ease-out; }
   @keyframes pop { 0% { transform:scale(.4); opacity:0; } 70% { transform:scale(1.08); } 100% { transform:scale(1); opacity:1; } }
   .rows { display:flex; flex-direction:column; gap:10px; margin-top:14px; padding-top:14px; border-top:1px solid var(--line); text-align:left; }
-  /* 오른쪽 위 전환 버튼: 앞 버튼(지금 화면) 뒤에 다른 화면 버튼이 반쯤 겹쳐 보임 → 누르거나 왼쪽으로 밀면 전환 */
-  .appSw { position:relative; height:32px; width:152px; flex:none; touch-action:pan-y; }
+  /* 오른쪽 위 전환 버튼: 지금 화면 버튼 뒤로 다른 화면 버튼이 튀어나와 있음 → 튀어나온 버튼을 누르면 앞으로 나오고 지금 버튼은 뒤로 들어감 */
+  .appSw { position:relative; height:32px; width:152px; flex:none; }
   .appSw .back, .appSw .front { position:absolute; top:0; height:32px; display:flex; align-items:center; border-radius:20px; font-size:13px; font-weight:700;
-    white-space:nowrap; text-decoration:none; user-select:none; -webkit-user-select:none; font-family:inherit; }
-  .appSw .back { right:62px; padding:0 24px 0 12px; background:#f3f4f7; border:1px solid #d8dde8; color:#667085; }
-  .appSw .front { right:0; z-index:2; padding:0 12px 0 9px; background:#eef1fb; border:1px solid #cdd6f3; color:var(--pri); cursor:pointer;
-    box-shadow:-4px 0 8px rgba(16,24,48,.14); transition:transform .22s ease, opacity .22s ease; }
-  .appSw .front::before { content:'‹'; margin-right:5px; font-size:15px; opacity:.55; }
-  .appSw.go .front { transform:translateX(-80px); opacity:0; }
-  .appSw.go .back { background:var(--pri); border-color:var(--pri); color:#fff; transition:background .2s, color .2s; }
+    white-space:nowrap; text-decoration:none; user-select:none; -webkit-user-select:none; font-family:inherit; transition:transform .25s ease, opacity .25s ease, background .25s, color .25s, border-color .25s; }
+  .appSw .back { right:62px; z-index:1; padding:0 24px 0 12px; background:#f3f4f7; border:1px solid #d8dde8; color:#667085; cursor:pointer; }
+  .appSw .back:active { background:#e8ebf2; }
+  .appSw .front { right:0; z-index:2; padding:0 12px; background:#eef1fb; border:1px solid #cdd6f3; color:var(--pri); box-shadow:-4px 0 8px rgba(16,24,48,.14); }
+  .appSw.go .back { z-index:3; transform:translateX(62px); padding:0 12px; background:var(--pri); border-color:var(--pri); color:#fff; box-shadow:-4px 0 8px rgba(16,24,48,.18); }
+  .appSw.go .front { transform:translateX(-56px) scale(.94); opacity:.55; box-shadow:none; }
   .carList { display:flex; flex-direction:column; gap:8px; margin-top:10px; }
   .carItem { display:flex !important; align-items:center; justify-content:space-between; gap:10px; }
   .carItem .ci { display:flex; flex-direction:column; gap:3px; min-width:0; }
@@ -230,7 +229,7 @@
         onerror="if(!this.dataset.alt){this.dataset.alt=1;this.src='https://www.bglrt.com/_res/default/img/sub/p00563_img05_04.png';}else{document.getElementById('brand').className='brand noimg';}">
       <span class="wm"><i>BGL</i>부산-김해경전철</span>
     </div>
-    <div class="appSw" id="appSw"><a class="back" href="#" tabindex="-1">전자서명</a><button class="front" type="button" aria-label="전자서명 화면으로 전환 (누르거나 왼쪽으로 밀기)">차량운행</button></div>
+    <div class="appSw" id="appSw"><a class="back" href="#" aria-label="전자서명 화면으로 전환">전자서명</a><span class="front">차량운행</span></div>
   </header>
   <div class="band"><b id="bandTitle">운행 시작</b><span class="carChip" id="bandCar"></span></div>
 </div>
@@ -399,20 +398,17 @@ function setInit(init) {
   S.mode = init.mode;
   S.reason = init.st.freq.reason; S.route = init.st.freq.route;
 }
-/** 오른쪽 위 전환 버튼 (전자서명 ↔ 차량운행): 누르거나 왼쪽으로 밀면 다른 화면으로 */
+/** 오른쪽 위 전환 버튼 (전자서명 ↔ 차량운행): 튀어나온 버튼을 누르면 앞으로 나오고 지금 버튼은 뒤로 들어간 뒤 이동 */
 function appSwitch(sw, url, nav) {
-  var f = sw.querySelector('.front'), b = sw.querySelector('.back'), x0 = null, gone = false;
+  var b = sw.querySelector('.back'), gone = false;
   b.href = url;
-  function go() {
-    if (gone) return; gone = true; sw.classList.add('go');
-    setTimeout(function () { nav ? nav(url) : b.click(); }, 200);
+  b.addEventListener('click', function (e) {
+    e.preventDefault();
+    if (gone) return;
+    gone = true; sw.classList.add('go');
+    setTimeout(function () { if (nav) nav(url); else window.open(url, '_top'); }, 260);
     setTimeout(function () { gone = false; sw.classList.remove('go'); }, 4000);
-  }
-  f.addEventListener('pointerdown', function (e) { x0 = e.clientX; f.style.transition = 'none'; });
-  f.addEventListener('pointermove', function (e) { if (x0 == null) return; var dx = Math.max(-90, Math.min(10, e.clientX - x0)); f.style.transform = 'translateX(' + dx + 'px)'; });
-  var reset = function () { x0 = null; f.style.transition = ''; f.style.transform = ''; };
-  f.addEventListener('pointerup', reset); f.addEventListener('pointercancel', reset); f.addEventListener('pointerleave', function () { if (x0 != null) { reset(); go(); } });
-  f.addEventListener('click', go);
+  });
 }
 
 /* ===================== 차량 목록 · 운행 기록 ===================== */
