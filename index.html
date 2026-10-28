@@ -88,6 +88,8 @@
   .kv b { text-align:right; }
   .cmp { font-size:13px; font-weight:700; display:flex; align-items:center; gap:6px; }
   .cmp.ok { color:var(--ok); } .cmp.warn { color:var(--warn); }
+  .ai { font-size:13px; font-weight:700; color:var(--pri); display:flex; align-items:center; gap:6px; }
+  .ai.fail { color:var(--warn); }
   .link { border:0; background:none; color:var(--pri); font-size:14px; font-weight:700; text-decoration:underline; padding:0; min-height:44px; align-self:flex-start; }
   .grid2 { display:grid; grid-template-columns:repeat(2, minmax(0,1fr)); gap:8px; }
   .fld { display:flex; flex-direction:column; gap:4px; margin-top:12px; }
@@ -213,6 +215,7 @@
         <div class="kv hidden" id="startKmRow"><span>탑승 km</span><b id="startKmVal"></b></div>
         <div class="kmRow"><label for="km" id="kmLabel">탑승 km</label><input type="text" id="km" class="kmIn" inputmode="numeric" autocomplete="off" maxlength="9"><span>km</span></div>
         <div class="cmp" id="kmCmp"></div>
+        <div class="ai hidden" id="aiState" aria-live="polite"></div>
         <button class="link" id="retake" type="button">km 다시 촬영</button>
       </div>
 
@@ -327,6 +330,7 @@ function setInit(init) {
   INIT.st = init.st; INIT.mode = init.mode; INIT.car = init.car;
   if (init.reasons) INIT.reasons = init.reasons;
   if (init.routes) INIT.routes = init.routes;
+  INIT.ai = !!init.ai;
   S.mode = init.mode;
   S.reason = init.st.freq.reason; S.route = init.st.freq.route;
 }
@@ -551,6 +555,7 @@ function pickKm(text) {
   runs.forEach(function (r) {
     var v = Number(r);
     if (exp != null) { if (v < exp || v > exp + 3000) return; }
+    else if (r.length < 5) return;                // 이전 기록이 없을 때: 끝자리가 'km'에 붙어 빠지는 오인식 방지 (5자리 이상만)
     if (best == null || (exp != null ? Math.abs(v - exp) < Math.abs(best - exp) : r.length > String(best).length)) best = v;
   });
   return best;
@@ -566,12 +571,16 @@ function ocrLoop() {
   OCR.worker.recognize(prepOcr(c)).then(function (r) {
     OCR.busy = false;
     if (!CAM.on) return;
-    var v = pickKm(r && r.data && r.data.text);
+    var txt = r && r.data && r.data.text || '';
+    if (INIT.ai && /\d{4,}/.test(txt)) {               // AI 사용: 박스에 숫자가 보이면 바로 촬영, 정확한 숫자는 AI가 읽음
+      $('guide').classList.add('hit'); setOcrState('숫자 발견 · 자동 촬영'); return capture(pickKm(txt));
+    }
+    var v = pickKm(txt);
     if (v == null) { OCR.last = null; OCR.hits = 0; $('live').textContent = ''; $('guide').classList.remove('hit'); }
     else {
       OCR.hits = (v === OCR.last) ? OCR.hits + 1 : 1; OCR.last = v;
       $('live').textContent = fmt(v); placeLive();
-      if (OCR.hits >= 2) { $('guide').classList.add('hit'); setOcrState('인식 완료 · 자동 촬영'); return capture(v); }
+      if (OCR.hits >= (expectKm() == null ? 3 : 2)) { $('guide').classList.add('hit'); setOcrState('인식 완료 · 자동 촬영'); return capture(v); }
     }
     OCR.timer = setTimeout(ocrLoop, 250);
   }).catch(function () { OCR.busy = false; OCR.timer = setTimeout(ocrLoop, 800); });
@@ -588,6 +597,21 @@ function capture(km) {
   S.km = km == null ? '' : String(km);
   stopCam();
   openConfirm();
+  aiRead();
+}
+/** AI(Gemini)로 주행거리 다시 읽기: 사진을 서버로 보내 결과를 칸에 채움 (직접 고친 값은 덮어쓰지 않음) */
+function aiRead() {
+  if (!INIT.ai || !S.kmImg) return;
+  var seq = S.aiSeq = (S.aiSeq || 0) + 1, el = $('aiState');
+  el.className = 'ai'; el.innerHTML = '<span class="spin" style="border-color:rgba(50,78,179,.3);border-top-color:var(--pri)"></span>AI가 숫자를 읽는 중…';
+  call('carReadKm', { car: INIT.car, img: S.kmImg }).then(function (r) {
+    if (seq !== S.aiSeq) return;
+    if (r && r.km != null) {
+      if (!S.kmEdited) { $('km').value = String(r.km); S.km = String(r.km); kmCheck(); }
+      el.className = 'ai'; el.textContent = 'AI 인식 완료 · 사진과 같은지 확인하세요';
+    } else if (r && r.nokey) { el.className = 'ai hidden'; }
+    else { el.className = 'ai fail'; el.textContent = 'AI가 읽지 못했어요 · 사진을 보고 확인하세요'; }
+  }).catch(function (e) { if (seq === S.aiSeq) { el.className = 'ai fail'; el.textContent = errText(e); } });
 }
 $('shutter').addEventListener('click', function () {
   if (!CAM.on || !INIT.st) return;
@@ -668,8 +692,8 @@ function cropPhoto(outW) {
 $('cropUse').addEventListener('click', function () {
   if (!CROP.img || !INIT.st) return;
   S.kmImg = toJpeg(cropPhoto(450), 450);
-  var go = function (v) { S.km = v == null ? '' : String(v); $('cropper').classList.add('hidden'); CROP.img = null; openConfirm(); };
-  if (!OCR.ready) return go(null);
+  var go = function (v) { S.km = v == null ? '' : String(v); $('cropper').classList.add('hidden'); CROP.img = null; openConfirm(); aiRead(); };
+  if (!OCR.ready || INIT.ai) return go(null);
   this.disabled = true; var btn = this; btn.textContent = '숫자 읽는 중…';
   var done = false, fin = function (v) { if (done) return; done = true; btn.disabled = false; btn.textContent = '이 영역 사용'; go(v); };
   OCR.worker.recognize(prepOcr(cropPhoto(640))).then(function (r) { fin(pickKm(r && r.data && r.data.text)); }).catch(function () { fin(null); });
@@ -702,6 +726,7 @@ function openConfirm(note) {
   $('startKmRow').classList.toggle('hidden', !end);
   if (end) $('startKmVal').textContent = fmt(st.run.startKm) + ' km · ' + st.run.driver;
   $('km').value = S.km;
+  S.kmEdited = false; S.aiSeq = (S.aiSeq || 0) + 1; $('aiState').className = 'ai hidden';
   kmCheck();
   // 이름·개인 코드: 내 휴대폰에 저장된 값
   var me = loadMe();
@@ -729,7 +754,7 @@ function kmCheck() {
   else if (n === st.last.km) { el.innerHTML = ok + '이전 종료 km와 같음 · 변동 없음'; el.classList.add('ok'); }
   else { el.textContent = '이전 종료 km(' + fmt(st.last.km) + ')와 ' + fmt(Math.abs(n - st.last.km)) + 'km 다릅니다. 숫자를 확인하세요.'; el.classList.add('warn'); }
 }
-$('km').addEventListener('input', kmCheck);
+$('km').addEventListener('input', function () { S.kmEdited = true; kmCheck(); });
 $('retake').addEventListener('click', function () { openCam(); });
 $('chgMe').addEventListener('click', function () {
   clearMe(); $('nm').value = ''; $('pc').value = ''; $('pin').value = '';
