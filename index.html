@@ -245,15 +245,15 @@
       </div>
 
       <div id="endBox" class="hidden">
-        <div class="sec"><span class="lbl">운행사유<small>이 차량에서 자주 쓰는 항목 자동 선택</small></span><div class="chips" id="reasons" role="group" aria-label="운행사유"></div>
-          <input type="text" id="reasonEtc" class="hidden" placeholder="운행사유 입력" maxlength="30" style="margin-top:8px" aria-label="기타 운행사유"></div>
+        <div class="sec"><span class="lbl">행선지<small>이 차량에서 자주 쓰는 곳 자동 선택</small></span><div class="chips" id="routes" role="group" aria-label="행선지"></div>
+          <input type="text" id="routeEtc" class="hidden" placeholder="행선지 입력" maxlength="30" style="margin-top:8px" aria-label="기타 행선지"></div>
+        <div class="sec"><span class="lbl">운행목적<small>이 차량에서 자주 쓰는 항목 자동 선택</small></span><div class="chips" id="reasons" role="group" aria-label="운행목적"></div>
+          <input type="text" id="reasonEtc" class="hidden" placeholder="운행목적 입력" maxlength="30" style="margin-top:8px" aria-label="기타 운행목적"></div>
         <div class="rc hidden" id="rcBox">
           <img id="rcThumb" class="hidden" alt="신용카드 전표">
           <div class="t">신용카드 전표<small id="rcText">주유 시 전표를 찍어 주세요</small></div>
           <label class="sbtn" id="rcBtn">전표 촬영<input type="file" id="rcFile" accept="image/*" capture="environment" hidden></label>
         </div>
-        <div class="sec"><span class="lbl">운행구간</span><div class="chips" id="routes" role="group" aria-label="운행구간"></div>
-          <input type="text" id="routeEtc" class="hidden" placeholder="운행구간 입력" maxlength="30" style="margin-top:8px" aria-label="기타 운행구간"></div>
       </div>
       <div class="msg" id="msg"></div>
     </div>
@@ -719,7 +719,7 @@ function openConfirm(note) {
   $('savedRow').classList.toggle('hidden', !me); $('saveRow').classList.toggle('hidden', !!me);
   $('pinRow').classList.toggle('hidden', !(me && me.pin)); S.needPin = !!(me && me.pin);
   $('setupBox').classList.add('hidden');
-  // 종료: 운행사유·구간
+  // 종료: 행선지·운행목적
   $('endBox').classList.toggle('hidden', !end);
   if (end) { drawChips('reasons', INIT.reasons, S.reason); drawChips('routes', INIT.routes, S.route); syncEnd(); }
   msg('');
@@ -808,8 +808,8 @@ function submit() {
   if (p.pcode.length !== 4) { msg('개인 코드 숫자 4자리를 입력하세요.'); $('pc').focus(); return; }
   if (S.mode === 'end') {
     if (Number(p.km) < Number(p.startKm)) { msg('하차 km가 탑승 km보다 작습니다.'); $('km').focus(); return; }
-    if (S.reason === '기타' && !p.reasonEtc.trim()) { msg('운행사유를 입력하세요.'); $('reasonEtc').focus(); return; }
-    if (S.route === '기타' && !p.routeEtc.trim()) { msg('운행구간을 입력하세요.'); $('routeEtc').focus(); return; }
+    if (S.reason === '기타' && !p.reasonEtc.trim()) { msg('운행목적을 입력하세요.'); $('reasonEtc').focus(); return; }
+    if (S.route === '기타' && !p.routeEtc.trim()) { msg('행선지를 입력하세요.'); $('routeEtc').focus(); return; }
     if (S.reason === '주유' && !S.receipt && !confirm('신용카드 전표 사진 없이 운행을 종료할까요?')) return;
   }
   S.km = p.km; S.km0 = p.startKm || null;
@@ -862,8 +862,8 @@ function showDone(r) {
   $('bandTitle').textContent = end ? '운행 종료' : '운행 시작';
   $('doneTitle').textContent = end ? '운행이 종료되었습니다' : '운행이 시작되었습니다';
   var rows = end
-    ? [['차량', r.car], ['운전자', r.name], ['탑승 → 하차', fmt(r.startKm) + ' → ' + fmt(r.km) + ' km'], ['운행거리', fmt(r.dist) + ' km'], ['사유 · 구간', r.reason + ' · ' + r.route], ['종료 시각', r.at]]
-    : [['차량', r.car], ['운전자', r.name], ['시작 시각', r.at], ['km · 사유 · 구간', '운행 종료 때 입력']];
+    ? [['차량', r.car], ['운전자', r.name], ['탑승 → 하차', fmt(r.startKm) + ' → ' + fmt(r.km) + ' km'], ['운행거리', fmt(r.dist) + ' km'], ['행선지 · 목적', r.route + ' · ' + r.reason], ['종료 시각', r.at]]
+    : [['차량', r.car], ['운전자', r.name], ['시작 시각', r.at], ['km · 행선지 · 목적', '운행 종료 때 입력']];
   $('doneRows').innerHTML = rows.map(function (x) { return '<div class="kv"><span>' + esc(x[0]) + '</span><b>' + esc(x[1]) + '</b></div>'; }).join('');
   show('done');
 }
