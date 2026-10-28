@@ -129,7 +129,34 @@
            box-shadow:0 0 0 10px rgba(50,78,179,.12); animation:pop .45s ease-out; }
   @keyframes pop { 0% { transform:scale(.4); opacity:0; } 70% { transform:scale(1.08); } 100% { transform:scale(1); opacity:1; } }
   .rows { display:flex; flex-direction:column; gap:10px; margin-top:14px; padding-top:14px; border-top:1px solid var(--line); text-align:left; }
+  /* 오른쪽 위 전환 버튼: 앞 버튼(지금 화면) 뒤에 다른 화면 버튼이 반쯤 겹쳐 보임 → 누르거나 왼쪽으로 밀면 전환 */
+  .appSw { position:relative; height:32px; width:152px; flex:none; touch-action:pan-y; }
+  .appSw .back, .appSw .front { position:absolute; top:0; height:32px; display:flex; align-items:center; border-radius:20px; font-size:13px; font-weight:700;
+    white-space:nowrap; text-decoration:none; user-select:none; -webkit-user-select:none; font-family:inherit; }
+  .appSw .back { right:62px; padding:0 24px 0 12px; background:#f3f4f7; border:1px solid #d8dde8; color:#667085; }
+  .appSw .front { right:0; z-index:2; padding:0 12px 0 9px; background:#eef1fb; border:1px solid #cdd6f3; color:var(--pri); cursor:pointer;
+    box-shadow:-4px 0 8px rgba(16,24,48,.14); transition:transform .22s ease, opacity .22s ease; }
+  .appSw .front::before { content:'‹'; margin-right:5px; font-size:15px; opacity:.55; }
+  .appSw.go .front { transform:translateX(-80px); opacity:0; }
+  .appSw.go .back { background:var(--pri); border-color:var(--pri); color:#fff; transition:background .2s, color .2s; }
   .carList { display:flex; flex-direction:column; gap:8px; margin-top:10px; }
+  .carItem { display:flex !important; align-items:center; justify-content:space-between; gap:10px; }
+  .carItem .ci { display:flex; flex-direction:column; gap:3px; min-width:0; }
+  .carItem .ci b { font-size:19px; }
+  .carItem .ci small { font-size:13px; font-weight:500; color:var(--sub); }
+  .carItem .go { flex:none; font-size:14px; font-weight:700; color:var(--pri); }
+  .tag { display:inline-block; font-size:12px; font-weight:800; border-radius:6px; padding:2px 7px; margin-right:6px; vertical-align:1px; }
+  .tag.run { background:#fdebdd; color:#8a3f0a; } .tag.idle { background:#e3f4ea; color:#17663a; }
+  .hTop { display:flex; align-items:center; justify-content:space-between; gap:8px; }
+  .hTop b { font-size:22px; color:var(--pri2); }
+  .hBtns { display:grid; grid-template-columns:repeat(2, minmax(0,1fr)); gap:8px; margin-top:12px; }
+  .hBtns a { display:flex; align-items:center; justify-content:center; height:48px; border-radius:12px; font-size:15px; font-weight:700; text-decoration:none; }
+  .rec { border-top:1px solid var(--line); padding:12px 2px; display:flex; flex-direction:column; gap:4px; font-size:14px; }
+  .rec:first-child { border-top:0; }
+  .rec .r1 { display:flex; justify-content:space-between; gap:8px; font-weight:700; font-size:15px; }
+  .rec .r2 { color:var(--text); }
+  .rec .r2 b { color:var(--pri2); }
+  .rec .r3 { color:var(--sub); }
   .carList a { display:block; padding:14px; border:1px solid var(--line); border-radius:12px; text-decoration:none; color:var(--text); font-size:17px; font-weight:700; }
   .spin { display:inline-block; width:16px; height:16px; border:2px solid rgba(255,255,255,.5); border-top-color:#fff; border-radius:50%; animation:sp 1s linear infinite; vertical-align:-3px; margin-right:6px; }
   @keyframes sp { to { transform:rotate(360deg); } }
@@ -203,7 +230,7 @@
         onerror="if(!this.dataset.alt){this.dataset.alt=1;this.src='https://www.bglrt.com/_res/default/img/sub/p00563_img05_04.png';}else{document.getElementById('brand').className='brand noimg';}">
       <span class="wm"><i>BGL</i>부산-김해경전철</span>
     </div>
-    <h1>차량운행</h1>
+    <div class="appSw" id="appSw"><a class="back" href="#" tabindex="-1">전자서명</a><button class="front" type="button" aria-label="전자서명 화면으로 전환 (누르거나 왼쪽으로 밀기)">차량운행</button></div>
   </header>
   <div class="band"><b id="bandTitle">운행 시작</b><span class="carChip" id="bandCar"></span></div>
 </div>
@@ -273,6 +300,36 @@
   </main>
 </section>
 
+<!-- ===== 차량 목록 (QR 없이 열면) ===== -->
+<section id="list" class="hidden">
+  <main>
+    <div class="card">
+      <h2>차량을 선택하세요</h2>
+      <div style="font-size:14px;color:var(--sub)">차량을 누르면 운행 기록을 볼 수 있습니다.</div>
+      <div class="carList" id="carList2"><div style="padding:14px;color:var(--sub);font-size:14px">불러오는 중…</div></div>
+    </div>
+  </main>
+</section>
+
+<!-- ===== 차량별 운행 기록 ===== -->
+<section id="hist" class="hidden">
+  <main>
+    <div class="card">
+      <div class="hTop"><b id="hCar"></b><span id="hState"></span></div>
+      <div style="font-size:14px;color:var(--sub);margin-top:6px" id="hSub"></div>
+      <div class="hBtns">
+        <a class="gray" href="?" id="hBack">‹ 차량 목록</a>
+        <a class="pri" href="#" id="hGo">운행 시작하기</a>
+      </div>
+    </div>
+    <div class="card">
+      <h2 style="margin-bottom:4px">운행 기록</h2>
+      <div id="hRows"><div style="padding:14px 0;color:var(--sub);font-size:14px">불러오는 중…</div></div>
+      <div style="font-size:12px;color:var(--sub);margin-top:6px" id="hFoot"></div>
+    </div>
+  </main>
+</section>
+
 <!-- ===== 차량 선택 / 오류 ===== -->
 <section id="pick" class="hidden">
   <main>
@@ -305,7 +362,7 @@ function call(fn, p) {
 }
 function errText(e) { return String(e && e.message || e || '오류가 났습니다.').replace(/^Exception:\s*/, ''); }
 function show(id) {
-  ['cam', 'cf', 'done', 'pick'].forEach(function (x) { $(x).classList.toggle('hidden', x !== id); });
+  ['cam', 'cf', 'done', 'pick', 'list', 'hist'].forEach(function (x) { $(x).classList.toggle('hidden', x !== id); });
   $('chrome').classList.toggle('hidden', id === 'cam');
   window.scrollTo(0, 0);
 }
@@ -316,7 +373,10 @@ function clearMe() { try { localStorage.removeItem(ME_KEY); } catch (e) {} }
 /* ===================== 시작 ===================== */
 /** QR(주소?car=차량번호)로 열리면: 카메라를 먼저 켜고, 그동안 차량 정보를 받아 옴 */
 function boot() {
-  var car = new URLSearchParams(location.search).get('car') || '';
+  appSwitch($('appSw'), API, function (u) { location.href = u; });
+  var q = new URLSearchParams(location.search), car = q.get('car') || '', hist = q.get('hist') || '';
+  if (hist) return showHist(hist);
+  if (!car) return showList();
   $('camTitle').textContent = '차량 정보 불러오는 중…';
   $('shCar').textContent = car; $('shState').textContent = '확인 중';
   show('cam');
@@ -339,6 +399,58 @@ function setInit(init) {
   S.mode = init.mode;
   S.reason = init.st.freq.reason; S.route = init.st.freq.route;
 }
+/** 오른쪽 위 전환 버튼 (전자서명 ↔ 차량운행): 누르거나 왼쪽으로 밀면 다른 화면으로 */
+function appSwitch(sw, url, nav) {
+  var f = sw.querySelector('.front'), b = sw.querySelector('.back'), x0 = null, gone = false;
+  b.href = url;
+  function go() {
+    if (gone) return; gone = true; sw.classList.add('go');
+    setTimeout(function () { nav ? nav(url) : b.click(); }, 200);
+    setTimeout(function () { gone = false; sw.classList.remove('go'); }, 4000);
+  }
+  f.addEventListener('pointerdown', function (e) { x0 = e.clientX; f.style.transition = 'none'; });
+  f.addEventListener('pointermove', function (e) { if (x0 == null) return; var dx = Math.max(-90, Math.min(10, e.clientX - x0)); f.style.transform = 'translateX(' + dx + 'px)'; });
+  var reset = function () { x0 = null; f.style.transition = ''; f.style.transform = ''; };
+  f.addEventListener('pointerup', reset); f.addEventListener('pointercancel', reset); f.addEventListener('pointerleave', function () { if (x0 != null) { reset(); go(); } });
+  f.addEventListener('click', go);
+}
+
+/* ===================== 차량 목록 · 운행 기록 ===================== */
+function apiGet(fn, car) {
+  return fetch(API + '?api=car&fn=' + fn + (car ? '&car=' + encodeURIComponent(car) : ''))
+    .then(function (r) { return r.json(); })
+    .then(function (j) { if (!j.ok) throw new Error(j.error || '오류가 났습니다.'); return j.data; });
+}
+function stateTag(run) { return run ? '<span class="tag run">운행 중</span>' : '<span class="tag idle">대기 중</span>'; }
+function showList() {
+  show('list');
+  $('bandTitle').textContent = '차량 운행 기록'; $('bandCar').textContent = '전체';
+  apiGet('list').then(function (d) {
+    $('carList2').innerHTML = (d.cars || []).map(function (c) {
+      var sub = c.run ? esc(c.run.driver) + ' · ' + esc(c.run.startAt) + ' 시작'
+        : (c.last ? '최근 ' + esc(c.last.at) + ' · ' + esc(c.last.driver) + ' · ' + fmt(c.last.km) + ' km' : '운행 기록 없음');
+      return '<a class="carItem" href="?hist=' + encodeURIComponent(c.no) + '"><span class="ci"><b>' + esc(c.no) + '</b><small>' + stateTag(c.run) + sub + '</small></span><span class="go">기록 보기 ›</span></a>';
+    }).join('') || '<div style="padding:14px;color:var(--sub);font-size:14px">등록된 차량이 없습니다.</div>';
+  }).catch(function (e) { $('carList2').innerHTML = '<div class="msg">' + esc(errText(e)) + '</div>'; });
+}
+function showHist(car) {
+  show('hist');
+  $('bandTitle').textContent = '운행 기록'; $('bandCar').textContent = car; $('hCar').textContent = car;
+  $('hGo').href = '?car=' + encodeURIComponent(car);
+  apiGet('hist', car).then(function (d) {
+    $('hState').innerHTML = stateTag(d.run);
+    $('hSub').textContent = d.run ? d.run.driver + ' 님 운행 중 · ' + d.run.startAt + ' 시작'
+      : (d.last ? '최근 종료 ' + d.last.at + ' · ' + fmt(d.last.km) + ' km' : '아직 운행 기록이 없습니다.');
+    $('hGo').textContent = d.run ? '운행 종료하기' : '운행 시작하기';
+    $('hRows').innerHTML = d.rows.map(function (r) {
+      return '<div class="rec"><div class="r1"><span>' + esc(r.date) + ' (' + esc(r.dow) + ')</span><span>' + esc(r.driver) + '</span></div>' +
+        '<div class="r2">' + esc(r.startKm) + ' → ' + esc(r.endKm) + ' km · <b>' + esc(r.dist) + ' km</b></div>' +
+        '<div class="r3">' + esc(r.dest) + ' · ' + esc(r.purpose) + '</div></div>';
+    }).join('') || '<div style="padding:14px 0;color:var(--sub);font-size:14px">아직 종료된 운행 기록이 없습니다.</div>';
+    $('hFoot').textContent = d.total > d.rows.length ? '최근 ' + d.rows.length + '건 표시 (전체 ' + d.total + '건 · 전체는 운행일지 시트에서)' : '';
+  }).catch(function (e) { $('hRows').innerHTML = '<div class="msg">' + esc(errText(e)) + '</div>'; });
+}
+
 function showPick() {
   show('pick');
   $('bandTitle').textContent = '차량 운행일지'; $('bandCar').textContent = INIT.car || '-';
