@@ -414,6 +414,7 @@ function boot() {
   if (!car) return showHome();
   $('camTitle').textContent = '차량 정보 불러오는 중…';
   $('shCar').textContent = car; $('shState').textContent = '확인 중';
+  shRows([['이전 종료 km', '…'], ['최근 운행', '…'], ['최근 운전자', '…']]);   // 정보가 와도 칸 높이가 그대로이도록 3줄을 미리
   show('cam');
   if (car) startCam();
   fetch(API + '?api=car&fn=init&car=' + encodeURIComponent(car))
@@ -423,6 +424,7 @@ function boot() {
       INIT.url = location.origin + location.pathname;
       if (INIT.error || INIT.needCar) { stopCam(); return showPick(); }
       setInit(INIT);
+      if (PENDING) return finishCapture();             // 정보가 오기 전에 이미 촬영함
       openCam();
     })
     .catch(function () { stopCam(); INIT = { error: '서버에 연결할 수 없습니다. 인터넷 연결 또는 페이지의 API 주소를 확인하세요.', url: location.origin + location.pathname }; showPick(); });
@@ -605,6 +607,7 @@ function showPick() {
 var CAM = { stream: null, track: null, caps: null, hwZoom: 1, dz: 1, zoom: 3, torch: false, on: false };
 var OCR = { worker: null, ready: false, failed: false, loading: false, busy: false, last: null, hits: 0, timer: null };
 
+function shRows(rows) { $('shRows').innerHTML = rows.map(function (r) { return '<div class="kv"><span>' + esc(r[0]) + '</span><b>' + esc(r[1]) + '</b></div>'; }).join(''); }
 function openCam() {
   var st = INIT.st, end = S.mode === 'end';
   $('camTitle').textContent = end ? '운행 종료 · 하차 km' : '운행 시작 · 탑승 km';
@@ -613,8 +616,8 @@ function openCam() {
   $('shState').style.cssText = end ? 'background:#fdebdd;color:#8a3f0a;font-weight:700' : 'background:#e3f4ea;color:#17663a;font-weight:700';
   var rows = end
     ? [['운전자', st.run.driver], ['시작 시각', st.run.startAt], ['이전 종료 km', st.last ? fmt(st.last.km) + ' km' : '기록 없음']]
-    : [['이전 종료 km', st.last ? fmt(st.last.km) + ' km' : '기록 없음'], ['최근 운행', st.last ? st.last.at + ' · ' + st.last.driver : '-']];
-  $('shRows').innerHTML = rows.map(function (r) { return '<div class="kv"><span>' + esc(r[0]) + '</span><b>' + esc(r[1]) + '</b></div>'; }).join('');
+    : [['이전 종료 km', st.last ? fmt(st.last.km) + ' km' : '기록 없음'], ['최근 운행', st.last ? st.last.at : '-'], ['최근 운전자', st.last ? st.last.driver : '-']];
+  shRows(rows);
   $('live').textContent = ''; $('guide').classList.remove('hit');
   $('cropper').classList.add('hidden'); $('fallback').classList.add('hidden');
   $('camCtl').classList.remove('hidden'); $('guide').classList.remove('hidden'); $('camHint').classList.remove('hidden');
@@ -834,14 +837,21 @@ function ocrOnce(c, cb) {
 }
 
 /** 촬영: 박스 영역을 흑백으로 저장하고 확인 화면으로. 종료 때는 인식한 숫자를 하차 km에 미리 채움 */
+var PENDING = null;     // 차량 정보가 오기 전에 찍은 사진 { img, km }
 function capture(km) {
-  if (S.mode === 'start') S.km0 = null;
   var c = cropGuide(600);
   if (!c) return;
-  S.kmImg = toJpeg(c, 600);
-  S.ocrKm = km == null ? null : km;
-  S.km = S.mode === 'end' && km != null ? String(km) : '';
+  PENDING = { img: toJpeg(c, 600), km: km == null ? null : km };
   stopCam();
+  if (!INIT.st) { $('camTitle').textContent = '촬영됨 · 차량 정보 확인 중…'; setOcrState('잠시만 기다려 주세요'); return; }   // boot()에서 이어서
+  finishCapture();
+}
+function finishCapture() {
+  var p = PENDING; PENDING = null;
+  if (S.mode === 'start') S.km0 = null;
+  S.kmImg = p.img;
+  S.ocrKm = p.km;
+  S.km = S.mode === 'end' && p.km != null ? String(p.km) : '';
   openConfirm();
   focusKm();
 }
@@ -849,7 +859,7 @@ function defaultKm() { return ''; }
 /** 종료 때만 하차 km 칸에 숫자 패드 (시작은 사진만) */
 function focusKm() { if (S.mode !== 'end') return; var k = $('km'); try { k.focus(); k.select(); } catch (e) {} }
 $('shutter').addEventListener('click', function () {
-  if (!CAM.on || !INIT.st) return;
+  if (!CAM.on) return;
   setOcrState('숫자 읽는 중…');
   ocrOnce(cropGuide(640), capture);
 });
