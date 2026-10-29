@@ -397,7 +397,7 @@ function errText(e) { return String(e && e.message || e || '오류가 났습니�
 function show(id) {
   ['cam', 'cf', 'done', 'pick', 'home', 'rec'].forEach(function (x) { $(x).classList.toggle('hidden', x !== id); });
   $('chrome').classList.toggle('hidden', id === 'cam');
-  $('bandCar').classList.toggle('hidden', id === 'home');     // 첫 화면(차량 목록)은 오른쪽 칩 없음
+  $('bandCar').classList.toggle('hidden', id === 'home' || id === 'rec');     // 차량 목록·운행기록 화면은 오른쪽 칩 없음 (운행기록은 아래 차량 탭에 표시)
   window.scrollTo(0, 0);
 }
 function loadMe() { try { var v = JSON.parse(localStorage.getItem(ME_KEY) || 'null'); return v && v.name ? v : null; } catch (e) { return null; } }
