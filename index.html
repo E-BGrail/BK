@@ -434,7 +434,7 @@ function clearMe() { try { localStorage.removeItem(ME_KEY); } catch (e) {} }
 /* ===================== 시작 ===================== */
 /** QR(주소?car=차량번호)로 열리면: 카메라를 먼저 켜고, 그동안 차량 정보를 받아 옴 */
 function boot() {
-  appSwitch($('appSw'), 'car', { sign: API, car: HOME });
+  appSwitch($('appSw'), 'car', { sign: SIGN, car: HOME });
   var q = new URLSearchParams(location.search), car = q.get('car') || '';
   if (q.has('rec') || q.has('hist')) return showRec(q.get('rec') || q.get('hist') || '');   // 예전 주소(?hist=)도 운행기록으로
   if (!car) return showHome();
@@ -461,6 +461,7 @@ function setInit(init) {
   S.reason = init.st.freq.reason; S.route = init.st.freq.route;
 }
 var HOME = location.origin + location.pathname;     // 업무차량관리 첫 화면 (주소만)
+var SIGN = HOME.replace(/[^\/]*$/, '') + 'sign.html';   // 전자서명: 같은 저장소의 sign.html (구글 웹 앱 주소로 가면 '구글 사용자가 만든 앱' 알림이 뜸)
 /** 오른쪽 위 전환 버튼 [전자서명][업무차량관리]: 누른 쪽에 불이 들어오며 그 화면으로 이동
  *  지금 켜진 버튼(업무차량관리)을 누르면 업무차량관리 첫 화면으로 */
 function appSwitch(sw, here, urls) {
