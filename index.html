@@ -2,6 +2,8 @@
 <html lang="ko">
 <head>
 <meta charset="utf-8">
+<link rel="preconnect" href="https://script.google.com" crossorigin>
+<link rel="preconnect" href="https://script.googleusercontent.com" crossorigin>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>업무차량관리</title>
 <style>
@@ -460,12 +462,24 @@ function apiGet(fn, car) {
     .then(function (r) { return r.json(); })
     .then(function (j) { if (!j.ok) throw new Error(j.error || '오류가 났습니다.'); return j.data; });
 }
+/** 빠른 화면: 지난번 받은 값(이 휴대폰에 저장)으로 바로 그리고, 서버 응답이 오면 최신 값으로 다시 그림.
+ *  저장본이 있으면 서버 오류는 조용히 넘김 (저장·운행 시작/종료는 언제나 서버에서 확인) */
+function cachedGet(fn, car, draw, fail) {
+  var key = 'bglCar:' + fn + ':' + (car || ''), old = null, had = false;
+  try { old = localStorage.getItem(key); } catch (x) {}
+  if (old) { try { draw(JSON.parse(old), true); had = true; } catch (x) { old = null; } }
+  apiGet(fn, car).then(function (d) {
+    var s = JSON.stringify(d);
+    try { localStorage.setItem(key, s); } catch (x) {}
+    if (s !== old) draw(d, false);
+  }).catch(function (e) { if (!had) fail(e); });
+}
 function stateTag(run) { return run ? '<span class="tag run">운행 중</span>' : '<span class="tag idle">대기 중</span>'; }
 /* ---------- 업무차량관리 첫 화면: 차량 목록 (카드마다 주행거리 촬영 · 운행 관리) ---------- */
 function showHome() {
   show('home');
   $('bandTitle').textContent = '업무차량관리'; $('bandCar').textContent = '';
-  apiGet('list').then(function (d) {
+  cachedGet('list', '', function (d) {
     $('carList2').innerHTML = (d.cars || []).map(function (c) {
       var sub = c.last ? fmt(c.last.km) + ' km' : '운행 기록 없음';      // 주행거리만 (운전자·날짜·시각은 운행 관리에서)
       return '<div class="carItem card" style="margin:0;box-shadow:none;border:1px solid var(--line)"><span class="ci"><b>' + esc(c.no) + '</b><small>' + stateTag(c.run) + sub + '</small></span>' +
@@ -473,7 +487,7 @@ function showHome() {
         '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>주행거리 촬영</a>' +
         '<a class="camBtn sub" href="?rec=' + encodeURIComponent(c.no) + '" aria-label="' + esc(c.no) + ' 운행 관리">운행 관리</a></span></div>';
     }).join('') || '<div style="padding:14px;color:var(--sub);font-size:14px">등록된 차량이 없습니다.</div>';
-  }).catch(function (e) { $('carList2').innerHTML = '<div class="msg">' + esc(errText(e)) + '</div>'; });
+  }, function (e) { $('carList2').innerHTML = '<div class="msg">' + esc(errText(e)) + '</div>'; });
 }
 
 /* ---------- 운행기록: 차량별 월 단위 보기 · 주유 전표 · 엑셀 ---------- */
@@ -485,7 +499,10 @@ function showRec(car) {
 }
 function loadRec(car) {
   $('rRows').innerHTML = '<div style="padding:14px 0;color:var(--sub);font-size:14px">불러오는 중…</div>';
-  apiGet('recs', car).then(function (d) {
+  REC.req = car; REC.month = '';
+  cachedGet('recs', car, function (d) {
+    if (REC.req !== car) return;                       // 그 사이 다른 차량을 고름
+    var keep = REC.month;                              // 저장본을 보다가 최신 값이 오면 보던 달 그대로
     REC.data = d; REC.car = d.car;
     try { history.replaceState(null, '', '?rec=' + encodeURIComponent(d.car)); } catch (x) {}
     $('bandCar').textContent = d.car;
@@ -497,13 +514,13 @@ function loadRec(car) {
     var now = new Date(), cur = now.getFullYear() + '-' + ('0' + (now.getMonth() + 1)).slice(-2), months = [cur];
     d.rows.forEach(function (r) { var m = r.date.slice(0, 7); if (m && months.indexOf(m) < 0) months.push(m); });
     months.sort().reverse();
-    REC.months = months; REC.month = cur;
+    REC.months = months; REC.month = keep && months.indexOf(keep) > -1 ? keep : cur;
     $('rMonth').innerHTML = months.map(function (m) {
       var n = d.rows.filter(function (r) { return r.date.slice(0, 7) === m; }).length;
       return '<option value="' + m + '">' + m.replace('-', '년 ') + '월 (' + n + '건)</option>';
     }).join('');
     drawRec();
-  }).catch(function (e) { $('rRows').innerHTML = '<div class="msg">' + esc(errText(e)) + '</div>'; });
+  }, function (e) { if (REC.req === car) $('rRows').innerHTML = '<div class="msg">' + esc(errText(e)) + '</div>'; });
 }
 function recRows() { var m = REC.month; return (REC.data ? REC.data.rows : []).filter(function (r) { return r.date.slice(0, 7) === m; }); }
 function dayText(r) { return r.date ? r.date.slice(2).replace(/-/g, '/') + '(' + r.dow + ')' : ''; }    // 2026-10-29 → 26/10/29(목)

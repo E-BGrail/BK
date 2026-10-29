@@ -3,6 +3,8 @@
 <head>
 <base target="_top">
 <meta charset="utf-8">
+<link rel="preconnect" href="https://script.google.com" crossorigin>
+<link rel="preconnect" href="https://script.googleusercontent.com" crossorigin>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>전자서명</title>
 <style>
@@ -987,6 +989,7 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
   function refreshInit() {
     google.script.run.withSuccessHandler(loadInit).withFailureHandler(function () {}).getInit();
   }
+  window.SIGN_RELOAD = loadInit;     // 저장해 둔 목록으로 먼저 그린 뒤 서버 최신 목록으로 바꿈
 
   /* ---------- 접속 코드 창: 교육을 누르면 열림 ---------- */
   function openCode(e) {
@@ -2049,17 +2052,32 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
 })();
 }
 
-/* 첫 화면 데이터 받기 → 화면 시작 */
+/* 첫 화면 데이터 받기 → 화면 시작
+   지난번 받은 교육 목록(이 휴대폰에 저장)으로 화면을 바로 그리고, 서버 응답이 오면 최신 목록으로 바꿈.
+   접속 코드·서명은 언제나 서버에서 확인하므로 목록이 잠깐 예전 것이어도 괜찮음 */
 (function () {
   var q = new URLSearchParams(location.search), e = String(q.get('e') || '').replace(/[^\w]/g, '').slice(0, 20);
-  var go = function (d) {
+  var KEY = 'bglSignInit', started = false;
+  var fix = function (d) {
     d.url = SIGN_HOME;                                                  // QR은 이 화면 주소로
     if (!d.carPage) d.carPage = SIGN_HOME.replace(/[^\/]*$/, '');       // 업무차량관리: 같은 저장소의 index.html
+    return d;
+  };
+  var go = function (d) {
+    if (started) { if (!d.error && window.SIGN_RELOAD) window.SIGN_RELOAD(fix(d)); return; }   // 이미 저장본으로 그림 → 목록만 새로
+    started = true;
+    fix(d);
     if (e) d.direct = e;                                                // 환불 등록 QR(주소?e=…)
     START(d);
   };
+  var cached = null;
+  try { cached = JSON.parse(localStorage.getItem(KEY) || 'null'); } catch (x) {}
+  if (cached && cached.educations && !e) go(cached);                    // 환불 등록 QR은 새 항목일 수 있어 서버 응답을 기다림
   fetch(API + '?api=sign&fn=init').then(function (r) { return r.json(); })
-    .then(function (j) { go(j.ok ? j.data : { error: j.error || '불러오기 실패', educations: [] }); })
+    .then(function (j) {
+      if (j.ok) { try { localStorage.setItem(KEY, JSON.stringify(j.data)); } catch (x) {} }
+      go(j.ok ? j.data : { error: j.error || '불러오기 실패', educations: [] });
+    })
     .catch(function () { go({ error: '서버에 연결할 수 없습니다. 인터넷 연결을 확인하세요.', educations: [] }); });
 })();
 </script>
