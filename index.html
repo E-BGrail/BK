@@ -146,16 +146,11 @@
   .camBtn { flex:none; display:flex; align-items:center; gap:6px; height:44px; padding:0 14px; border-radius:12px; text-decoration:none;
     background:linear-gradient(180deg, #3b58c0, var(--pri)); color:#fff; font-size:14px; font-weight:800; box-shadow:0 2px 6px rgba(50,78,179,.3); }
   /* 운행기록 페이지 */
-  .carTabs { display:flex; gap:6px; overflow-x:auto; padding-bottom:2px; -webkit-overflow-scrolling:touch; }
-  .carTabs button { flex:none; height:40px; padding:0 14px; border-radius:20px; border:1px solid #c9d0ee; background:#fff; color:var(--pri2); font-size:15px; font-weight:700; }
-  .carTabs button.on { background:var(--pri); border-color:var(--pri); color:#fff; }
-  .recTool { display:flex; gap:8px; margin-top:12px; }
+  .recTool { display:flex; gap:8px; }
   .recTool select { flex:1; min-width:0; font-size:15px; padding:0 10px; height:44px; border:1px solid var(--line); border-radius:10px; background:#fff; font-family:inherit; }
   .recTool .sbtn { flex:none; }
   .recTool .mBtn { flex:none; width:40px; height:44px; border:1px solid var(--line); border-radius:10px; background:#fff; color:var(--pri); font-size:14px; }
   .recTool .mBtn:disabled { opacity:.35; }
-  .recSum { font-size:13px; color:var(--sub); margin-top:8px; }
-  .recSum b { color:var(--pri2); }
   /* 운행기록 표 (엑셀 형식): 폰 폭에서는 표만 가로 스크롤, 날짜 열 고정 */
   .recTbl { overflow-x:auto; -webkit-overflow-scrolling:touch; border:1px solid #c8ced9; border-radius:8px; }
   .recTbl table { border-collapse:collapse; width:100%; font-size:13px; white-space:nowrap; }
@@ -343,14 +338,12 @@
 <section id="rec" class="hidden">
   <main>
     <div class="card">
-      <div class="carTabs" id="rCars" role="tablist" aria-label="차량 선택"></div>
       <div class="recTool">
         <button class="mBtn" id="rPrev" type="button" aria-label="이전 달">◀</button>
         <select id="rMonth" aria-label="조회 월"></select>
         <button class="mBtn" id="rNext" type="button" aria-label="다음 달">▶</button>
-        <button class="sbtn" id="rXlsx" type="button">엑셀 내보내기</button>
+        <button class="sbtn" id="rXlsx" type="button">엑셀</button>
       </div>
-      <div class="recSum" id="rSum"></div>
     </div>
     <div class="card">
       <div id="rRows"><div style="padding:14px 0;color:var(--sub);font-size:14px">불러오는 중…</div></div>
@@ -399,7 +392,7 @@ function errText(e) { return String(e && e.message || e || '오류가 났습니�
 function show(id) {
   ['cam', 'cf', 'done', 'pick', 'home', 'rec'].forEach(function (x) { $(x).classList.toggle('hidden', x !== id); });
   $('chrome').classList.toggle('hidden', id === 'cam');
-  $('bandCar').classList.toggle('hidden', id === 'home' || id === 'rec');     // 차량 목록·운행기록 화면은 오른쪽 칩 없음 (운행기록은 아래 차량 탭에 표시)
+  $('bandCar').classList.toggle('hidden', id === 'home');     // 첫 화면(차량 목록)은 오른쪽 칩 없음. 운행기록은 오른쪽 칩에 차량번호
   window.scrollTo(0, 0);
 }
 function loadMe() { try { var v = JSON.parse(localStorage.getItem(ME_KEY) || 'null'); return v && v.name ? v : null; } catch (e) { return null; } }
@@ -508,18 +501,13 @@ function loadRec(car) {
     REC.data = d; REC.car = d.car;
     try { history.replaceState(null, '', '?rec=' + encodeURIComponent(d.car)); } catch (x) {}
     $('bandCar').textContent = d.car;
-    $('rCars').innerHTML = d.cars.map(function (c) {
-      var on = c === d.car;
-      return '<button type="button" role="tab" aria-selected="' + on + '" class="' + (on ? 'on' : '') + '" data-c="' + esc(c) + '">' + esc(c) + '</button>';
-    }).join('');
     // 월 단위 조회: 이번 달 + 기록이 있는 달 (최근 달이 위). 처음엔 이번 달
     var now = new Date(), cur = now.getFullYear() + '-' + ('0' + (now.getMonth() + 1)).slice(-2), months = [cur];
     d.rows.forEach(function (r) { var m = r.date.slice(0, 7); if (m && months.indexOf(m) < 0) months.push(m); });
     months.sort().reverse();
     REC.months = months; REC.month = keep && months.indexOf(keep) > -1 ? keep : cur;
     $('rMonth').innerHTML = months.map(function (m) {
-      var n = d.rows.filter(function (r) { return r.date.slice(0, 7) === m; }).length;
-      return '<option value="' + m + '">' + m.replace('-', '년 ') + '월 (' + n + '건)</option>';
+      return '<option value="' + m + '">' + m.slice(2, 4) + '년 ' + Number(m.slice(5)) + '월</option>';     // 26년 10월
     }).join('');
     drawRec();
   }, function (e) { if (REC.req === car) $('rRows').innerHTML = '<div class="msg">' + esc(errText(e)) + '</div>'; });
@@ -527,10 +515,9 @@ function loadRec(car) {
 function recRows() { var m = REC.month; return (REC.data ? REC.data.rows : []).filter(function (r) { return r.date.slice(0, 7) === m; }); }
 function dayText(r) { return r.date ? r.date.slice(2).replace(/-/g, '/') + '(' + r.dow + ')' : ''; }    // 2026-10-29 → 26/10/29(목)
 function drawRec() {
-  var rows = recRows(), total = rows.reduce(function (a, r) { return a + (Number(r.dist) || 0); }, 0), i = REC.months.indexOf(REC.month);
+  var rows = recRows(), i = REC.months.indexOf(REC.month);
   $('rMonth').value = REC.month;
   $('rPrev').disabled = i >= REC.months.length - 1; $('rNext').disabled = i <= 0;
-  $('rSum').innerHTML = rows.length ? '<b>' + rows.length + '건</b> · 총 운행거리 <b>' + fmt(total) + ' km</b>' : '';
   $('rXlsx').disabled = !rows.length;
   // 엑셀 같은 표 (보고용 운행일지와 같은 열). [보기]는 주유 전표
   $('rRows').innerHTML = rows.length ? '<div class="recTbl"><table><thead><tr><th>날짜</th><th>운전자</th><th>출발 km</th><th>도착 km</th><th>운행거리</th><th>행선지</th><th>운행목적</th><th>전표</th></tr></thead><tbody>' +
@@ -542,7 +529,6 @@ function drawRec() {
     }).join('') + '</tbody></table></div>'
     : '<div style="padding:14px 0;color:var(--sub);font-size:14px">이 달의 운행 기록이 없습니다.</div>';
 }
-$('rCars').addEventListener('click', function (e) { var b = e.target.closest('button'); if (b && b.dataset.c !== REC.car) { $('bandCar').textContent = b.dataset.c; loadRec(b.dataset.c); } });
 $('rMonth').addEventListener('change', function () { REC.month = this.value; drawRec(); });
 $('rPrev').addEventListener('click', function () { var i = REC.months.indexOf(REC.month); if (i < REC.months.length - 1) { REC.month = REC.months[i + 1]; drawRec(); } });
 $('rNext').addEventListener('click', function () { var i = REC.months.indexOf(REC.month); if (i > 0) { REC.month = REC.months[i - 1]; drawRec(); } });
@@ -580,7 +566,7 @@ $('rXlsx').addEventListener('click', function () {
   var head = ['날짜', '요일', '운전자', '주행거리 출발 시(km)', '주행거리 도착 시(km)', '운행거리(km)', '행선지', '운행목적'];
   var aoa = [head].concat(rows.map(function (r) { return [r.date, r.dow, r.driver, r.startKm, r.endKm, r.dist, r.route, r.reason]; }));
   var name = '운행일지_' + REC.car + '_' + (REC.month || '전체');
-  btn.disabled = true; btn.textContent = '만드는 중…';
+  btn.disabled = true; btn.textContent = '…';
   loadXlsx().then(function (X) {
     var ws = X.utils.aoa_to_sheet(aoa);
     ws['!cols'] = [12, 6, 10, 18, 18, 13, 14, 16].map(function (w) { return { wch: w }; });
@@ -590,7 +576,7 @@ $('rXlsx').addEventListener('click', function () {
     var csv = aoa.map(function (r) { return r.map(function (v) { v = String(v == null ? '' : v); return /[",\r\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; }).join(','); }).join('\r\n');
     var a = document.createElement('a'); a.href = URL.createObjectURL(new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8' })); a.download = name + '.csv';
     document.body.appendChild(a); a.click(); setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 4000);
-  }).then(function () { btn.disabled = false; btn.textContent = '엑셀 내보내기'; });
+  }).then(function () { btn.disabled = false; btn.textContent = '엑셀'; });
 });
 
 function showPick() {
