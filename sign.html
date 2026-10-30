@@ -1452,7 +1452,8 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
         } else { el.maxLength = 30; el.placeholder = f.label; }
       }
       el.setAttribute('data-key', f.key); el.setAttribute('data-label', f.label);
-      if (f.type === 'station') d.setAttribute('data-st', '1');        // 역 칸: 승차권 종류를 고르면 나타남
+      if (f.type === 'station') { d.setAttribute('data-st', '1');      // 역 칸: 승차권 종류를 고르면 나타남
+        if (!f.dest && el.options[0]) el.options[0].textContent = '탑승하신 역을 선택하세요'; }
       if (f.dest) d.setAttribute('data-dest', '1');                    // 하차/목적지: 승차권 종류에 따라 이름이 바뀜
       if (f.type === 'select') el.addEventListener('change', rfSync);
       d.appendChild(el); box.appendChild(d);
@@ -1466,13 +1467,14 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
     var t = '';
     [].forEach.call($('rfFields').querySelectorAll('select'), function (el) { if (el.querySelector('option[value="' + rfCard + '"]')) t = el.value; });
     var name = t && t !== rfCard ? '목적지' : '하차';
+    var hint = name === '목적지' ? '가시려던 역을 선택하세요' : '내리신 역을 선택하세요';
     [].forEach.call($('rfFields').querySelectorAll('[data-st]'), function (d) {
       d.classList.toggle('hidden', !t);
       if (!t) { var s = d.querySelector('select'); if (s) s.value = ''; }
     });
     [].forEach.call($('rfFields').querySelectorAll('[data-dest]'), function (d) {
       d.querySelector('label').textContent = name;
-      var s = d.querySelector('select'); if (s) s.setAttribute('data-label', name);
+      var s = d.querySelector('select'); if (s) { s.setAttribute('data-label', name); if (s.options[0]) s.options[0].textContent = hint; }
     });
   }
   function nextRefund() {          // 다음 승객: 이름·연락처 등 글자 칸과 동의는 비우고, 고르는 칸(역·승차권)은 그대로
