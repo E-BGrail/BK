@@ -1439,6 +1439,9 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
       fs = fs.filter(function (f) { return sel.indexOf(f) < 0; });
       fs.splice.apply(fs, [si, 0].concat(sel));
     }
+    var isCardF = function (f) { return f.type === 'select' && (f.options || []).indexOf(form.cardOnly || '교통카드') > -1; };
+    var ci = fs.findIndex(isCardF), oi = fs.findIndex(function (f) { return f.type === 'select' && !isCardF(f); });
+    if (ci > -1 && oi > ci) fs.splice(ci, 0, fs.splice(oi, 1)[0]);      // 승객 구분은 승차권 종류 위에 (시트 열 순서와 상관없이)
     var stRow = null;
     fs.forEach(function (f) {
       var d = document.createElement('div'); d.className = 'field';
