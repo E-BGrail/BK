@@ -151,7 +151,14 @@
   .carPanelBtns { display:flex; gap:8px; margin-top:8px; } .carPanelBtns .btn { flex:1; padding:12px; font-size:15px; }
   .carPanel .btn.gray { background:#e4e7ec; color:var(--text); } .carPanel .btn.del { background:#b42318; color:#fff; }
   .carDel { height:44px; padding:0 12px; border:0; border-radius:12px; background:#b42318; color:#fff; font-size:14px; font-weight:800; }
-  #carList2:not(.manage) .carDel { display:none; } #carList2.manage a.camBtn:not(.sub) { display:none; }   /* 차량 관리를 눌렀을 때만 삭제 (주행거리 촬영 자리) */
+  #carList2:not(.manage) .carDel, #carList2:not(.manage) .carRc { display:none; } #carList2.manage a.camBtn { display:none; }   /* 차량 관리: 주행거리 촬영 자리에 삭제, 운행 기록 자리에 전표 등록 */
+  .carRc { height:40px; padding:0; border-radius:12px; border:1px solid #c9d0ee; background:#eef1fb; color:var(--pri); font-size:14px; font-weight:800; }
+  .crcList { display:flex; flex-direction:column; gap:6px; margin-top:8px; max-height:240px; overflow-y:auto; }
+  .crcRow { text-align:left; padding:10px; border:1px solid var(--line); border-radius:10px; background:#fff; font-size:14px; color:var(--text); }
+  .crcRow.on { border-color:var(--pri); background:#eef1fb; font-weight:700; } .crcRow em { font-style:normal; font-size:12px; color:#9a5b00; margin-left:6px; }
+  .crcShot { display:block; width:100%; margin-top:8px; padding:12px; font-size:15px; text-align:center; background:#e4e7ec; color:var(--text); }
+  #crcThumb { display:block; max-width:100%; max-height:180px; margin:8px auto 0; border-radius:8px; }
+  .recTbl td.rcCell { cursor:pointer; }
   .carAddBtn.on { background:var(--pri); color:#fff; border-color:var(--pri); }
   .carModel { margin-left:6px; font-size:14px; font-weight:600; color:var(--sub); }
   .carList a.camBtn { display:flex; flex:none; justify-content:center; padding:0 12px; border:0; font-size:14px; color:#fff; }
@@ -354,6 +361,19 @@
         <div class="carPanelBtns"><button type="button" class="btn gray" id="carDelNoBtn">취소</button><button type="button" class="btn del" id="carDelOk">삭제</button></div>
         <div class="msg" id="carDelMsg"></div>
       </div>
+      <div class="carPanel hidden" id="carRcBox">
+        <b id="crcTitle"></b> 전표 등록
+        <div class="crcList" id="crcList"></div>
+        <div class="hidden" id="crcForm">
+          <img id="crcThumb" class="hidden" alt="전표 사진">
+          <label class="btn gray crcShot" id="crcShot">전표 촬영<input type="file" id="crcFile" accept="image/*" capture="environment" hidden></label>
+          <input type="text" id="crcName" placeholder="이름" autocomplete="off" maxlength="20">
+          <input type="text" id="crcPin" class="hidden" placeholder="사번 (같은 이름이 있어 함께 확인)" autocomplete="off" inputmode="numeric">
+          <input type="text" id="crcPc" class="secret" placeholder="개인 코드 4자리" autocomplete="off" inputmode="numeric" maxlength="4">
+        </div>
+        <div class="carPanelBtns"><button type="button" class="btn gray" id="crcNo">취소</button><button type="button" class="btn pri" id="crcOk" disabled>등록</button></div>
+        <div class="msg" id="crcMsg"></div>
+      </div>
       <div class="msg" id="carNote"></div>
       <div class="carList" id="carList2"><div style="padding:14px;color:var(--sub);font-size:14px">불러오는 중…</div></div>
     </div>
@@ -549,13 +569,14 @@ function showHome() {
         '<span class="carBtns"><a class="camBtn" href="?car=' + encodeURIComponent(c.no) + '" aria-label="' + esc(c.no) + ' 주행거리 촬영">' +
         '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>주행거리 촬영</a>' +
         '<button type="button" class="carDel" data-car="' + esc(c.no) + '"' + (c.run ? ' data-run="1"' : '') + '>삭제</button>' +
+        '<button type="button" class="carRc" data-car="' + esc(c.no) + '" data-model="' + esc(c.model || '') + '">전표 등록</button>' +
         '<a class="camBtn sub" href="?rec=' + encodeURIComponent(c.no) + '" aria-label="' + esc(c.no) + ' 운행 기록">운행 기록</a></span></div>';
     }).join('') || '<div style="padding:14px;color:var(--sub);font-size:14px">등록된 차량이 없습니다.</div>';
   }, function (e) { $('carList2').innerHTML = '<div class="msg">' + esc(errText(e)) + '</div>'; });
 }
 
 /* ---------- 차량 등록(누구나) · 삭제(관리자 비밀번호) ---------- */
-function carPanel(id) { ['carAddBox', 'carDelBox'].forEach(function (x) { $(x).classList.toggle('hidden', x !== id); }); }
+function carPanel(id) { ['carAddBox', 'carDelBox', 'carRcBox'].forEach(function (x) { $(x).classList.toggle('hidden', x !== id); }); }
 /** 관리 모드: 등록 칸이 열리고, 카드의 주행거리 촬영 자리에 삭제 버튼 */
 function carManage(on) {
   $('carList2').classList.toggle('manage', on); $('carAddBtn').classList.toggle('on', on);
@@ -579,7 +600,7 @@ $('carAddOk').onclick = function () {
 $('carList2').addEventListener('click', function (e) {
   var b = e.target.closest('.carDel'); if (!b) return;
   $('carNote').textContent = '';
-  if (b.getAttribute('data-run')) { carPanel(''); $('carNote').textContent = '운행 종료 후 삭제 가능합니다.'; return; }
+  if (b.getAttribute('data-run')) { carPanel(''); $('carNote').style.color = ''; $('carNote').textContent = '운행 종료 후 삭제 가능합니다.'; return; }
   $('carDelNo').textContent = b.getAttribute('data-car'); $('carDelPw').value = ''; $('carDelMsg').textContent = '';
   carPanel('carDelBox'); $('carDelPw').focus();
 });
@@ -590,6 +611,64 @@ $('carDelOk').onclick = function () {
   $('carDelOk').disabled = true; $('carDelMsg').textContent = '';
   call('carRemove', { car: $('carDelNo').textContent, pw: pw }).then(function (d) { $('carDelOk').disabled = false; $('carDelPw').value = ''; carDone(d); },
     function (e) { $('carDelOk').disabled = false; $('carDelMsg').textContent = errText(e); });
+};
+
+/* ---------- 전표 등록 (차량 관리): 운행 고르기 → 촬영 → 이름·개인 코드 (이 휴대폰에 저장된 값으로 채움) ---------- */
+var CRC = { car: '', id: '', img: '' };
+function crcSync() {
+  $('crcForm').classList.toggle('hidden', !CRC.id);
+  $('crcThumb').classList.toggle('hidden', !CRC.img); if (CRC.img) $('crcThumb').src = CRC.img;
+  $('crcShot').firstChild.nodeValue = CRC.img ? '다시 촬영' : '전표 촬영';
+  $('crcOk').disabled = !(CRC.id && CRC.img);
+}
+$('carList2').addEventListener('click', function (e) {
+  var b = e.target.closest('.carRc'); if (!b) return;
+  var me = loadMe();
+  CRC = { car: b.getAttribute('data-car'), id: '', img: '' };
+  $('crcTitle').textContent = carLabel(CRC.car, b.getAttribute('data-model'));
+  $('crcName').value = me ? me.name : ''; $('crcPc').value = me ? me.pcode : ''; $('crcPin').value = me && me.pin ? me.pin : '';
+  $('crcPin').classList.toggle('hidden', !(me && me.pin));
+  $('crcMsg').textContent = ''; $('carNote').textContent = ''; $('crcList').textContent = '운행 기록을 불러오는 중…';
+  carPanel('carRcBox'); crcSync();
+  var car = CRC.car;
+  apiGet('recs', car).then(function (d) {
+    if (CRC.car !== car) return;
+    var rows = (d.rows || []).slice(0, 10);
+    $('crcList').innerHTML = rows.map(function (r) {
+      return '<button type="button" class="crcRow" data-id="' + esc(r.id) + '">' + esc(r.date + ' ' + r.time + ' · ' + r.driver + ' · ' + r.route) + (r.receipt ? '<em>전표 있음</em>' : '') + '</button>';
+    }).join('') || '등록할 수 있는 운행 기록이 없습니다.';
+  }, function (e) { $('crcList').textContent = errText(e); });
+});
+$('crcList').addEventListener('click', function (e) {
+  var b = e.target.closest('.crcRow'); if (!b) return;
+  [].forEach.call($('crcList').children, function (x) { x.classList.toggle('on', x === b); });
+  CRC.id = b.getAttribute('data-id'); crcSync();
+});
+$('crcFile').addEventListener('change', function () {
+  var f = this.files && this.files[0]; this.value = '';
+  if (!f) return;
+  loadImg(f).then(function (img) {
+    var w = Math.min(900, img.naturalWidth), c = document.createElement('canvas');
+    c.width = w; c.height = Math.round(img.naturalHeight * w / img.naturalWidth);
+    c.getContext('2d').drawImage(img, 0, 0, c.width, c.height); gray(c);
+    CRC.img = toJpeg(c, 900) || '';
+    $('crcMsg').textContent = CRC.img ? '' : '사진이 너무 큽니다. 전표만 가까이 다시 찍어 주세요.';
+    crcSync();
+  }).catch(function () { $('crcMsg').textContent = '사진을 열 수 없습니다. 다시 찍어 주세요.'; });
+});
+$('crcNo').onclick = function () { CRC = { car: '', id: '', img: '' }; carPanel('carAddBox'); };
+$('crcOk').onclick = function () {
+  var name = $('crcName').value.trim(), pc = $('crcPc').value.trim(), pin = $('crcPin').classList.contains('hidden') ? '' : $('crcPin').value.trim();
+  if (!name || !pc) { $('crcMsg').textContent = '이름과 개인 코드를 입력하세요.'; return; }
+  $('crcOk').disabled = true; $('crcMsg').textContent = '저장 중…';
+  call('carReceiptAdd', { car: CRC.car, id: CRC.id, receipt: CRC.img, name: name, pcode: pc, pin: pin, device: device() }).then(function (r) {
+    $('crcOk').disabled = false;
+    if (r.needPin) { $('crcPin').classList.remove('hidden'); $('crcMsg').textContent = '같은 이름의 직원이 있습니다. 사번도 입력하세요.'; $('crcPin').focus(); return; }
+    if (r.setup) { $('crcMsg').textContent = '개인 코드가 아직 없습니다. 주행거리 촬영에서 먼저 만들어 주세요.'; return; }
+    saveMe({ name: name, pcode: pc, pin: pin });
+    var car = CRC.car; CRC = { car: '', id: '', img: '' };
+    carManage(false); $('carNote').style.color = 'var(--ok)'; $('carNote').textContent = car + ' 전표를 등록했습니다.';
+  }, function (e) { $('crcOk').disabled = false; $('crcMsg').textContent = errText(e); });
 };
 
 /* ---------- 운행기록: 차량별 월 단위 보기 · 주유 전표 · 엑셀 ---------- */
@@ -632,7 +711,7 @@ function drawRec() {
       return '<tr><td>' + esc(dayText(r)) + '</td><td>' + esc(r.driver) + '</td>' +
         '<td class="n">' + fmt(r.startKm) + '</td><td class="n">' + fmt(r.endKm) + '</td><td class="n"><b>' + fmt(r.dist) + '</b></td>' +
         '<td>' + esc(r.route) + '</td><td>' + esc(r.reason) + '</td>' +
-        '<td class="c">' + (r.receipt ? '<button type="button" class="rcv" data-rc="' + esc(r.id) + '">보기</button>' : '') + '</td></tr>';
+        (r.receipt ? '<td class="c rcCell" data-rc="' + esc(r.id) + '"><button type="button" class="rcv">보기</button></td>' : '<td class="c"></td>') + '</tr>';
     }).join('') + '</tbody></table></div>'
     : '<div style="padding:14px 0;color:var(--sub);font-size:14px">이 달의 운행 기록이 없습니다.</div>';
 }
@@ -640,8 +719,8 @@ $('rMonth').addEventListener('change', function () { REC.month = this.value; dra
 $('rPrev').addEventListener('click', function () { var i = REC.months.indexOf(REC.month); if (i < REC.months.length - 1) { REC.month = REC.months[i + 1]; drawRec(); } });
 $('rNext').addEventListener('click', function () { var i = REC.months.indexOf(REC.month); if (i > 0) { REC.month = REC.months[i - 1]; drawRec(); } });
 $('rRows').addEventListener('click', function (e) {
-  var b = e.target.closest('button[data-rc]'), r = b && (REC.data.rows || []).filter(function (x) { return x.id === b.dataset.rc; })[0];
-  if (r) openReceipt(r, b);
+  var c = e.target.closest('td[data-rc]'), r = c && (REC.data.rows || []).filter(function (x) { return x.id === c.dataset.rc; })[0];   // 전표 칸 어디를 눌러도
+  if (r) { var b = c.querySelector('button'); if (!b.disabled) openReceipt(r, b); }
 });
 
 /* 주유 전표 보기 */
