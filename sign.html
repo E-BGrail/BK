@@ -257,7 +257,6 @@
   #empCard.open .nhead::after, #pcCard.open .nhead::after { transform:rotate(180deg); }
   #empCard .ebody, #pcCard .ebody { display:none; } #empCard.open .ebody, #pcCard.open .ebody { display:block; }
   #empCard .codeRow, #pcCard .codeRow { align-items:flex-end; }
-  #pcList { white-space:pre-wrap; }
   /* 개인 코드: 입력 글자를 점으로 가림 (비밀번호 칸이 아니라서 휴대폰·브라우저가 저장하자고 묻지 않음) */
   .secret { -webkit-text-security:disc; letter-spacing:4px; }
   .setupBox { margin-top:12px; background:#f3f6fd; border:1px solid #d6def5; border-radius:12px; padding:4px 12px 12px; }
@@ -485,11 +484,11 @@
       </div>
     </div>
     <div class="card">
-      <b>서명지별 서명 현황</b> <span class="hint">· 서명지를 눌러서 관리</span>
+      <b>서명지별 현황</b> <span class="hint">· 서명지를 눌러서 관리</span>
       <div id="aEdus"></div>
     </div>
     <div class="card" id="empCard">
-      <div class="nhead" id="eHead"><b>직원 등록</b> <span class="hint ehint">· 직원DB에 추가 · 수정</span></div>
+      <div class="nhead" id="eHead"><b>직원 등록</b></div>
       <div class="ebody">
         <div class="codeRow">
           <div style="flex:1"><label class="hint">부서명</label><input type="text" id="eDept" placeholder="예: 역무처" autocomplete="off"></div>
@@ -510,7 +509,7 @@
       </div>
     </div>
     <div class="card" id="pcCard">
-      <div class="nhead" id="pcHead"><b>개인 코드 관리</b> <span class="hint ehint">· 초기화 · 등록 현황</span></div>
+      <div class="nhead" id="pcHead"><b>개인 코드 관리</b></div>
       <div class="ebody">
         <div class="note">첫 서명시 이름과 사번으로 본인 확인 후 개인코드(숫자 4자리)를 만듭니다.<br>코드는 암호화 돼 관리자도 볼 수 없습니다.<br>코드 분실시 사번 입력 후 초기화 하면 다음 접속때 새로 만듭니다.</div>
         <div class="codeRow">
@@ -518,8 +517,6 @@
           <button class="btn del sbtn" id="pcReset" style="flex:none">초기화</button>
         </div>
         <div class="msg" id="pcMsg"></div>
-        <div class="row"><button class="btn gray" id="pcStat">등록 현황 보기</button></div>
-        <div class="note" id="pcList"></div>
       </div>
     </div>
   </section>
@@ -2069,15 +2066,6 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
     }, $('pcMsg'), function () { $('pcReset').disabled = false; });
   };
   $('pcPin').addEventListener('input', pcDisarm);
-  $('pcStat').onclick = function () {
-    $('pcStat').disabled = true;
-    admCall('adminPcStatus', [], function (d) {
-      $('pcStat').disabled = false;
-      var miss = d.missing || [];
-      $('pcList').textContent = '전체 ' + d.total + '명 중 ' + d.done + '명 등록 · 아직 안 만든 직원 ' + miss.length + '명' +
-        (miss.length ? '\n' + miss.join(', ') : '');
-    }, $('pcMsg'), function () { $('pcStat').disabled = false; });
-  };
 
   /* ---------- 직원 등록 (직원DB) ---------- */
   $('eHead').onclick = function () { $('empCard').classList.toggle('open'); };
