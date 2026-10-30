@@ -1426,7 +1426,13 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
     var box = $('rfFields'); box.innerHTML = '';
     $('rfConsentText').textContent = form ? form.consent || '' : '';
     if (!form) { box.innerHTML = '<div class="msg" style="color:#c0392b"></div>'; box.firstChild.textContent = '등록 화면을 불러오지 못했습니다. 관리자에게 문의하세요.' + (err ? ' (' + err + ')' : ''); return; }
-    form.fields.forEach(function (f) {
+    var fs = form.fields.slice(), si = fs.findIndex(function (f) { return f.type === 'station'; });
+    if (si > -1) {                                                      // 승차권 종류는 시트 열 순서와 상관없이 역 칸 바로 위에
+      var sel = fs.filter(function (f, i) { return f.type === 'select' && i > si; });
+      fs = fs.filter(function (f) { return sel.indexOf(f) < 0; });
+      fs.splice.apply(fs, [si, 0].concat(sel));
+    }
+    fs.forEach(function (f) {
       var d = document.createElement('div'); d.className = 'field';
       var l = document.createElement('label'); l.textContent = f.label; d.appendChild(l);
       var el;
@@ -1445,22 +1451,22 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
         } else { el.maxLength = 30; el.placeholder = f.label; }
       }
       el.setAttribute('data-key', f.key); el.setAttribute('data-label', f.label);
-      if (f.dest) d.setAttribute('data-dest', '1');                    // 목적지: 승차권을 골랐을 때만
+      if (f.dest) d.setAttribute('data-dest', '1');                    // 하차/목적지: 승차권 종류에 따라 이름만 바뀜
       if (f.type === 'select') el.addEventListener('change', rfSync);
       d.appendChild(el); box.appendChild(d);
     });
     rfCard = form.cardOnly || '교통카드';
     rfSync();
   }
-  /** 승차권 종류에 따라 목적지 칸: 교통카드 → 숨김(승차역만), 승차권 → 보임. 고르기 전에는 숨김 */
+  /** 승차권 종류에 따라 두 번째 역 칸 이름: 승차권 → '목적지'(산 표의 도착역), 교통카드·고르기 전 → '하차' (둘 다 필수) */
   var rfCard = '교통카드';
   function rfSync() {
     var t = '';
     [].forEach.call($('rfFields').querySelectorAll('select'), function (el) { if (el.querySelector('option[value="' + rfCard + '"]')) t = el.value; });
-    var on = !!t && t !== rfCard;
+    var name = t && t !== rfCard ? '목적지' : '하차';
     [].forEach.call($('rfFields').querySelectorAll('[data-dest]'), function (d) {
-      d.classList.toggle('hidden', !on);
-      if (!on) { var s = d.querySelector('select'); if (s) s.value = ''; }
+      d.querySelector('label').textContent = name;
+      var s = d.querySelector('select'); if (s) s.setAttribute('data-label', name);
     });
   }
   function nextRefund() {          // 다음 승객: 이름·연락처 등 글자 칸과 동의는 비우고, 고르는 칸(역·승차권)은 그대로
@@ -1474,7 +1480,6 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
     var vals = {}, miss = null;
     [].forEach.call($('rfFields').querySelectorAll('input,select'), function (el) {
       var v = el.value.trim(); vals[el.getAttribute('data-key')] = v;
-      if (el.closest('.hidden')) return;                                // 숨긴 칸(교통카드의 목적지)은 안 받음
       if (!v && !miss) miss = el;
     });
     if (miss) { msg($('rfMsg'), miss.getAttribute('data-label') + ' 칸을 입력하세요.', '#c0392b'); miss.focus(); return; }
