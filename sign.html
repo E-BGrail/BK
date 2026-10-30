@@ -516,7 +516,7 @@
       <div class="ebody">
         <div class="note">첫 서명시 이름과 사번으로 본인 확인 후 개인코드(숫자 4자리)를 만듭니다.<br>코드는 암호화 돼 관리자도 볼 수 없습니다.<br>코드 분실시 사번 입력 후 초기화 하면 다음 접속때 새로 만듭니다.</div>
         <div class="codeRow">
-          <div style="flex:1"><label class="hint">사번</label><input type="text" id="pcPin" placeholder="초기화할 직원의 사번" autocomplete="off" inputmode="numeric"></div>
+          <div style="flex:1"><input type="text" id="pcPin" placeholder="초기화할 직원의 사번" autocomplete="off" inputmode="numeric"></div>
           <button class="btn del sbtn" id="pcReset" style="flex:none">초기화</button>
         </div>
         <div class="msg" id="pcMsg"></div>
@@ -1875,7 +1875,7 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
       '<div class="field"><label>교육명</label><input type="text" class="i-title" autocomplete="off"></div>' +
       '<div class="fRow"><div class="field i-deptRow"><label>부서명</label><input type="text" class="i-dept" autocomplete="off"></div>' +
       '<div class="field i-dateRow"><label>날짜</label><input type="text" class="i-date" autocomplete="off"></div></div>' +
-      '<div class="row"><button class="btn gray b-info">제목 변경 저장</button></div>' +
+      '<div class="row"><button class="btn gray b-info">변경 사항 저장</button></div>' +
       '</div></div>' +
       '<div class="codeSec"><div style="margin-top:12px"><b>접속 코드</b></div>' +
       '<div class="codeRow" style="margin-top:6px"><input type="text" class="c-code" autocomplete="off" inputmode="numeric" maxlength="4" pattern="[0-9]*" placeholder="숫자 4자리"><button class="btn pri sbtn b-code">코드 저장</button></div>' +
@@ -1899,8 +1899,10 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
     q('.head').onclick = function () { admOpen[e.id] = !admOpen[e.id]; c.classList.toggle('open', admOpen[e.id]); saveState(); };
 
     q('.t').textContent = e.title;
+    if (e.refund) q('.t').appendChild(document.createElement('br'));   // 환불 건: 제목이 길어 표시는 다음 줄에
     var chip = document.createElement('span');
     chip.className = 'chip ' + (e.open ? 'on' : 'off'); chip.textContent = e.open ? '접수 중' : '마감';
+    if (e.refund) chip.style.marginLeft = '0';
     q('.t').appendChild(chip);
     if (e.guest) { var gchip = document.createElement('span'); gchip.className = 'chip ext'; gchip.textContent = '본인 확인 없음'; q('.t').appendChild(gchip); }
     if (e.roster) { var ochip = document.createElement('span'); ochip.className = 'chip ext'; ochip.textContent = '명단 지정'; q('.t').appendChild(ochip);
@@ -2058,6 +2060,12 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
   }
 
   $('aRefresh').onclick = function () { admCall('adminRefresh', [], renderAdmin); };
+
+  /** 개인 코드 칸: 복사·잘라내기·끌기·길게 눌러 메뉴·선택 막기 */
+  ['copy', 'cut', 'dragstart', 'contextmenu'].forEach(function (t) {
+    document.addEventListener(t, function (e) { if (e.target && e.target.classList && e.target.classList.contains('secret')) e.preventDefault(); });
+  });
+  document.addEventListener('select', function (e) { var el = e.target; if (el && el.classList && el.classList.contains('secret')) { var n = el.value.length; el.setSelectionRange(n, n); } });
 
   /* ---------- 개인 코드 관리 ---------- */
   $('pcHead').onclick = function () { $('pcCard').classList.toggle('open'); };

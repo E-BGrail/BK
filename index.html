@@ -457,6 +457,11 @@ window.addEventListener('popstate', function () {
   else if (CUR === 'cam' || CUR === 'done') { stopCam(); location.replace(HOME); }
 });
 function loadMe() { try { var v = JSON.parse(localStorage.getItem(ME_KEY) || 'null'); return v && v.name ? v : null; } catch (e) { return null; } }
+/** 개인 코드 칸: 복사·잘라내기·끌기·길게 눌러 메뉴·선택 막기 */
+['copy', 'cut', 'dragstart', 'contextmenu'].forEach(function (t) {
+  document.addEventListener(t, function (e) { if (e.target && e.target.classList && e.target.classList.contains('secret')) e.preventDefault(); });
+});
+document.addEventListener('select', function (e) { var el = e.target; if (el && el.classList && el.classList.contains('secret')) { var n = el.value.length; el.setSelectionRange(n, n); } });
 function saveMe(v) { try { localStorage.setItem(ME_KEY, JSON.stringify(v)); } catch (e) {} }
 
 /* ===================== 시작 ===================== */
