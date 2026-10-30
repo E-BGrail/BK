@@ -474,6 +474,9 @@
       <div class="field" id="nKindRow"><label class="vchk"><input type="checkbox" id="nVerify" checked> <b>본인 확인</b> <small>이름 + 개인 코드</small></label>
         <div class="note hidden" id="nNoVerify">본인 확인 없음: 서명자가 소속·직위·성명을 직접 입력합니다. 서명지를 연 뒤에는 바꿀 수 없습니다.</div></div>
       <div class="field"><label>양식</label><select id="nTpl"></select><div class="tprev hidden" id="nTplPrev"></div></div>
+      <div class="field" id="nRosterRow"><label class="vchk"><input type="checkbox" id="nUseRoster"> <b>명단 지정</b> <small>명단에 있는 사람만 서명</small></label>
+        <div class="hidden" id="nRosterBox"><textarea id="nRoster" rows="5" placeholder="이름을 한 번에 입력 (줄바꿈·쉼표·띄어쓰기로 구분)&#10;예) 홍길동, 김철수, 이영희&#10;동명이인은 사번도: 김철수 1234"></textarea>
+        <div class="note">입력한 순서대로 서명지에 이름이 채워집니다. 직원DB에 있는 직원만 넣을 수 있고, 서명지를 연 뒤에는 바꿀 수 없습니다.</div></div></div>
       <div class="field" id="nTitleRow"><label>교육명</label><input type="text" id="nTitle" placeholder="예: 4분기 비상대응 훈련" autocomplete="off"></div>
       <div class="fRow"><div class="field" id="nDeptRow"><label>부서명</label><input type="text" id="nDept" placeholder="예: 역무처" autocomplete="off"></div>
       <div class="field" id="nDateRow"><label>날짜</label><input type="text" id="nDate" autocomplete="off"></div></div>
@@ -1815,9 +1818,11 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
       $('nKindRow').classList.toggle('hidden', rf); $('nCodeRow').classList.toggle('hidden', rf); $('nRfNote').classList.toggle('hidden', !rf);
       $('nTitleRow').classList.toggle('hidden', rf); $('nDateRow').classList.toggle('hidden', rf);   // 비상: 제목·날짜 자동
       $('nCreate').textContent = rf ? '환불 등록 열기' : '서명지 열기';
+      $('nRosterRow').classList.toggle('hidden', rf || !$('nVerify').checked);   // 명단 지정은 본인 확인 서명지만
+      $('nRosterBox').classList.toggle('hidden', !$('nUseRoster').checked);
     };
-    nTplUi(); sel.onchange = nTplUi;
-    $('nVerify').onchange = function () { $('nNoVerify').classList.toggle('hidden', $('nVerify').checked); };
+    nTplUi(); sel.onchange = nTplUi; $('nUseRoster').onchange = nTplUi;
+    $('nVerify').onchange = function () { $('nNoVerify').classList.toggle('hidden', $('nVerify').checked); nTplUi(); };
     if (!d.templates.length) msg($('nMsg'), '양식 탭이 없습니다. 시트에 이름이 "양식"으로 시작하는 탭을 만들어 두세요.', '#c0392b');
     if (!$('nDate').value) $('nDate').value = today();
     if (!$('nDept').value) { try { $('nDept').value = localStorage.getItem('sigDept') || ''; } catch (x) {} }
@@ -1845,11 +1850,13 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
       $(need[0][0]).focus();
       return;
     }
+    var rosterNew = !rfNew && $('nVerify').checked && $('nUseRoster').checked;
+    if (rosterNew && !$('nRoster').value.trim()) { msg($('nMsg'), '명단에 이름을 입력하세요.', '#c0392b'); $('nRoster').focus(); return; }
     $('nCreate').disabled = true;
     if (useDept) { try { localStorage.setItem('sigDept', dept); } catch (x) {} }   // 다음에 열 때 같은 부서를 미리 채움
     var guestNew = !rfNew && !$('nVerify').checked;   // 본인 확인을 끄면 서명자가 칸을 직접 입력
-    admCall('adminCreateEdu', [{ tpl: $('nTpl').value, title: rfNew ? '' : $('nTitle').value, dept: dept, date: rfNew ? '' : $('nDate').value, code: rfNew ? '' : $('nCode').value, guest: guestNew }], function (d) {
-      $('nCreate').disabled = false; if (!rfNew) { $('nTitle').value = ''; $('nCode').value = ''; }
+    admCall('adminCreateEdu', [{ tpl: $('nTpl').value, title: rfNew ? '' : $('nTitle').value, dept: dept, date: rfNew ? '' : $('nDate').value, code: rfNew ? '' : $('nCode').value, guest: guestNew, useRoster: rosterNew, roster: rosterNew ? $('nRoster').value : '' }], function (d) {
+      $('nCreate').disabled = false; if (!rfNew) { $('nTitle').value = ''; $('nCode').value = ''; $('nRoster').value = ''; $('nUseRoster').checked = false; }
       $('newCard').classList.remove('open');   // 교육을 연 뒤에는 접음
       renderAdmin(d);
     }, $('nMsg'), function () { $('nCreate').disabled = false; });   // 실패하면 바로 다시 누를 수 있게
@@ -1877,6 +1884,7 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
       '<div class="row"><button class="btn gray b-qr">QR 크게 보기</button></div></div>' +
       '<div class="roleBox"><div style="margin-top:12px"><b>임무·역할</b></div>' +
       '<div class="row"><button class="btn gray b-role"></button></div></div>' +
+      '<div class="rosterSec hidden"><div style="margin-top:12px"><b>아직 서명 안 한 사람</b></div><div class="hint rosterLeft" style="margin-top:4px"></div></div>' +
       '<div class="ordSec"><div style="margin-top:12px"><b>서명자 순서</b> <span class="hint">(마감 후에도 순서 변경 가능)</span></div>' +
       '<div class="row"><button class="btn gray b-order"></button></div></div>' +
       '<div style="margin-top:12px"><b class="expTitle">PDF · 로그</b></div>' +
@@ -1895,12 +1903,14 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
     chip.className = 'chip ' + (e.open ? 'on' : 'off'); chip.textContent = e.open ? '접수 중' : '마감';
     q('.t').appendChild(chip);
     if (e.guest) { var gchip = document.createElement('span'); gchip.className = 'chip ext'; gchip.textContent = '본인 확인 없음'; q('.t').appendChild(gchip); }
+    if (e.roster) { var ochip = document.createElement('span'); ochip.className = 'chip ext'; ochip.textContent = '명단 지정'; q('.t').appendChild(ochip);
+      q('.rosterSec').classList.remove('hidden'); q('.rosterLeft').textContent = (e.rosterLeft || []).join(', ') || '없음 (전원 서명)'; }
     if (e.codeLocked) { var lchip = document.createElement('span'); lchip.className = 'chip off'; lchip.textContent = '코드 잠김'; q('.t').appendChild(lchip); }
     if (e.missingTabs) { var tchip = document.createElement('span'); tchip.className = 'chip off'; tchip.textContent = '탭 없음'; q('.t').appendChild(tchip); }
     if (e.refund) { var rchip = document.createElement('span'); rchip.className = 'chip rf'; rchip.textContent = '환불 등록'; q('.t').appendChild(rchip);
       var rcnt = document.createElement('span'); rcnt.style.cssText = 'margin-left:6px;font-size:14px;font-weight:700;vertical-align:1px'; rcnt.textContent = e.signers.length + '명'; q('.t').appendChild(rcnt); }
     q('.d').textContent = [e.dept, e.date, e.tpl].filter(Boolean).join(' · ') + (e.pages > 1 ? ' · ' + e.pages + '페이지' : '');
-    q('.cnt').textContent = '서명 ' + e.signers.length + '명 · 접속 코드 ' + (e.code || '-');
+    q('.cnt').textContent = '서명 ' + e.signers.length + (e.roster ? '/' + e.roster : '') + '명 · 접속 코드 ' + (e.code || '-');
     q('.d').classList.toggle('hidden', !!e.refund); q('.cnt').classList.toggle('hidden', !!e.refund);   // 환불 등록: 빨간 표시 옆 인원만
     if (e.refund && e.autoCloseLeft > 0) {          // 자동 마감까지 남은 시간 (1분마다 줄어듦)
       var left = document.createElement('span'); left.className = 'rfLeft';
@@ -1911,7 +1921,7 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
 
     // 접수 열기/마감
     q('.b-open').innerHTML = e.refund ? (e.open ? '등록 마감' : '등록 다시 열기') :
-      e.open ? '서명지 마감<small class="bsub">직책·직위 순으로 자동 정렬</small>' : '이 서명지 접수 다시 열기';
+      e.open ? (e.roster ? '서명지 마감' : '서명지 마감<small class="bsub">직책·직위 순으로 자동 정렬</small>') : '이 서명지 접수 다시 열기';
     q('.b-open').className = 'btn b-open ' + (e.open ? 'del' : 'pri');
     q('.b-open').onclick = function () {
       var closing = !!e.open; q('.b-open').disabled = true;
@@ -1955,7 +1965,7 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
     q('.b-role').onclick = function () { openRoles(e.id); };
     q('.roleBox').classList.toggle('hidden', !e.hasRole || !!e.guest || !!e.refund);
     // 비상(환불 등록): 접속 코드·서명자 순서 없음, 등록 QR 보기
-    q('.codeSec').classList.toggle('hidden', !!e.refund); q('.ordSec').classList.toggle('hidden', !!e.refund);
+    q('.codeSec').classList.toggle('hidden', !!e.refund); q('.ordSec').classList.toggle('hidden', !!e.refund || !!e.roster);
     q('.qrSec').classList.toggle('hidden', !e.refund);
     q('.b-pdf').classList.toggle('hidden', !!e.refund); q('.b-html').classList.toggle('hidden', !!e.refund);
     if (e.refund) q('.expTitle').textContent = '등록 명단 내보내기 (CSV)';
