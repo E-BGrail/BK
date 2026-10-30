@@ -343,8 +343,7 @@
     <div class="card">
       <div class="carHead"><h2>차량 목록</h2><button type="button" class="carAddBtn" id="carAddBtn">차량 관리</button></div>
       <div class="carPanel hidden" id="carAddBox">
-        <input type="text" id="carNo" placeholder="차량번호 (예: 12가1234)" autocomplete="off" maxlength="20">
-        <input type="text" id="carModel" placeholder="차종 (예: 스타리아)" autocomplete="off" maxlength="20">
+        <input type="text" id="carNo" placeholder="예: 12가1234 스타리아" autocomplete="off" maxlength="40">
         <div class="carPanelBtns"><button type="button" class="btn gray" id="carAddNo">취소</button><button type="button" class="btn pri" id="carAddOk">등록</button></div>
         <div class="msg" id="carAddMsg"></div>
       </div>
@@ -552,7 +551,7 @@ function carPanel(id) { ['carAddBox', 'carDelBox'].forEach(function (x) { $(x).c
 /** 관리 모드: 등록 칸이 열리고, 카드의 주행거리 촬영 자리에 삭제 버튼 */
 function carManage(on) {
   $('carList2').classList.toggle('manage', on); $('carAddBtn').classList.toggle('on', on);
-  $('carNote').textContent = ''; $('carNo').value = ''; $('carModel').value = ''; $('carAddMsg').textContent = ''; $('carDelPw').value = '';
+  $('carNote').textContent = ''; $('carNo').value = ''; $('carAddMsg').textContent = ''; $('carDelPw').value = '';
   carPanel(on ? 'carAddBox' : '');
 }
 function carDone(d) {                                  // 서버가 돌려준 최신 목록으로 저장본을 바꾸고 다시 그림
@@ -562,10 +561,10 @@ function carDone(d) {                                  // 서버가 돌려준 �
 $('carAddBtn').onclick = function () { var on = !$('carList2').classList.contains('manage'); carManage(on); if (on) $('carNo').focus(); };
 $('carAddNo').onclick = function () { carManage(false); };
 $('carAddOk').onclick = function () {
-  var no = $('carNo').value.trim();
-  var model = $('carModel').value.trim();
-  if (!no) { $('carAddMsg').textContent = '차량번호를 입력하세요.'; $('carNo').focus(); return; }
-  if (!model) { $('carAddMsg').textContent = '차종을 입력하세요.'; $('carModel').focus(); return; }
+  var m = /^\s*((?:[가-힣]{2})?\d{2,3}\s*[가-힣]\s*\d{4})\s*(.*?)\s*$/.exec($('carNo').value);   // 한 칸에 '번호 차종' (띄어쓰기 없어도 됨)
+  if (!m) { $('carAddMsg').textContent = '차량번호를 바르게 입력하세요. (예: 12가1234 스타리아)'; $('carNo').focus(); return; }
+  if (!m[2]) { $('carAddMsg').textContent = '차종도 함께 입력하세요. (예: 12가1234 스타리아)'; $('carNo').focus(); return; }
+  var no = m[1].replace(/\s/g, ''), model = m[2];
   $('carAddOk').disabled = true; $('carAddMsg').textContent = '';
   call('carAdd', { car: no, model: model }).then(function (d) { $('carAddOk').disabled = false; carDone(d); },
     function (e) { $('carAddOk').disabled = false; $('carAddMsg').textContent = errText(e); });
@@ -735,7 +734,7 @@ function startCam() {
     .catch(function (err) { camFallback(err); });
 }
 function stopCam() {
-  CAM.on = false; clearTimeout(OCR.timer);
+  CAM.on = false; clearTimeout(OCR.timer); clearTimeout(EXP.timer);
   if (CAM.stream) CAM.stream.getTracks().forEach(function (t) { try { t.stop(); } catch (e) {} });
   CAM.stream = null; CAM.track = null; CAM.torch = false; $('torch').classList.remove('on');
 }
@@ -777,8 +776,8 @@ $('torch').addEventListener('click', function () {
   this.classList.toggle('on', CAM.torch); this.setAttribute('aria-label', CAM.torch ? '플래시 끄기' : '플래시 켜기');
 });
 
-/* ---------- 밝기(노출): 야간 계기판 빛 번짐 줄이기 (처음 1단계 어둡게, −/＋로 조절) ---------- */
-var EXP = { ok: false, min: 0, max: 0, step: 0.1, v: 0 };
+/* ---------- 밝기(노출): 처음 1단계 어둡게 시작 → 박스 안 밝기에 맞춰 자동 조절 (−/＋를 누르면 수동) ---------- */
+var EXP = { ok: false, min: 0, max: 0, step: 0.1, v: 0, auto: true, timer: null };
 function initExposure() {
   var c = CAM.caps && CAM.caps.exposureCompensation;
   EXP.ok = !!(c && c.max > c.min);
@@ -787,7 +786,32 @@ function initExposure() {
   if (!EXP.ok) return;
   EXP.min = c.min; EXP.max = c.max; EXP.step = c.step || 0.1;
   setExposure(Math.max(EXP.min, -1));              // 처음부터 1단계 어둡게 (계기판은 자체 발광)
+  EXP.auto = true; $('expAuto').textContent = ' 자동';
+  expLoop();
 }
+/** 박스 안에서 밝은 쪽(상위 5%)의 밝기 0~255: 계기판 숫자가 하얗게 날아갔는지, 너무 어두운지 봄 */
+function brightTop(c) {
+  var p = c.getContext('2d').getImageData(0, 0, c.width, c.height).data, h = new Array(256).fill(0), n = p.length / 4, left = n * 0.05;
+  for (var i = 0; i < p.length; i += 4) h[Math.round(p[i])]++;
+  for (var b = 255; b > 0; b--) { left -= h[b]; if (left <= 0) return b; }
+  return 0;
+}
+/** 1초마다 박스 안 밝기를 보고 한 단계씩 보정 (사이에 있으면 그대로) */
+function expLoop() {
+  clearTimeout(EXP.timer);
+  if (!CAM.on || !EXP.ok || !EXP.auto) return;
+  EXP.timer = setTimeout(function () {
+    var c = null;
+    try { c = cropGuide(160); } catch (e) {}
+    if (c && CAM.on && EXP.auto) {
+      var b = brightTop(c), d = Math.max(EXP.step, 0.3);
+      if (b > 225 && EXP.v > EXP.min) setExposure(EXP.v - d);
+      else if (b < 150 && EXP.v < EXP.max) setExposure(EXP.v + d);
+    }
+    expLoop();
+  }, 1000);
+}
+function expManual(d) { EXP.auto = false; clearTimeout(EXP.timer); $('expAuto').textContent = ' 수동'; setExposure(EXP.v + d); }
 function setExposure(v) {
   v = Math.max(EXP.min, Math.min(EXP.max, Math.round(v / EXP.step) * EXP.step));
   EXP.v = v;
@@ -796,8 +820,8 @@ function setExposure(v) {
   try { CAM.track.applyConstraints({ advanced: [k] }).catch(function () {}); } catch (e) {}
   $('expVal').textContent = (v > 0 ? '+' : '') + v.toFixed(1);
 }
-$('expDn').addEventListener('click', function () { setExposure(EXP.v - Math.max(EXP.step, 0.3)); });
-$('expUp').addEventListener('click', function () { setExposure(EXP.v + Math.max(EXP.step, 0.3)); });
+$('expDn').addEventListener('click', function () { expManual(-Math.max(EXP.step, 0.3)); });
+$('expUp').addEventListener('click', function () { expManual(Math.max(EXP.step, 0.3)); });
 /** 가이드 박스 영역을 영상에서 잘라 캔버스로 (흑백) */
 function cropGuide(outW) {
   var v = $('video'), view = $('view'), g = $('guide');
