@@ -58,7 +58,8 @@
   .hero h2 { margin:4px 0 4px; font-size:22px; line-height:1.35; }
   .hero p { margin:0; font-size:14px; opacity:.9; }
   .hero svg { display:block; width:100%; height:auto; margin-top:8px; }
-  .hero .run { animation:run 9s linear infinite; touch-action:pan-y; user-select:none; -webkit-user-select:none; }   /* 왼쪽으로 밀면 관리자 로그인 (세로 스크롤은 그대로) */
+  .hero .run { animation:run 9s linear infinite; }
+  #trainHit { touch-action:pan-y; user-select:none; -webkit-user-select:none; }   /* 열차 높이의 띠: 왼쪽으로 밀면 관리자 로그인 (세로 스크롤은 그대로) */
   @keyframes run { from { transform:translateX(-260px); } to { transform:translateX(420px); } }
   @media (prefers-reduced-motion: reduce) { .hero .run { animation:none; transform:translateX(90px); } }
   /* 진행 단계 */
@@ -312,7 +313,7 @@
     <rect x="0" y="99" width="400" height="3" fill="#9fa9aa"/>
     <g fill="#c9d1e8"><rect x="34" y="102" width="9" height="18"/><rect x="134" y="102" width="9" height="18"/><rect x="234" y="102" width="9" height="18"/><rect x="334" y="102" width="9" height="18"/></g>
     <!-- 경전철 2량 (실제 열차처럼: 흰·회색 차체, 주황 지붕띠가 양 끝에서 아래로 내려옴, 검은 창, 가운데 연결막) -->
-    <g class="run" id="train">
+    <g id="trainDrag"><g class="run" id="train">
       <!-- 지붕 장비 -->
       <g fill="#eef0f2" stroke="#c3c8ce" stroke-width=".6">
         <rect x="22" y="53.5" width="20" height="5" rx="1"/><rect x="60" y="54.5" width="10" height="4" rx="1"/><rect x="88" y="53.5" width="20" height="5" rx="1"/>
@@ -346,7 +347,8 @@
       </g>
       <!-- 앞등 -->
       <rect x="230" y="82" width="3" height="2" rx="1" fill="#ffd27a"/>
-    </g>
+    </g></g>
+    <rect id="trainHit" x="0" y="50" width="400" height="42" fill="transparent"/>
   </svg>
 </div>
 
@@ -1086,13 +1088,24 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
     $('admOver').classList.remove('hidden'); popPush();
     setTimeout(function () { $('admPw').focus(); }, 50);
   }
-  // 열차 그림 위에서 시작해 왼쪽으로 40px 넘게 밀고 떼면 열림 (누르기·오른쪽·세로로 밀기는 무시)
-  var trainX = null, trainY = 0;
-  $('train').addEventListener('pointerdown', function (e) { trainX = e.clientX; trainY = e.clientY; try { $('train').setPointerCapture(e.pointerId); } catch (x) {} });
-  $('train').addEventListener('pointercancel', function () { trainX = null; });
-  $('train').addEventListener('pointerup', function (e) {
+  // 열차 높이의 띠(좌우 끝까지)에서 시작해 왼쪽으로 40px 넘게 밀고 떼면 열림. 미는 동안 열차가 멈춰 따라오고, 떼면 제자리로 돌아가 다시 달림
+  var trainX = null, trainY = 0, trainHit = $('trainHit'), trainDrag = $('trainDrag');
+  function trainShift(px, slide) { trainDrag.style.transition = slide ? 'transform .2s ease-out' : 'none'; trainDrag.style.transform = px ? 'translateX(' + px + 'px)' : ''; }
+  function trainRelease() { trainX = null; trainShift(0, true); $('train').style.animationPlayState = ''; }
+  trainHit.addEventListener('pointerdown', function (e) {
+    trainX = e.clientX; trainY = e.clientY; $('train').style.animationPlayState = 'paused';
+    try { trainHit.setPointerCapture(e.pointerId); } catch (x) {}
+  });
+  trainHit.addEventListener('pointermove', function (e) {
     if (trainX === null) return;
-    var dx = e.clientX - trainX, dy = e.clientY - trainY; trainX = null;
+    var w = trainHit.ownerSVGElement.getBoundingClientRect().width || 400;   // 화면 px → 그림 좌표
+    trainShift(Math.min(0, e.clientX - trainX) * 400 / w);
+  });
+  trainHit.addEventListener('pointercancel', trainRelease);
+  trainHit.addEventListener('pointerup', function (e) {
+    if (trainX === null) return;
+    var dx = e.clientX - trainX, dy = e.clientY - trainY;
+    trainRelease();
     if (dx <= -40 && Math.abs(dy) < -dx) openAdmLogin();
   });
   function admLogin() {
