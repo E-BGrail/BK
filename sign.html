@@ -227,6 +227,7 @@
   .vchk { display:flex; align-items:center; gap:8px; border:1px solid var(--line); border-radius:10px; padding:11px 12px; font-size:15px; color:var(--text) !important; cursor:pointer; }
   .vchk input { width:20px; height:20px; margin:0; accent-color:var(--pri); flex:none; }
   .vchk small { color:var(--sub); font-size:12px; }
+  .vRow { display:flex; gap:8px; } .vRow .vchk { flex:1; min-width:0; }   /* 본인 확인·명단 지정 한 줄 */
   .ival { margin-top:4px; font-size:15px; }
   .lockRow { display:flex; align-items:center; justify-content:space-between; gap:8px; margin-top:8px; padding:8px 10px; border-radius:10px; background:#fdecea; color:#b42318; font-size:13px; font-weight:700; }
   .rfLeft.soon, .rfLeft.over { color:#c0392b; font-weight:700; }
@@ -471,12 +472,12 @@
     <div class="card" id="newCard">
       <div class="nhead" id="nHead"><b>새 서명지 열기</b> <span class="hint nhint">· 눌러서 펼치기</span></div>
       <div class="nbody">
-      <div class="field" id="nKindRow"><label class="vchk"><input type="checkbox" id="nVerify" checked> <b>본인 확인</b> <small>이름 + 개인 코드</small></label>
+      <div class="field" id="nKindRow"><div class="vRow"><label class="vchk"><input type="checkbox" id="nVerify" checked> <b>본인 확인</b></label>
+        <label class="vchk" id="nRosterRow"><input type="checkbox" id="nUseRoster"> <b>명단 지정</b></label></div>
         <div class="note hidden" id="nNoVerify">본인 확인 없음: 서명자가 소속·직위·성명을 직접 입력합니다. 서명지를 연 뒤에는 바꿀 수 없습니다.</div></div>
       <div class="field"><label>양식</label><select id="nTpl"></select><div class="tprev hidden" id="nTplPrev"></div></div>
-      <div class="field" id="nRosterRow"><label class="vchk"><input type="checkbox" id="nUseRoster"> <b>명단 지정</b> <small>명단에 있는 사람만 서명</small></label>
-        <div class="hidden" id="nRosterBox"><textarea id="nRoster" rows="5" placeholder="이름을 한 번에 입력 (줄바꿈·쉼표·띄어쓰기로 구분)&#10;예) 홍길동, 김철수, 이영희&#10;동명이인은 사번도: 김철수 1234"></textarea>
-        <div class="note">입력한 순서대로 서명지에 이름이 채워집니다. 직원DB에 있는 직원만 넣을 수 있고, 서명지를 연 뒤에는 바꿀 수 없습니다.</div></div></div>
+      <div class="field hidden" id="nRosterBox"><textarea id="nRoster" rows="5" placeholder="이름을 한 번에 입력 (줄바꿈·쉼표·띄어쓰기로 구분)&#10;예) 홍길동, 김철수, 이영희&#10;동명이인은 사번도: 김철수 1234"></textarea>
+        <div class="note">입력한 순서대로 서명지에 이름이 채워집니다. 직원DB에 있는 직원만 넣을 수 있고, 서명지를 연 뒤에는 바꿀 수 없습니다.</div></div>
       <div class="field" id="nTitleRow"><label>교육명</label><input type="text" id="nTitle" placeholder="예: 4분기 비상대응 훈련" autocomplete="off"></div>
       <div class="fRow"><div class="field" id="nDeptRow"><label>부서명</label><input type="text" id="nDept" placeholder="예: 역무처" autocomplete="off"></div>
       <div class="field" id="nDateRow"><label>날짜</label><input type="text" id="nDate" autocomplete="off"></div></div>
@@ -1819,7 +1820,7 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
       $('nTitleRow').classList.toggle('hidden', rf); $('nDateRow').classList.toggle('hidden', rf);   // 비상: 제목·날짜 자동
       $('nCreate').textContent = rf ? '환불 등록 열기' : '서명지 열기';
       $('nRosterRow').classList.toggle('hidden', rf || !$('nVerify').checked);   // 명단 지정은 본인 확인 서명지만
-      $('nRosterBox').classList.toggle('hidden', !$('nUseRoster').checked);
+      $('nRosterBox').classList.toggle('hidden', rf || !$('nVerify').checked || !$('nUseRoster').checked);
     };
     nTplUi(); sel.onchange = nTplUi; $('nUseRoster').onchange = nTplUi;
     $('nVerify').onchange = function () { $('nNoVerify').classList.toggle('hidden', $('nVerify').checked); nTplUi(); };
