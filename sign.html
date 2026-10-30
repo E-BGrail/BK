@@ -48,6 +48,7 @@
   .qrOver p { margin:10px 0 0; font-size:15px; font-weight:700; color:var(--text); }
   .qrOver .u { font-size:11px; font-weight:400; color:var(--sub); word-break:break-all; margin-top:6px; }
   .qrOver .close { display:block; margin-top:10px; font-size:12px; color:var(--sub); }
+  .qrOver.picOnly .qrBox { padding:18px; } .qrOver.picOnly p, .qrOver.picOnly .close { display:none; }   /* 환불 등록 QR: 그림만 */
   /* 관리자 로그인 팝업 (첫 화면 BGL 로고를 누르면) */
   #admOver, #codeOver { align-items:flex-start; padding-top:10vh; }   /* 로그인 팝업은 화면 위쪽에 (휴대폰 키보드에 가리지 않게) */
   .qrOver .admBox { text-align:left; }
@@ -769,7 +770,7 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
       if (svg) {
         var qb = document.createElement('button'); qb.className = 'rfQr'; qb.type = 'button'; qb.setAttribute('aria-label', 'QR 크게 보기');
         qb.innerHTML = '<em>고객용</em><span>' + svg + '</span><small>QR 크게</small>';
-        qb.onclick = function () { openQr(url, '휴대폰 카메라로 찍으면 바로 환불 등록 화면으로 들어옵니다', e.title); };
+        qb.onclick = function () { openQr(url); };
         w.appendChild(qb);
       }
     }
@@ -994,10 +995,11 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
   } catch (x) {}
 
   /** QR 크게 보기 (누르면 닫힘) */
-  function openQr(url, cap, title) {
+  function openQr(url, cap) {   // cap 없으면 그림만 (환불 등록 QR)
     var svg = qrSvg(url, '#1b2333'); if (!svg) return;
-    $('qrBig').innerHTML = svg; $('qrUrl').textContent = url;
-    $('qrCap').textContent = (title ? title + ' · ' : '') + cap;
+    $('qrBig').innerHTML = svg; $('qrUrl').textContent = cap ? url : '';
+    $('qrCap').textContent = cap || '';
+    $('qrOver').classList.toggle('picOnly', !cap);
     $('qrOver').classList.remove('hidden'); popPush();
   }
   function closeQr() { $('qrOver').classList.add('hidden'); popSync(); }
@@ -1941,7 +1943,7 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
       q('.b-qr').onclick = function () {
         var base = qrUrl || admData.url;
         if (!base) { msg(q('.m'), '웹 앱 주소를 알 수 없습니다. 배포 후 다시 시도하세요.', '#c0392b'); return; }
-        openQr(base + (base.indexOf('?') > -1 ? '&' : '?') + 'e=' + encodeURIComponent(e.id), '휴대폰 카메라로 찍으면 바로 환불 등록 화면으로 들어옵니다', e.title);
+        openQr(base + (base.indexOf('?') > -1 ? '&' : '?') + 'e=' + encodeURIComponent(e.id));
       };
     }   // 임무·역할 칸이 있는 양식만. 본인 확인 없는 교육은 서명자가 직접 입력
 
