@@ -462,6 +462,8 @@ function loadMe() { try { var v = JSON.parse(localStorage.getItem(ME_KEY) || 'nu
   document.addEventListener(t, function (e) { if (e.target && e.target.classList && e.target.classList.contains('secret')) e.preventDefault(); });
 });
 document.addEventListener('select', function (e) { var el = e.target; if (el && el.classList && el.classList.contains('secret')) { var n = el.value.length; el.setSelectionRange(n, n); } });
+/** 차량번호 + 차종 표시 */
+function carLabel(no, model) { return (no || '') + (model ? ' ' + model : ''); }
 function saveMe(v) { try { localStorage.setItem(ME_KEY, JSON.stringify(v)); } catch (e) {} }
 
 /* ===================== 시작 ===================== */
@@ -489,7 +491,7 @@ function boot() {
     .catch(function () { stopCam(); INIT = { error: '서버에 연결할 수 없습니다. 인터넷 연결 또는 페이지의 API 주소를 확인하세요.', url: location.origin + location.pathname }; showPick(); });
 }
 function setInit(init) {
-  INIT.st = init.st; INIT.mode = init.mode; INIT.car = init.car;
+  INIT.st = init.st; INIT.mode = init.mode; INIT.car = init.car; INIT.model = init.model || '';
   if (init.reasons) INIT.reasons = init.reasons;
   if (init.routes) INIT.routes = init.routes;
   S.mode = init.mode;
@@ -603,9 +605,9 @@ function loadRec(car) {
   cachedGet('recs', car, function (d) {
     if (REC.req !== car) return;                       // 그 사이 다른 차량을 고름
     var keep = REC.month;                              // 저장본을 보다가 최신 값이 오면 보던 달 그대로
-    REC.data = d; REC.car = d.car;
+    REC.data = d; REC.car = d.car; REC.model = d.model || '';
     try { history.replaceState(null, '', '?rec=' + encodeURIComponent(d.car)); } catch (x) {}
-    $('bandCar').textContent = d.car;
+    $('bandCar').textContent = carLabel(d.car, d.model);
     // 월 단위 조회: 이번 달 + 기록이 있는 달 (최근 달이 위). 처음엔 이번 달
     var now = new Date(), cur = now.getFullYear() + '-' + ('0' + (now.getMonth() + 1)).slice(-2), months = [cur];
     d.rows.forEach(function (r) { var m = r.date.slice(0, 7); if (m && months.indexOf(m) < 0) months.push(m); });
@@ -649,7 +651,7 @@ function openReceipt(r, b) {
     b.disabled = false; b.textContent = t;
     if (!j.ok) throw new Error(j.error);
     $('rcBig').src = j.data.img || j.data.url;
-    $('rcCap').textContent = REC.car + ' · ' + r.date + ' (' + r.dow + ') ' + r.time + ' · ' + r.driver;
+    $('rcCap').textContent = carLabel(REC.car, REC.model) + ' · ' + r.date + ' (' + r.dow + ') ' + r.time + ' · ' + r.driver;
     $('rcOver').classList.remove('hidden');
   }).catch(function (e) { b.disabled = false; b.textContent = t; alert(errText(e) || '전표를 불러오지 못했습니다.'); });
 }
@@ -702,7 +704,7 @@ function shRows(rows) { $('shRows').innerHTML = rows.map(function (r) { return '
 function openCam() {
   var st = INIT.st, end = S.mode === 'end';
   $('camTitle').textContent = end ? '운행 종료 · 하차 km' : '운행 시작 · 탑승 km';
-  $('shCar').textContent = INIT.car;
+  $('shCar').textContent = carLabel(INIT.car, INIT.model);
   $('shState').textContent = end ? '운행 중' : '대기 중';
   $('shState').style.cssText = end ? 'background:#fdebdd;color:#8a3f0a;font-weight:700' : 'background:#e3f4ea;color:#17663a;font-weight:700';
   var rows = end
@@ -1069,7 +1071,7 @@ document.addEventListener('visibilitychange', function () {
 function openConfirm(note) {
   var end = S.mode === 'end', st = INIT.st;
   $('bandTitle').textContent = end ? '운행 종료' : '운행 시작';
-  $('bandCar').textContent = INIT.car;
+  $('bandCar').textContent = carLabel(INIT.car, INIT.model);
   $('st1Label').textContent = end ? '하차 km' : '탑승 km';
   $('cfTitle').textContent = end ? '운행 종료 확인' : '운행 시작 확인';
   $('submit').textContent = end ? '운행 종료' : '운행 시작';
@@ -1234,8 +1236,8 @@ function showDone(r) {
   $('bandTitle').textContent = end ? '운행 종료' : '운행 시작';
   $('doneTitle').textContent = end ? '운행이 종료되었습니다' : '운행이 시작되었습니다';
   var rows = end
-    ? [['차량', r.car], ['운전자', r.name], ['탑승 → 하차', fmt(r.startKm) + ' → ' + fmt(r.km) + ' km'], ['운행거리', fmt(r.dist) + ' km'], ['행선지 · 목적', r.route + ' · ' + r.reason], ['종료 시각', r.at]]
-    : [['차량', r.car], ['운전자', r.name], ['시작 시각', r.at], ['km · 행선지 · 목적', '운행 종료 때 입력']];
+    ? [['차량', carLabel(r.car, INIT.model)], ['운전자', r.name], ['탑승 → 하차', fmt(r.startKm) + ' → ' + fmt(r.km) + ' km'], ['운행거리', fmt(r.dist) + ' km'], ['행선지 · 목적', r.route + ' · ' + r.reason], ['종료 시각', r.at]]
+    : [['차량', carLabel(r.car, INIT.model)], ['운전자', r.name], ['시작 시각', r.at], ['km · 행선지 · 목적', '운행 종료 때 입력']];
   $('doneRows').innerHTML = rows.map(function (x) { return '<div class="kv"><span>' + esc(x[0]) + '</span><b>' + esc(x[1]) + '</b></div>'; }).join('');
   show('done');
 }
