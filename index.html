@@ -146,6 +146,8 @@
   .carAddBtn { flex:none; height:40px; padding:0 14px; border-radius:12px; border:1px solid #c9d0ee; background:#eef1fb; color:var(--pri); font-size:14px; font-weight:800; }
   .carPanel { margin-bottom:12px; padding:12px; border:1px solid var(--line); border-radius:12px; font-size:14px; }
   .carPanel input { width:100%; font-size:17px; padding:11px 12px; border:1px solid var(--line); border-radius:10px; min-width:0; margin-top:8px; }
+  .carAddRow { display:flex; gap:8px; } .carAddRow input { flex:1; width:auto; margin-top:0; }
+  #carAddOk { flex:none; width:84px; padding:0; font-size:15px; } #carList2.manage .carBtns { width:84px; }   /* 등록·삭제 버튼 폭 같게 */
   .carPanelBtns { display:flex; gap:8px; margin-top:8px; } .carPanelBtns .btn { flex:1; padding:12px; font-size:15px; }
   .carPanel .btn.gray { background:#e4e7ec; color:var(--text); } .carPanel .btn.del { background:#b42318; color:#fff; }
   .carDel { height:44px; padding:0 12px; border:0; border-radius:12px; background:#b42318; color:#fff; font-size:14px; font-weight:800; }
@@ -343,8 +345,7 @@
     <div class="card">
       <div class="carHead"><h2>차량 목록</h2><button type="button" class="carAddBtn" id="carAddBtn">차량 관리</button></div>
       <div class="carPanel hidden" id="carAddBox">
-        <input type="text" id="carNo" placeholder="예: 12가1234 스타리아" autocomplete="off" maxlength="40">
-        <div class="carPanelBtns"><button type="button" class="btn gray" id="carAddNo">취소</button><button type="button" class="btn pri" id="carAddOk">등록</button></div>
+        <div class="carAddRow"><input type="text" id="carNo" placeholder="예: 12가1234 스타리아" autocomplete="off" maxlength="40"><button type="button" class="btn pri" id="carAddOk">등록</button></div>
         <div class="msg" id="carAddMsg"></div>
       </div>
       <div class="carPanel hidden" id="carDelBox">
@@ -559,7 +560,6 @@ function carDone(d) {                                  // 서버가 돌려준 �
   carManage(false); showHome();
 }
 $('carAddBtn').onclick = function () { var on = !$('carList2').classList.contains('manage'); carManage(on); if (on) $('carNo').focus(); };
-$('carAddNo').onclick = function () { carManage(false); };
 $('carAddOk').onclick = function () {
   var m = /^\s*((?:[가-힣]{2})?\d{2,3}\s*[가-힣]\s*\d{4})\s*(.*?)\s*$/.exec($('carNo').value);   // 한 칸에 '번호 차종' (띄어쓰기 없어도 됨)
   if (!m) { $('carAddMsg').textContent = '차량번호를 바르게 입력하세요. (예: 12가1234 스타리아)'; $('carNo').focus(); return; }
