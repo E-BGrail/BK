@@ -398,26 +398,37 @@ function show(id) {
 }
 
 /* ---------- 휴대폰 [뒤로가기] ----------
- * 확인·완료 화면에 있을 때 브라우저 기록을 한 칸 넣어 둠 → 뒤로가기를 누르면 앱 밖으로 나가지 않고 이전 화면으로
- *   확인 화면 → 다시 촬영, 완료 화면 → 업무차량관리 첫 화면. 다른 화면(촬영·목록·운행기록)은 브라우저 기본 동작 */
-var CUR = '', NAV = { guard: false, skip: 0, t: null };
+ * 화면 단계만큼 브라우저 기록을 쌓아 둠 → 뒤로가기를 누를 때마다 한 단계씩 앞 화면으로
+ *   확인 화면 → 다시 촬영, 촬영·완료 화면 → 업무차량관리 첫 화면 (QR로 바로 들어왔을 때. 첫 화면에서 들어왔으면 첫 화면으로 돌아감)
+ *   차량 목록·운행기록 화면은 브라우저 기본 동작 */
+var CUR = '', NAV = { n: 0, skip: 0, t: null, q: false };
+var FROM_HOME = (function () { try { return document.referrer.indexOf(location.origin + location.pathname) === 0; } catch (e) { return false; } })();
+function navDepth() {
+  var base = FROM_HOME ? 0 : 1;                     // QR로 바로 들어왔으면 촬영 화면 뒤에 '첫 화면' 한 칸
+  return CUR === 'cf' ? base + 1 : (CUR === 'cam' || CUR === 'done') ? base : 0;
+}
 function navSync() {
-  if (NAV.skip > 0) return;
-  var want = CUR === 'cf' || CUR === 'done';
-  if (want && !NAV.guard) { try { history.pushState({ scr: 1 }, ''); NAV.guard = true; } catch (e) {} }
-  else if (!want && NAV.guard) {
-    NAV.guard = false; NAV.skip++;
-    clearTimeout(NAV.t); NAV.t = setTimeout(function () { if (NAV.skip) { NAV.skip = 0; navSync(); } }, 1500);
-    try { history.back(); } catch (e) { NAV.skip--; }
-  }
+  if (NAV.q) return;
+  NAV.q = true;
+  setTimeout(function () {
+    NAV.q = false;
+    if (NAV.skip > 0) return;
+    var want = navDepth();
+    while (NAV.n < want) { try { history.pushState({ nav: NAV.n + 1 }, ''); NAV.n++; } catch (e) { break; } }
+    if (NAV.n > want) {
+      var k = NAV.n - want; NAV.n = want; NAV.skip++;
+      clearTimeout(NAV.t); NAV.t = setTimeout(function () { if (NAV.skip) { NAV.skip = 0; navSync(); } }, 1500);
+      try { history.go(-k); } catch (e) { NAV.skip--; }
+    }
+  }, 0);
 }
 window.addEventListener('popstate', function () {
   if (NAV.skip > 0) { NAV.skip--; if (!NAV.skip) navSync(); return; }   // 우리가 되돌린 것
-  if (!NAV.guard) return;
-  NAV.guard = false;
+  if (NAV.n === 0) return;
+  NAV.n--;
   if (S.busy) { navSync(); return; }                                  // 저장 중에는 그대로
   if (CUR === 'cf') openCam();
-  else if (CUR === 'done') location.replace(HOME);
+  else if (CUR === 'cam' || CUR === 'done') { stopCam(); location.replace(HOME); }
 });
 function loadMe() { try { var v = JSON.parse(localStorage.getItem(ME_KEY) || 'null'); return v && v.name ? v : null; } catch (e) { return null; } }
 function saveMe(v) { try { localStorage.setItem(ME_KEY, JSON.stringify(v)); } catch (e) {} }
