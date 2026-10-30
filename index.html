@@ -23,18 +23,19 @@
   .round.on { background:#ffd34d; color:#1b2333; }
   .view { position:relative; flex:1; overflow:hidden; min-height:0; }
   #video { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; transform-origin:50% 50%; background:#000; }
-  .guide { position:absolute; left:8%; right:8%; top:34%; height:0; padding-bottom:26%; border:3px dashed #fff; border-radius:14px;
+  .guide { position:absolute; left:8%; right:8%; top:38px; height:0; padding-bottom:26%; border:3px dashed #fff; border-radius:14px;
            box-shadow:0 0 0 9999px rgba(0,0,0,.45); }
   .guide.hit { border-style:solid; border-color:#5ee08a; }
-  .camHint { position:absolute; z-index:2; left:0; right:0; top:calc(34% - 40px); text-align:center; font-size:15px; margin:0; text-shadow:0 1px 3px #000; }
+  .camHint { position:absolute; z-index:2; left:0; right:0; top:10px; text-align:center; font-size:15px; margin:0; text-shadow:0 1px 3px #000; }
   .live { position:absolute; z-index:2; left:0; right:0; text-align:center; font-size:30px; font-weight:800; letter-spacing:2px; text-shadow:0 1px 4px #000; pointer-events:none; }
   .camCtl { position:absolute; left:0; right:0; bottom:14px; display:flex; flex-direction:column; align-items:center; gap:12px; }
+  .ctlRow { display:flex; flex-wrap:wrap; justify-content:center; gap:6px; }   /* 밝기·줌 한 줄 */
   .zoom { display:flex; gap:4px; padding:4px; border-radius:999px; background:rgba(20,22,30,.75); }
-  .zoom button { width:48px; height:40px; border-radius:999px; border:0; background:transparent; color:#fff; font-size:14px; }
+  .zoom button { width:36px; height:40px; border-radius:999px; border:0; background:transparent; color:#fff; font-size:14px; }
   .zoom button.on { background:#fff; color:#1b2333; font-weight:800; font-size:15px; }
   .exp { display:flex; align-items:center; gap:4px; padding:4px; border-radius:999px; background:rgba(20,22,30,.75); font-size:13px; }
-  .exp button { width:44px; height:40px; border-radius:999px; border:0; background:rgba(255,255,255,.14); color:#fff; font-size:20px; line-height:1; }
-  .exp span { min-width:92px; text-align:center; }
+  .exp button { width:34px; height:40px; border-radius:999px; border:0; background:rgba(255,255,255,.14); color:#fff; font-size:20px; line-height:1; }
+  .exp span { min-width:52px; text-align:center; }
   .exp b { font-size:15px; }
   .pill { padding:6px 12px; border-radius:999px; background:rgba(20,22,30,.8); font-size:13px; }
   .shRow { display:flex; align-items:center; justify-content:center; gap:22px; }
@@ -209,11 +210,13 @@
     <div class="guide" id="guide"></div>
     <div class="live" id="live"></div>
     <div class="camCtl" id="camCtl">
+      <div class="ctlRow">
       <div class="exp hidden" id="expRow" role="group" aria-label="밝기 조절">
         <button type="button" id="expDn" aria-label="더 어둡게">−</button><span>밝기 <b id="expVal">0</b><small id="expAuto"></small></span><button type="button" id="expUp" aria-label="더 밝게">＋</button>
       </div>
       <div class="zoom" id="zoom" role="group" aria-label="줌">
         <button type="button" data-z="1" aria-label="줌 1배">1×</button><button type="button" data-z="2" aria-label="줌 2배">2×</button><button type="button" data-z="3" aria-label="줌 3배">3×</button><button type="button" data-z="5" aria-label="줌 5배">5×</button>
+      </div>
       </div>
       <span class="pill" id="ocrState">숫자 인식 준비 중 · 가운데 버튼으로 바로 촬영 가능</span>
       <div class="shRow">
@@ -442,7 +445,7 @@ function boot() {
   if (!car) return showHome();
   $('camTitle').textContent = '차량 정보 불러오는 중…';
   $('shCar').textContent = car; $('shState').textContent = '확인 중';
-  shRows([['이전 종료 km', '…'], ['최근 운행', '…'], ['최근 운전자', '…']]);   // 정보가 와도 칸 높이가 그대로이도록 3줄을 미리
+  shRows([['이전 종료 km', '…'], ['최근 운행', '…']]);   // 정보가 와도 칸 높이가 그대로이도록 2줄을 미리
   show('cam');
   if (car) startCam();
   fetch(API + '?api=car&fn=init&car=' + encodeURIComponent(car))
@@ -637,7 +640,7 @@ function openCam() {
   $('shState').style.cssText = end ? 'background:#fdebdd;color:#8a3f0a;font-weight:700' : 'background:#e3f4ea;color:#17663a;font-weight:700';
   var rows = end
     ? [['운전자', st.run.driver], ['시작 시각', st.run.startAt], ['이전 종료 km', st.last ? fmt(st.last.km) + ' km' : '기록 없음']]
-    : [['이전 종료 km', st.last ? fmt(st.last.km) + ' km' : '기록 없음'], ['최근 운행', st.last ? st.last.at : '-'], ['최근 운전자', st.last ? st.last.driver : '-']];
+    : [['이전 종료 km', st.last ? fmt(st.last.km) + ' km' : '기록 없음'], ['최근 운행', st.last ? st.last.at : '-']];
   shRows(rows);
   $('live').textContent = ''; $('guide').classList.remove('hit');
   $('cropper').classList.add('hidden'); $('fallback').classList.add('hidden');

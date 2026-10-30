@@ -49,7 +49,7 @@
   .qrOver .u { font-size:11px; font-weight:400; color:var(--sub); word-break:break-all; margin-top:6px; }
   .qrOver .close { display:block; margin-top:10px; font-size:12px; color:var(--sub); }
   .qrOver.picOnly .qrBox { padding:18px; } .qrOver.picOnly .u, .qrOver.picOnly .close { display:none; }   /* 환불 등록 QR: 그림과 안내문만 */
-  /* 관리자 로그인 팝업 (첫 화면 BGL 로고를 누르면) */
+  /* 관리자 로그인 팝업 (첫 화면 맨 아래 회사 이름을 누르면) */
   #admOver, #codeOver { align-items:flex-start; padding-top:10vh; }   /* 로그인 팝업은 화면 위쪽에 (휴대폰 키보드에 가리지 않게) */
   .qrOver .admBox { text-align:left; }
   .qrOver .admBox p { margin:0 0 4px; font-size:17px; }
@@ -70,7 +70,7 @@
   .steps .st1.on b { background:var(--pri); border-color:var(--pri); color:#fff; box-shadow:0 0 0 4px rgba(50,78,179,.18); }
   .steps .st1.on { color:var(--pri); font-weight:700; }
   .steps .st1.done b { background:#e7ecfa; border-color:var(--pri); color:var(--pri); }
-  footer { text-align:center; color:#98a1b3; font-size:11px; padding:6px 0 18px; }
+  footer { text-align:center; color:#98a1b3; font-size:22px; padding:6px 0 18px; cursor:pointer; }
   main { padding:14px; max-width:560px; margin:0 auto; }
   .card { background:var(--card); border-radius:16px; padding:16px; box-shadow:0 1px 2px rgba(16,24,40,.05), 0 4px 14px rgba(34,55,138,.07); margin-bottom:12px; }
   .card > b:first-child { font-size:16px; }
@@ -456,7 +456,7 @@
     </div>
   </section>
 
-  <!-- 관리자 화면 (첫 화면 BGL 로고 → 관리자 비밀번호 팝업) -->
+  <!-- 관리자 화면 (첫 화면 맨 아래 회사 이름 → 관리자 비밀번호 팝업) -->
   <section id="sa" class="hidden">
     <div class="card">
       <div class="adm-top">
@@ -584,7 +584,7 @@
     <div class="row"><button class="btn gray" id="codeCancel" type="button">취소</button><button class="btn pri" id="codeOk" type="button">확인</button></div>
   </div>
 </div>
-<!-- 관리자 로그인 (첫 화면 BGL 로고를 누르면 열림) -->
+<!-- 관리자 로그인 (첫 화면 맨 아래 회사 이름을 누르면 열림) -->
 <div class="qrOver hidden" id="admOver" role="dialog" aria-label="관리자 로그인">
   <div class="qrBox admBox">
     <p>관리자 로그인</p>
@@ -712,7 +712,7 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
       show('sa'); msg($('aMsg'), '불러오는 중…', '#6b7686');
       google.script.run.withFailureHandler(function () {
         admTok = null; show('s1');
-        msg($('msg1'), '관리자 접속 시간이 지나 처음 화면으로 돌아왔습니다. BGL 로고를 눌러 비밀번호를 다시 입력하세요.', '#c0392b');
+        msg($('msg1'), '관리자 접속 시간이 지나 처음 화면으로 돌아왔습니다. 맨 아래 회사 이름을 눌러 비밀번호를 다시 입력하세요.', '#c0392b');
       }).withSuccessHandler(function (d) {
         msg($('aMsg'), ''); renderAdmin(d);
         if (st.s === 'so' && st.ordId && ordEduById(st.ordId)) openOrder(st.ordId);
@@ -1078,9 +1078,9 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
   }
   $('codeOk').onclick = submitCode;
 
-  /* ---------- 관리자 로그인: 첫 화면 BGL 로고를 누르면 비밀번호 팝업 ---------- */
+  /* ---------- 관리자 로그인: 첫 화면 맨 아래 회사 이름을 누르면 비밀번호 팝업 ---------- */
   function closeAdmLogin() { $('admOver').classList.add('hidden'); $('admPw').value = ''; msg($('admMsg'), ''); popSync(); }
-  $('brand').onclick = function () {
+  $('foot').onclick = function () {
     if (curScreen !== 's1') return;          // 첫 화면에서만 (서명 중에 잘못 눌러도 뜨지 않게)
     $('admPw').value = ''; msg($('admMsg'), ''); $('admOk').disabled = false;
     $('admOver').classList.remove('hidden'); popPush();
