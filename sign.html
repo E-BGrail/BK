@@ -674,6 +674,7 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
     $('appSw').classList.toggle('hidden', !swOn); document.querySelector('header h1').classList.toggle('hidden', swOn);
     window.scrollTo(0, 0);
     curScreen = id; saveState();
+    navSync(id);
   }
 
   /* ---------- 새로고침해도 지금 화면 유지 ----------
@@ -935,32 +936,58 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
     $('qrSmall').innerHTML = svg;
     $('qrBtn').classList.remove('hidden');
   }
-  /* ---------- 팝업과 휴대폰 [뒤로가기] ----------
-   * 팝업(QR 확대·접속 코드·관리자 로그인)을 열 때 브라우저 기록을 한 칸 넣어 둠
-   * → 뒤로가기를 누르면 앱 밖으로 나가지 않고 팝업만 닫힘. 버튼으로 닫으면 넣어 둔 칸을 되돌림 */
-  var POPS = ['qrOver', 'codeOver', 'admOver'], popOpen = false, popSkip = false, popSkipT = null;
+  /* ---------- 팝업·화면과 휴대폰 [뒤로가기] ----------
+   * 팝업(QR 확대·접속 코드·관리자 로그인)을 열 때, 그리고 첫 화면이 아닌 화면에 있을 때 브라우저 기록을 한 칸 넣어 둠
+   * → 뒤로가기를 누르면 앱 밖으로 나가지 않고 팝업을 닫거나 이전 화면으로 감. 버튼으로 닫거나 첫 화면으로 오면 넣어 둔 칸을 되돌림
+   * 환불 등록(등록·완료 화면)은 예전처럼 기록을 넣지 않음 (뒤로가기 = 브라우저 기본 동작) */
+  var POPS = ['qrOver', 'codeOver', 'admOver'], popOpen = false;
+  var NAV = { guard: false, want: false, skip: 0, t: null };   // guard: 화면용 기록 칸이 있음, skip: 우리가 되돌리는 중인 칸 수
   function anyPop() { return POPS.some(function (id) { return !$(id).classList.contains('hidden'); }); }
+  function navBack() {                     // 우리가 넣은 칸 하나 되돌리기 (그때 오는 popstate는 무시)
+    NAV.skip++;
+    clearTimeout(NAV.t); NAV.t = setTimeout(function () { if (NAV.skip) { NAV.skip = 0; navApply(); } }, 1500);
+    try { history.back(); } catch (x) { NAV.skip--; }
+  }
+  function navApply() {                    // 지금 화면에 맞게 화면용 기록 칸을 넣거나 뺌
+    if (NAV.skip > 0) return;              // 되돌리는 중이면 끝난 뒤 다시
+    if (NAV.want && !NAV.guard) { try { history.pushState({ scr: 1 }, ''); NAV.guard = true; } catch (x) {} }
+    else if (!NAV.want && NAV.guard && !popOpen) { NAV.guard = false; navBack(); }
+  }
+  function navSync(id) {                   // show()에서: 첫 화면·환불 등록·시트 메뉴 창은 기록 칸 없음
+    NAV.want = id !== 's1' && !(rfEdu && (id === 'sf' || id === 's3')) && !(typeof DIALOG !== 'undefined' && DIALOG);
+    navApply();
+  }
+  function screenBack() {                  // 휴대폰 뒤로가기 = 화면의 [뒤로]·[처음으로] 버튼
+    var s = curScreen;
+    if (s === 'sp' || s === 's3') resetAll();
+    else if (s === 's2') { if (!submitting) show('sp'); }
+    else if (s === 'sa') $('aLogout').onclick();
+    else if (s === 'so') $('oBack').onclick();
+    else if (s === 'sr') $('rBack').onclick();
+  }
   function popPush() {
     if (popOpen) return;
     popOpen = true;
-    try {
-      if (window.google && google.script && google.script.history) google.script.history.push({ pop: 1 }, null, 'popup');
-      else history.pushState({ pop: 1 }, '');
-    } catch (x) { popOpen = false; }
+    try { history.pushState({ pop: 1 }, ''); } catch (x) { popOpen = false; }
   }
   function popSync() {                     // 팝업을 버튼·바깥 누르기 등으로 닫았을 때: 넣어 둔 기록 한 칸 되돌리기
     if (!popOpen || anyPop()) return;
-    popOpen = false; popSkip = true;
-    clearTimeout(popSkipT); popSkipT = setTimeout(function () { popSkip = false; }, 1500);
-    try { history.back(); } catch (x) { popSkip = false; }
+    popOpen = false;
+    navBack();
   }
   function onBack() {
-    if (popSkip) { popSkip = false; return; }        // 우리가 되돌린 것
-    if (!popOpen) return;
-    popOpen = false;                                  // 뒤로가기 → 열린 팝업 닫기
-    if (!$('qrOver').classList.contains('hidden')) $('qrOver').classList.add('hidden');
-    if (!$('codeOver').classList.contains('hidden')) closeCode();
-    if (!$('admOver').classList.contains('hidden')) closeAdmLogin();
+    if (NAV.skip > 0) { NAV.skip--; if (!NAV.skip) navApply(); return; }   // 우리가 되돌린 것
+    if (popOpen) {                                    // 뒤로가기 → 열린 팝업 닫기
+      popOpen = false;
+      if (!$('qrOver').classList.contains('hidden')) $('qrOver').classList.add('hidden');
+      if (!$('codeOver').classList.contains('hidden')) closeCode();
+      if (!$('admOver').classList.contains('hidden')) closeAdmLogin();
+      return;
+    }
+    if (!NAV.guard) return;
+    NAV.guard = false;                                // 뒤로가기 → 이전 화면 (저장 안 한 변경 경고 등으로 그대로면 칸을 다시 넣음)
+    screenBack();
+    navApply();
   }
   try {
     if (window.google && google.script && google.script.history) google.script.history.setChangeHandler(onBack);
