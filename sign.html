@@ -1870,7 +1870,7 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
       '<div class="tap">눌러서 펼치기</div></div>' +
       '<div class="body">' +
       '<div class="row"><button class="btn b-open"></button></div>' +
-      '<div class="ibox"><div class="ihead"><b>서명지 정보</b></div>' +
+      '<div class="ibox"><div class="ihead"><b>서명지 정보 수정</b></div>' +
       '<div class="ibody">' +
       '<div class="field"><label>교육명</label><input type="text" class="i-title" autocomplete="off"></div>' +
       '<div class="fRow"><div class="field i-deptRow"><label>부서명</label><input type="text" class="i-dept" autocomplete="off"></div>' +
@@ -1975,6 +1975,7 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
     if (e.refund) q('.expTitle').textContent = '등록 명단 내보내기 (CSV)';
     if (e.refund) {
       q('.i-deptRow').classList.add('hidden');
+      q('.i-title').previousElementSibling.textContent = '제목';   // 환불 건은 교육이 아니라서
       q('.i-dateRow').classList.add('hidden'); q('.i-date').value = '';   // 비상: 날짜는 제목에 들어 있으므로 칸 없음
       q('.b-qr').onclick = function () {
         var base = qrUrl || admData.url;
