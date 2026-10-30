@@ -1483,12 +1483,12 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
     rfCard = form.cardOnly || '교통카드';
     rfSync();
   }
-  /** 승차권 종류를 고르면 역 칸(승차·하차)이 나타남. 두 번째 역 칸 이름: 승차권 → '목적지'(산 표의 도착역), 교통카드 → '하차' (둘 다 필수) */
+  /** 승차권 종류를 고르면 역 칸(승차역·하차역)이 나타남. 두 번째 역 칸 이름: 승차권 → '목적지'(산 표의 도착역), 교통카드 → '하차역' (둘 다 필수) */
   var rfCard = '교통카드';
   function rfSync() {
     var t = '';
     [].forEach.call($('rfFields').querySelectorAll('select'), function (el) { if (el.querySelector('option[value="' + rfCard + '"]')) t = el.value; });
-    var name = t && t !== rfCard ? '목적지' : '하차';
+    var name = t && t !== rfCard ? '목적지' : '하차역';
     var hint = name === '목적지' ? '목적지 선택' : '내린역 선택';
     [].forEach.call($('rfFields').querySelectorAll('[data-st]'), function (d) {
       d.classList.toggle('hidden', !t);
