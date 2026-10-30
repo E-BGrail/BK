@@ -1494,6 +1494,9 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
     if (miss) { msg($('rfMsg'), miss.getAttribute('data-label') + ' 칸을 입력하세요.', '#c0392b'); miss.focus(); return; }
     if (!$('rfAgree').checked) { msg($('rfMsg'), '개인정보 수집·이용에 동의해 주세요.', '#c0392b'); return; }
     var direct = rfDirect;
+    if (direct && !(navigator.maxTouchPoints > 0 || 'ontouchstart' in window)) {   // 고객용 QR: PC(터치 안 되는 기기)로는 등록 안 됨
+      msg($('rfMsg'), '휴대폰으로 QR을 찍어 등록해 주세요. 컴퓨터에서는 등록할 수 없습니다. 어려우면 역 직원에게 문의해 주세요.', '#c0392b'); return;
+    }
     if (direct && !$('rfLocAgree').checked) { msg($('rfMsg'), '위치정보 수집·이용에 동의하지 않으면 이 화면에서 등록할 수 없습니다. 역 직원에게 문의해 주세요.', '#c0392b'); return; }
     $('rfOk').disabled = true;
     if (!direct) { sendRefund(vals, null); return; }
