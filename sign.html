@@ -59,7 +59,7 @@
   .hero p { margin:0; font-size:14px; opacity:.9; }
   .hero svg { display:block; width:100%; height:auto; margin-top:8px; }
   .hero .run { animation:run 9s linear infinite; }
-  #trainHit { touch-action:pan-y; user-select:none; -webkit-user-select:none; }   /* 열차 높이의 띠: 왼쪽으로 밀면 관리자 로그인 (세로 스크롤은 그대로) */
+  .hero > svg { touch-action:pan-y; } #trainHit { touch-action:pan-y; user-select:none; -webkit-user-select:none; }   /* 열차 높이의 띠: 왼쪽으로 밀면 관리자 로그인 (세로 스크롤은 그대로) */
   @keyframes run { from { transform:translateX(-260px); } to { transform:translateX(420px); } }
   @media (prefers-reduced-motion: reduce) { .hero .run { animation:none; transform:translateX(90px); } }
   /* 진행 단계 */
@@ -1102,6 +1102,11 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
     trainShift(Math.min(0, e.clientX - trainX) * 400 / w);
   });
   trainHit.addEventListener('pointercancel', trainRelease);
+  // 휴대폰: 가로로 움직이면 브라우저가 터치를 가져가지 못하게 막음 (안 그러면 pointercancel로 열차가 돌아감). 세로는 스크롤 그대로
+  trainHit.addEventListener('touchmove', function (e) {
+    var t = e.touches && e.touches[0];
+    if (t && trainX !== null && Math.abs(t.clientX - trainX) > Math.abs(t.clientY - trainY)) e.preventDefault();
+  }, { passive: false });
   trainHit.addEventListener('pointerup', function (e) {
     if (trainX === null) return;
     var dx = e.clientX - trainX, dy = e.clientY - trainY;
