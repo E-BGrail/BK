@@ -6,7 +6,7 @@
 <link rel="preconnect" href="https://script.google.com" crossorigin>
 <link rel="preconnect" href="https://script.googleusercontent.com" crossorigin>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>e-문서</title>
+<title>e-싸인</title>
 <style>
 
   /* 부산-김해경전철 CI 색: 블루 DIC 222 (#324EB3), 그레이 DIC 442 (#9FA9AA) */
@@ -282,15 +282,15 @@
       onerror="if(!this.dataset.alt){this.dataset.alt=1;this.src='https://www.bglrt.com/_res/default/img/sub/p00563_img05_04.png';}else{document.getElementById('brand').className='brand noimg';}">
     <span class="wm"><i>BGL</i>부산-김해경전철</span>
   </div>
-  <h1>e-문서</h1>
-  <div class="appSw hidden" id="appSw" role="tablist"><a class="sw on" data-k="sign" href="#" role="tab" aria-selected="true">e-문서</a><a class="sw" data-k="car" href="#" target="_top" role="tab" aria-selected="false">업무차량관리</a></div>
+  <h1>e-싸인</h1>
+  <div class="appSw hidden" id="appSw" role="tablist"><a class="sw on" data-k="sign" href="#" role="tab" aria-selected="true">e-싸인</a><a class="sw" data-k="car" href="#" target="_top" role="tab" aria-selected="false">업무차량관리</a></div>
 </header>
 
 <!-- 첫 화면 그림 (교육 선택 화면에서만) -->
 <div class="hero" id="hero">
   <div class="txt">
     <div class="k">BUSAN · GIMHAE LRT</div>
-    <h2>BGL e-문서</h2>
+    <h2>BGL e-싸인</h2>
     <p>교육을 고르고 현장에서 안내받은 접속 코드를 입력하세요.</p>
   </div>
   <button class="qrBtn hidden" id="qrBtn" type="button" aria-label="QR 크게 보기"><span id="qrSmall"></span><b>QR</b></button>
@@ -596,7 +596,7 @@
     <span class="close">아무 곳이나 누르면 닫힙니다</span>
   </div>
 </div>
-<footer id="foot">부산-김해경전철(주) · e-문서</footer>
+<footer id="foot">부산-김해경전철(주) · e-싸인</footer>
 
 <script>
 /* ▼▼▼ 여기만 고치세요: 전자서명 웹 앱 배포 주소 (…/exec 로 끝남, 업무차량관리 index.html과 같은 주소) ▼▼▼ */
@@ -669,7 +669,7 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
       el.classList.toggle('on', i === at); el.classList.toggle('done', i < at);
       el.querySelector('b').textContent = (i < at || id === 's3') ? '✓' : String(i + 1);
     });
-    document.querySelector('header h1').textContent = adminScr ? '관리자' : 'e-문서';
+    document.querySelector('header h1').textContent = adminScr ? '관리자' : 'e-싸인';
     var swOn = !!(CAR_PAGE && id === 's1' && !adminScr && !(typeof DIALOG !== 'undefined' && DIALOG));   // 첫 화면에서만 업무차량관리 전환 버튼
     $('appSw').classList.toggle('hidden', !swOn); document.querySelector('header h1').classList.toggle('hidden', swOn);
     window.scrollTo(0, 0);
