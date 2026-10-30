@@ -142,6 +142,13 @@
   /* 업무차량관리 첫 화면: 차량 카드 [주행거리 촬영][운행 관리] */
   .sbtn:disabled { opacity:.5; }
   .carBtns { flex:none; display:flex; flex-direction:column; gap:6px; }
+  .carHead { display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:12px; } .carHead h2 { margin:0; }
+  .carAddBtn { flex:none; height:40px; padding:0 14px; border-radius:12px; border:1px solid #c9d0ee; background:#eef1fb; color:var(--pri); font-size:14px; font-weight:800; }
+  .carPanel { margin-bottom:12px; padding:12px; border:1px solid var(--line); border-radius:12px; font-size:14px; }
+  .carPanel input { width:100%; font-size:17px; padding:11px 12px; border:1px solid var(--line); border-radius:10px; min-width:0; margin-top:8px; }
+  .carPanelBtns { display:flex; gap:8px; margin-top:8px; } .carPanelBtns .btn { flex:1; padding:12px; font-size:15px; }
+  .carPanel .btn.gray { background:#e4e7ec; color:var(--text); } .carPanel .btn.del { background:#b42318; color:#fff; }
+  .carDel { border:0; background:transparent; color:#b42318; font-size:13px; font-weight:700; height:28px; padding:0; }
   .carList a.camBtn { display:flex; flex:none; justify-content:center; padding:0 12px; border:0; font-size:14px; color:#fff; }
   .carList a.camBtn.sub { background:#eef1fb; color:var(--pri); box-shadow:none; border:1px solid #c9d0ee; height:40px; }
   .camBtn { flex:none; display:flex; align-items:center; gap:6px; height:44px; padding:0 14px; border-radius:12px; text-decoration:none;
@@ -331,7 +338,18 @@
 <section id="home" class="hidden">
   <main>
     <div class="card">
-      <h2>차량 목록</h2>
+      <div class="carHead"><h2>차량 목록</h2><button type="button" class="carAddBtn" id="carAddBtn">차량 관리</button></div>
+      <div class="carPanel hidden" id="carAddBox">
+        <input type="text" id="carNo" placeholder="차량번호 (예: 12가1234)" autocomplete="off" maxlength="20">
+        <div class="carPanelBtns"><button type="button" class="btn gray" id="carAddNo">취소</button><button type="button" class="btn pri" id="carAddOk">등록</button></div>
+        <div class="msg" id="carAddMsg"></div>
+      </div>
+      <div class="carPanel hidden" id="carDelBox">
+        <b id="carDelNo"></b> 차량을 삭제합니다. 운행 기록은 남습니다.
+        <input type="password" id="carDelPw" placeholder="관리자 비밀번호" autocomplete="off">
+        <div class="carPanelBtns"><button type="button" class="btn gray" id="carDelNoBtn">취소</button><button type="button" class="btn del" id="carDelOk">삭제</button></div>
+        <div class="msg" id="carDelMsg"></div>
+      </div>
       <div class="carList" id="carList2"><div style="padding:14px;color:var(--sub);font-size:14px">불러오는 중…</div></div>
     </div>
   </main>
@@ -518,10 +536,40 @@ function showHome() {
       return '<div class="carItem card" style="margin:0;box-shadow:none;border:1px solid var(--line)"><span class="ci"><b>' + esc(c.no) + '</b><small>' + stateTag(c.run) + sub + '</small></span>' +
         '<span class="carBtns"><a class="camBtn" href="?car=' + encodeURIComponent(c.no) + '" aria-label="' + esc(c.no) + ' 주행거리 촬영">' +
         '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>주행거리 촬영</a>' +
-        '<a class="camBtn sub" href="?rec=' + encodeURIComponent(c.no) + '" aria-label="' + esc(c.no) + ' 운행 관리">운행 관리</a></span></div>';
+        '<a class="camBtn sub" href="?rec=' + encodeURIComponent(c.no) + '" aria-label="' + esc(c.no) + ' 운행 관리">운행 관리</a>' +
+        (c.run ? '' : '<button type="button" class="carDel" data-car="' + esc(c.no) + '">삭제</button>') + '</span></div>';
     }).join('') || '<div style="padding:14px;color:var(--sub);font-size:14px">등록된 차량이 없습니다.</div>';
   }, function (e) { $('carList2').innerHTML = '<div class="msg">' + esc(errText(e)) + '</div>'; });
 }
+
+/* ---------- 차량 등록(누구나) · 삭제(관리자 비밀번호) ---------- */
+function carPanel(id) { ['carAddBox', 'carDelBox'].forEach(function (x) { $(x).classList.toggle('hidden', x !== id); }); }
+function carDone(d) {                                  // 서버가 돌려준 최신 목록으로 저장본을 바꾸고 다시 그림
+  try { localStorage.setItem('bglCar:list:', JSON.stringify(d)); } catch (x) {}
+  carPanel(''); showHome();
+}
+$('carAddBtn').onclick = function () { $('carNo').value = ''; $('carAddMsg').textContent = ''; carPanel('carAddBox'); $('carNo').focus(); };
+$('carAddNo').onclick = function () { carPanel(''); };
+$('carAddOk').onclick = function () {
+  var no = $('carNo').value.trim();
+  if (!no) { $('carAddMsg').textContent = '차량번호를 입력하세요.'; $('carNo').focus(); return; }
+  $('carAddOk').disabled = true; $('carAddMsg').textContent = '';
+  call('carAdd', { car: no }).then(function (d) { $('carAddOk').disabled = false; carDone(d); },
+    function (e) { $('carAddOk').disabled = false; $('carAddMsg').textContent = errText(e); });
+};
+$('carList2').addEventListener('click', function (e) {
+  var b = e.target.closest('.carDel'); if (!b) return;
+  $('carDelNo').textContent = b.getAttribute('data-car'); $('carDelPw').value = ''; $('carDelMsg').textContent = '';
+  carPanel('carDelBox'); $('carDelPw').focus();
+});
+$('carDelNoBtn').onclick = function () { $('carDelPw').value = ''; carPanel(''); };
+$('carDelOk').onclick = function () {
+  var pw = $('carDelPw').value;
+  if (!pw) { $('carDelMsg').textContent = '관리자 비밀번호를 입력하세요.'; $('carDelPw').focus(); return; }
+  $('carDelOk').disabled = true; $('carDelMsg').textContent = '';
+  call('carRemove', { car: $('carDelNo').textContent, pw: pw }).then(function (d) { $('carDelOk').disabled = false; $('carDelPw').value = ''; carDone(d); },
+    function (e) { $('carDelOk').disabled = false; $('carDelMsg').textContent = errText(e); });
+};
 
 /* ---------- 운행기록: 차량별 월 단위 보기 · 주유 전표 · 엑셀 ---------- */
 var REC = { car: '', data: null, month: '', months: [] };
