@@ -70,7 +70,8 @@
   .steps .st1.on b { background:var(--pri); border-color:var(--pri); color:#fff; box-shadow:0 0 0 4px rgba(50,78,179,.18); }
   .steps .st1.on { color:var(--pri); font-weight:700; }
   .steps .st1.done b { background:#e7ecfa; border-color:var(--pri); color:var(--pri); }
-  footer { text-align:center; color:#98a1b3; font-size:14px; padding:6px 0 18px; cursor:pointer; }
+  footer { text-align:center; color:#98a1b3; font-size:14px; padding:6px 0 18px; }
+  #footLink { display:inline-block; padding:4px 6px; cursor:pointer; }   /* 관리자 로그인: 글자 주변만 눌림 */
   main { padding:14px; max-width:560px; margin:0 auto; }
   .card { background:var(--card); border-radius:16px; padding:16px; box-shadow:0 1px 2px rgba(16,24,40,.05), 0 4px 14px rgba(34,55,138,.07); margin-bottom:12px; }
   .card > b:first-child { font-size:16px; }
@@ -603,7 +604,7 @@
     <span class="close">아무 곳이나 누르면 닫힙니다</span>
   </div>
 </div>
-<footer id="foot">부산-김해경전철(주) · e-싸인</footer>
+<footer id="foot"><span id="footLink">부산-김해경전철(주) · e-싸인</span></footer>
 
 <script>
 /* ▼▼▼ 여기만 고치세요: 전자서명 웹 앱 배포 주소 (…/exec 로 끝남, 업무차량관리 index.html과 같은 주소) ▼▼▼ */
@@ -1081,7 +1082,7 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
 
   /* ---------- 관리자 로그인: 첫 화면 맨 아래 회사 이름을 누르면 비밀번호 팝업 ---------- */
   function closeAdmLogin() { $('admOver').classList.add('hidden'); $('admPw').value = ''; msg($('admMsg'), ''); popSync(); }
-  $('foot').onclick = function () {
+  $('footLink').onclick = function () {
     if (curScreen !== 's1') return;          // 첫 화면에서만 (서명 중에 잘못 눌러도 뜨지 않게)
     $('admPw').value = ''; msg($('admMsg'), ''); $('admOk').disabled = false;
     $('admOver').classList.remove('hidden'); popPush();
