@@ -139,7 +139,7 @@
   .appSw .sw.on { background:var(--pri); color:#fff; box-shadow:0 1px 4px rgba(50,78,179,.35); }
   .appSw:not(.go) .sw:not(.on):active { background:#e3e7ef; }
   header .brand img { max-width:130px; height:26px; }
-  /* 업무차량관리 첫 화면: 차량 카드 [주행거리 촬영][운행 관리] */
+  /* 업무차량관리 첫 화면: 차량 카드 [주행거리 촬영][운행 기록] */
   .sbtn:disabled { opacity:.5; }
   .carBtns { flex:none; display:flex; flex-direction:column; gap:6px; }
   .carHead { display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:12px; } .carHead h2 { margin:0; }
@@ -148,7 +148,10 @@
   .carPanel input { width:100%; font-size:17px; padding:11px 12px; border:1px solid var(--line); border-radius:10px; min-width:0; margin-top:8px; }
   .carPanelBtns { display:flex; gap:8px; margin-top:8px; } .carPanelBtns .btn { flex:1; padding:12px; font-size:15px; }
   .carPanel .btn.gray { background:#e4e7ec; color:var(--text); } .carPanel .btn.del { background:#b42318; color:#fff; }
-  .carDel { border:0; background:transparent; color:#b42318; font-size:13px; font-weight:700; height:28px; padding:0; }
+  .carDel { height:44px; padding:0 12px; border:0; border-radius:12px; background:#b42318; color:#fff; font-size:14px; font-weight:800; }
+  #carList2:not(.manage) .carDel { display:none; } #carList2.manage a.camBtn:not(.sub) { display:none; }   /* 차량 관리를 눌렀을 때만 삭제 (주행거리 촬영 자리) */
+  .carAddBtn.on { background:var(--pri); color:#fff; border-color:var(--pri); }
+  .carModel { margin-left:6px; font-size:14px; font-weight:600; color:var(--sub); }
   .carList a.camBtn { display:flex; flex:none; justify-content:center; padding:0 12px; border:0; font-size:14px; color:#fff; }
   .carList a.camBtn.sub { background:#eef1fb; color:var(--pri); box-shadow:none; border:1px solid #c9d0ee; height:40px; }
   .camBtn { flex:none; display:flex; align-items:center; gap:6px; height:44px; padding:0 14px; border-radius:12px; text-decoration:none;
@@ -334,13 +337,14 @@
   </main>
 </section>
 
-<!-- ===== 업무차량관리 첫 화면 (주소만 열면): 차량 목록 (차량마다 주행거리 촬영 · 운행 관리) ===== -->
+<!-- ===== 업무차량관리 첫 화면 (주소만 열면): 차량 목록 (차량마다 주행거리 촬영 · 운행 기록) ===== -->
 <section id="home" class="hidden">
   <main>
     <div class="card">
       <div class="carHead"><h2>차량 목록</h2><button type="button" class="carAddBtn" id="carAddBtn">차량 관리</button></div>
       <div class="carPanel hidden" id="carAddBox">
         <input type="text" id="carNo" placeholder="차량번호 (예: 12가1234)" autocomplete="off" maxlength="20">
+        <input type="text" id="carModel" placeholder="차종 (예: 스타리아)" autocomplete="off" maxlength="20">
         <div class="carPanelBtns"><button type="button" class="btn gray" id="carAddNo">취소</button><button type="button" class="btn pri" id="carAddOk">등록</button></div>
         <div class="msg" id="carAddMsg"></div>
       </div>
@@ -350,6 +354,7 @@
         <div class="carPanelBtns"><button type="button" class="btn gray" id="carDelNoBtn">취소</button><button type="button" class="btn del" id="carDelOk">삭제</button></div>
         <div class="msg" id="carDelMsg"></div>
       </div>
+      <div class="msg" id="carNote"></div>
       <div class="carList" id="carList2"><div style="padding:14px;color:var(--sub);font-size:14px">불러오는 중…</div></div>
     </div>
   </main>
@@ -526,43 +531,53 @@ function cachedGet(fn, car, draw, fail) {
   }).catch(function (e) { if (!had) fail(e); });
 }
 function stateTag(run) { return run ? '<span class="tag run">운행 중</span>' : '<span class="tag idle">대기 중</span>'; }
-/* ---------- 업무차량관리 첫 화면: 차량 목록 (카드마다 주행거리 촬영 · 운행 관리) ---------- */
+/* ---------- 업무차량관리 첫 화면: 차량 목록 (카드마다 주행거리 촬영 · 운행 기록) ---------- */
 function showHome() {
   show('home');
   $('bandTitle').textContent = '업무차량관리'; $('bandCar').textContent = '';
   cachedGet('list', '', function (d) {
     $('carList2').innerHTML = (d.cars || []).map(function (c) {
-      var sub = c.last ? fmt(c.last.km) + ' km' : '운행 기록 없음';      // 주행거리만 (운전자·날짜·시각은 운행 관리에서)
-      return '<div class="carItem card" style="margin:0;box-shadow:none;border:1px solid var(--line)"><span class="ci"><b>' + esc(c.no) + '</b><small>' + stateTag(c.run) + sub + '</small></span>' +
+      var sub = c.last ? fmt(c.last.km) + ' km' : '운행 기록 없음';      // 주행거리만 (운전자·날짜·시각은 운행 기록에서)
+      return '<div class="carItem card" style="margin:0;box-shadow:none;border:1px solid var(--line)"><span class="ci"><b>' + esc(c.no) + (c.model ? '<span class="carModel">' + esc(c.model) + '</span>' : '') + '</b><small>' + stateTag(c.run) + sub + '</small></span>' +
         '<span class="carBtns"><a class="camBtn" href="?car=' + encodeURIComponent(c.no) + '" aria-label="' + esc(c.no) + ' 주행거리 촬영">' +
         '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>주행거리 촬영</a>' +
-        '<a class="camBtn sub" href="?rec=' + encodeURIComponent(c.no) + '" aria-label="' + esc(c.no) + ' 운행 관리">운행 관리</a>' +
-        (c.run ? '' : '<button type="button" class="carDel" data-car="' + esc(c.no) + '">삭제</button>') + '</span></div>';
+        '<button type="button" class="carDel" data-car="' + esc(c.no) + '"' + (c.run ? ' data-run="1"' : '') + '>삭제</button>' +
+        '<a class="camBtn sub" href="?rec=' + encodeURIComponent(c.no) + '" aria-label="' + esc(c.no) + ' 운행 기록">운행 기록</a></span></div>';
     }).join('') || '<div style="padding:14px;color:var(--sub);font-size:14px">등록된 차량이 없습니다.</div>';
   }, function (e) { $('carList2').innerHTML = '<div class="msg">' + esc(errText(e)) + '</div>'; });
 }
 
 /* ---------- 차량 등록(누구나) · 삭제(관리자 비밀번호) ---------- */
 function carPanel(id) { ['carAddBox', 'carDelBox'].forEach(function (x) { $(x).classList.toggle('hidden', x !== id); }); }
+/** 관리 모드: 등록 칸이 열리고, 카드의 주행거리 촬영 자리에 삭제 버튼 */
+function carManage(on) {
+  $('carList2').classList.toggle('manage', on); $('carAddBtn').classList.toggle('on', on);
+  $('carNote').textContent = ''; $('carNo').value = ''; $('carModel').value = ''; $('carAddMsg').textContent = ''; $('carDelPw').value = '';
+  carPanel(on ? 'carAddBox' : '');
+}
 function carDone(d) {                                  // 서버가 돌려준 최신 목록으로 저장본을 바꾸고 다시 그림
   try { localStorage.setItem('bglCar:list:', JSON.stringify(d)); } catch (x) {}
-  carPanel(''); showHome();
+  carManage(false); showHome();
 }
-$('carAddBtn').onclick = function () { $('carNo').value = ''; $('carAddMsg').textContent = ''; carPanel('carAddBox'); $('carNo').focus(); };
-$('carAddNo').onclick = function () { carPanel(''); };
+$('carAddBtn').onclick = function () { var on = !$('carList2').classList.contains('manage'); carManage(on); if (on) $('carNo').focus(); };
+$('carAddNo').onclick = function () { carManage(false); };
 $('carAddOk').onclick = function () {
   var no = $('carNo').value.trim();
+  var model = $('carModel').value.trim();
   if (!no) { $('carAddMsg').textContent = '차량번호를 입력하세요.'; $('carNo').focus(); return; }
+  if (!model) { $('carAddMsg').textContent = '차종을 입력하세요.'; $('carModel').focus(); return; }
   $('carAddOk').disabled = true; $('carAddMsg').textContent = '';
-  call('carAdd', { car: no }).then(function (d) { $('carAddOk').disabled = false; carDone(d); },
+  call('carAdd', { car: no, model: model }).then(function (d) { $('carAddOk').disabled = false; carDone(d); },
     function (e) { $('carAddOk').disabled = false; $('carAddMsg').textContent = errText(e); });
 };
 $('carList2').addEventListener('click', function (e) {
   var b = e.target.closest('.carDel'); if (!b) return;
+  $('carNote').textContent = '';
+  if (b.getAttribute('data-run')) { carPanel(''); $('carNote').textContent = '운행 종료 후 삭제 가능합니다.'; return; }
   $('carDelNo').textContent = b.getAttribute('data-car'); $('carDelPw').value = ''; $('carDelMsg').textContent = '';
   carPanel('carDelBox'); $('carDelPw').focus();
 });
-$('carDelNoBtn').onclick = function () { $('carDelPw').value = ''; carPanel(''); };
+$('carDelNoBtn').onclick = function () { $('carDelPw').value = ''; carPanel('carAddBox'); };
 $('carDelOk').onclick = function () {
   var pw = $('carDelPw').value;
   if (!pw) { $('carDelMsg').textContent = '관리자 비밀번호를 입력하세요.'; $('carDelPw').focus(); return; }
