@@ -160,8 +160,8 @@
   .person.closed .badge { color:#b42318; }
   .ecard { border:1px solid var(--line); border-radius:12px; padding:12px; margin-top:10px; }
   .ecard .t { font-weight:700; font-size:16px; }
-  .ecard .head { cursor:pointer; position:relative; padding-right:26px; }
-  .ecard .head::after { content:'▾'; position:absolute; right:2px; top:0; color:var(--sub); font-size:18px; transition:transform .2s; }
+  .ecard .head { cursor:pointer; position:relative; padding-right:34px; }
+  .ecard .head::after { content:'▾'; position:absolute; right:2px; top:-2px; color:var(--sub); font-size:28px; line-height:1; transition:transform .2s; }
   .ecard.open .head::after { transform:rotate(180deg); }
   .ecard .body { display:none; border-top:1px dashed var(--line); margin-top:10px; padding-top:4px; }
   .ecard.open .body { display:block; }
@@ -254,8 +254,8 @@
   .tprev th.k-sign { background:#dfe6fb; color:var(--pri2); }
   .tprev td.more { color:var(--sub); font-size:9px; height:11px; padding:0; }
   /* 직원 등록 카드 */
-  #empCard .nhead, #pcCard .nhead { cursor:pointer; position:relative; padding-right:26px; }
-  #empCard .nhead::after, #pcCard .nhead::after { content:'▾'; position:absolute; right:2px; top:-2px; color:var(--sub); font-size:18px; transition:transform .2s; }
+  #empCard .nhead, #pcCard .nhead { cursor:pointer; position:relative; padding-right:34px; }
+  #empCard .nhead::after, #pcCard .nhead::after { content:'▾'; position:absolute; right:2px; top:-2px; color:var(--sub); font-size:28px; line-height:1; transition:transform .2s; }
   #empCard.open .nhead::after, #pcCard.open .nhead::after { transform:rotate(180deg); }
   #empCard .ebody, #pcCard .ebody { display:none; } #empCard.open .ebody, #pcCard.open .ebody { display:block; }
   #empCard .codeRow, #pcCard .codeRow { align-items:flex-end; }
@@ -266,15 +266,14 @@
   .pcHelp a { color:var(--pri); font-weight:700; text-decoration:none; }
   .dupbox { margin-top:10px; background:#fff7e0; border:1px solid #f0d58a; color:#7a5a00; border-radius:10px; padding:10px 12px; font-size:14px; line-height:1.5; }
   /* 새 교육 열기: 접고 펼치기 */
-  #newCard .nhead { cursor:pointer; position:relative; padding-right:26px; }
-  #newCard .nhead::after { content:'▾'; position:absolute; right:2px; top:-2px; color:var(--sub); font-size:18px; transition:transform .2s; }
+  #newCard .nhead { cursor:pointer; position:relative; padding-right:34px; }
+  #newCard .nhead::after { content:'▾'; position:absolute; right:2px; top:-2px; color:var(--sub); font-size:28px; line-height:1; transition:transform .2s; }
   #newCard.open .nhead::after { transform:rotate(180deg); }
   #newCard .nbody { display:none; }
   #newCard.open .nbody { display:block; }
-  #newCard.open .nhint { display:none; }
   /* 교육 카드 안 '교육 정보': 접고 펼치기 */
-  .ihead { cursor:pointer; position:relative; padding-right:26px; margin-top:12px; }
-  .ihead::after { content:'▾'; position:absolute; right:2px; top:-2px; color:var(--sub); font-size:16px; transition:transform .2s; }
+  .ihead { cursor:pointer; position:relative; padding-right:34px; margin-top:12px; }
+  .ihead::after { content:'▾'; position:absolute; right:2px; top:-2px; color:var(--sub); font-size:28px; line-height:1; transition:transform .2s; }
   .ibox.open .ihead::after { transform:rotate(180deg); }
   .ibox .ibody { display:none; }
   .ibox.open .ibody { display:block; }
@@ -470,7 +469,7 @@
       <div class="msg" id="aMsg"></div>
     </div>
     <div class="card" id="newCard">
-      <div class="nhead" id="nHead"><b>새 서명지 열기</b> <span class="hint nhint">· 눌러서 펼치기</span></div>
+      <div class="nhead" id="nHead"><b>새 서명지 열기</b></div>
       <div class="nbody">
       <div class="field" id="nKindRow"><div class="vRow"><label class="vchk"><input type="checkbox" id="nVerify" checked> <b>본인 확인</b></label>
         <label class="vchk" id="nRosterRow"><input type="checkbox" id="nUseRoster"> <b>명단 지정</b></label></div>
@@ -488,7 +487,7 @@
       </div>
     </div>
     <div class="card">
-      <b>서명지별 현황</b> <span class="hint">· 서명지를 눌러서 관리</span>
+      <b>서명지별 현황</b>
       <div id="aEdus"></div>
     </div>
     <div class="card" id="empCard">
@@ -1910,7 +1909,9 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
     if (e.missingTabs) { var tchip = document.createElement('span'); tchip.className = 'chip off'; tchip.textContent = '탭 없음'; q('.t').appendChild(tchip); }
     if (e.refund) { var rchip = document.createElement('span'); rchip.className = 'chip rf'; rchip.textContent = '환불 등록'; q('.t').appendChild(rchip);
       var rcnt = document.createElement('span'); rcnt.style.cssText = 'margin-left:6px;font-size:14px;font-weight:700;vertical-align:1px'; rcnt.textContent = e.signers.length + '명'; q('.t').appendChild(rcnt); }
-    q('.d').textContent = [e.dept, e.date, e.tpl].filter(Boolean).join(' · ') + (e.pages > 1 ? ' · ' + e.pages + '페이지' : '');
+    var tInfo = [e.dept, e.date].filter(Boolean).join(' · ');      // 부서명·날짜는 제목 줄의 표시 옆에
+    if (tInfo && !e.refund) { var tI = document.createElement('span'); tI.style.cssText = 'margin-left:6px;font-size:13px;font-weight:400;color:var(--sub)'; tI.textContent = tInfo; q('.t').appendChild(tI); }
+    q('.d').textContent = (e.tpl || '') + (e.pages > 1 ? ' · ' + e.pages + '페이지' : '');
     q('.cnt').textContent = '서명 ' + e.signers.length + (e.roster ? '/' + e.roster : '') + '명 · 접속 코드 ' + (e.code || '-');
     q('.d').classList.toggle('hidden', !!e.refund); q('.cnt').classList.toggle('hidden', !!e.refund);   // 환불 등록: 빨간 표시 옆 인원만
     if (e.refund && e.autoCloseLeft > 0) {          // 자동 마감까지 남은 시간 (1분마다 줄어듦)
