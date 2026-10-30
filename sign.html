@@ -1900,9 +1900,11 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
     if (e.guest) { var gchip = document.createElement('span'); gchip.className = 'chip ext'; gchip.textContent = '본인 확인 없음'; q('.t').appendChild(gchip); }
     if (e.codeLocked) { var lchip = document.createElement('span'); lchip.className = 'chip off'; lchip.textContent = '코드 잠김'; q('.t').appendChild(lchip); }
     if (e.missingTabs) { var tchip = document.createElement('span'); tchip.className = 'chip off'; tchip.textContent = '탭 없음'; q('.t').appendChild(tchip); }
-    if (e.refund) { var rchip = document.createElement('span'); rchip.className = 'chip rf'; rchip.textContent = '환불 등록'; q('.t').appendChild(rchip); }
+    if (e.refund) { var rchip = document.createElement('span'); rchip.className = 'chip rf'; rchip.textContent = '환불 등록'; q('.t').appendChild(rchip);
+      var rcnt = document.createElement('span'); rcnt.style.cssText = 'margin-left:6px;font-size:14px;font-weight:700;vertical-align:1px'; rcnt.textContent = e.signers.length + '명'; q('.t').appendChild(rcnt); }
     q('.d').textContent = [e.dept, e.date, e.tpl].filter(Boolean).join(' · ') + (e.pages > 1 ? ' · ' + e.pages + '페이지' : '');
-    q('.cnt').textContent = e.refund ? '환불 등록 ' + e.signers.length + '명 · 접속 코드 없음' : '서명 ' + e.signers.length + '명 · 접속 코드 ' + (e.code || '-');
+    q('.cnt').textContent = '서명 ' + e.signers.length + '명 · 접속 코드 ' + (e.code || '-');
+    q('.d').classList.toggle('hidden', !!e.refund); q('.cnt').classList.toggle('hidden', !!e.refund);   // 환불 등록: 빨간 표시 옆 인원만
     if (e.refund && e.autoCloseLeft > 0) {          // 자동 마감까지 남은 시간 (1분마다 줄어듦)
       var left = document.createElement('span'); left.className = 'rfLeft';
       left.setAttribute('data-end', String(Date.now() + e.autoCloseLeft)); left.title = e.autoClose + ' 자동 마감';
