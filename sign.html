@@ -206,6 +206,7 @@
   .codeRow input { margin-top:0; }
   .field { margin-top:10px; }
   .field label { font-size:13px; color:var(--sub); }
+  #rfFields .field label { font-size:16px; font-weight:700; color:var(--text); }   /* 환불 등록: 칸 이름 크게 */
   select { width:100%; font-size:16px; padding:11px; border:1px solid var(--line); border-radius:10px; margin-top:4px; background:#fff; }
   .slist { margin-top:8px; border:1px solid var(--line); border-radius:10px; overflow:hidden; }
   .srow { display:flex; align-items:center; gap:6px; padding:6px 8px; border-top:1px solid var(--line); font-size:14px; }
@@ -1451,19 +1452,24 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
         } else { el.maxLength = 30; el.placeholder = f.label; }
       }
       el.setAttribute('data-key', f.key); el.setAttribute('data-label', f.label);
-      if (f.dest) d.setAttribute('data-dest', '1');                    // 하차/목적지: 승차권 종류에 따라 이름만 바뀜
+      if (f.type === 'station') d.setAttribute('data-st', '1');        // 역 칸: 승차권 종류를 고르면 나타남
+      if (f.dest) d.setAttribute('data-dest', '1');                    // 하차/목적지: 승차권 종류에 따라 이름이 바뀜
       if (f.type === 'select') el.addEventListener('change', rfSync);
       d.appendChild(el); box.appendChild(d);
     });
     rfCard = form.cardOnly || '교통카드';
     rfSync();
   }
-  /** 승차권 종류에 따라 두 번째 역 칸 이름: 승차권 → '목적지'(산 표의 도착역), 교통카드·고르기 전 → '하차' (둘 다 필수) */
+  /** 승차권 종류를 고르면 역 칸(승차·하차)이 나타남. 두 번째 역 칸 이름: 승차권 → '목적지'(산 표의 도착역), 교통카드 → '하차' (둘 다 필수) */
   var rfCard = '교통카드';
   function rfSync() {
     var t = '';
     [].forEach.call($('rfFields').querySelectorAll('select'), function (el) { if (el.querySelector('option[value="' + rfCard + '"]')) t = el.value; });
     var name = t && t !== rfCard ? '목적지' : '하차';
+    [].forEach.call($('rfFields').querySelectorAll('[data-st]'), function (d) {
+      d.classList.toggle('hidden', !t);
+      if (!t) { var s = d.querySelector('select'); if (s) s.value = ''; }
+    });
     [].forEach.call($('rfFields').querySelectorAll('[data-dest]'), function (d) {
       d.querySelector('label').textContent = name;
       var s = d.querySelector('select'); if (s) s.setAttribute('data-label', name);
@@ -1480,6 +1486,7 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
     var vals = {}, miss = null;
     [].forEach.call($('rfFields').querySelectorAll('input,select'), function (el) {
       var v = el.value.trim(); vals[el.getAttribute('data-key')] = v;
+      if (el.closest('.hidden')) return;                                // 숨긴 칸은 빈칸 검사에서 뺌
       if (!v && !miss) miss = el;
     });
     if (miss) { msg($('rfMsg'), miss.getAttribute('data-label') + ' 칸을 입력하세요.', '#c0392b'); miss.focus(); return; }
