@@ -207,6 +207,7 @@
   .codeRow input { margin-top:0; }
   .field { margin-top:10px; }
   .field label { font-size:13px; color:var(--sub); }
+  .fRow { display:flex; gap:8px; } .fRow > .field { flex:1; min-width:0; }   /* 부서명·날짜 한 줄 (한쪽이 숨으면 나머지가 줄 전체) */
   .rfSeg { display:flex; gap:6px; margin-top:4px; }
   .rfSeg button { flex:1; min-width:0; font-size:16px; font-weight:700; padding:12px 4px; border:0; border-radius:10px; background:#e4e7ec; color:var(--sub); }
   .rfSeg button.on { background:var(--pri); color:#fff; }
@@ -297,7 +298,7 @@
   <div class="txt">
     <div class="k">BUSAN · GIMHAE LRT</div>
     <h2>BGL e-싸인</h2>
-    <p>교육을 고르고 현장에서 안내받은 접속 코드를 입력하세요.</p>
+    <p>서명지를 고르고 현장에서 안내받은 접속 코드를 입력하세요.</p>
   </div>
   <button class="qrBtn hidden" id="qrBtn" type="button" aria-label="QR 크게 보기"><span id="qrSmall"></span><b>QR</b></button>
   <svg viewBox="0 0 400 120" aria-hidden="true">
@@ -353,7 +354,7 @@
 
 <!-- 진행 단계 -->
 <div class="steps" id="steps">
-  <div class="st1"><b>1</b>교육 선택</div>
+  <div class="st1"><b>1</b>서명지 선택</div>
   <div class="st1"><b>2</b>본인 확인</div>
   <div class="st1"><b>3</b>서명</div>
   <div class="st1"><b>4</b>완료</div>
@@ -363,7 +364,7 @@
   <!-- 1단계: 교육 선택 + 접속 코드 -->
   <section id="s1">
     <div class="card">
-      <b>교육을 선택하세요</b>
+      <b>서명지를 선택하세요</b>
       <div class="list" id="edus"><div class="hint">불러오는 중…</div></div>
       <div class="msg" id="msg1"></div>
     </div>
@@ -374,7 +375,7 @@
     <div class="card">
       <div class="who" id="eduName"></div>
       <div class="edu" id="eduDate"></div>
-      <div class="gnote hidden" id="gNote">이 교육은 개인 코드가 필요 없습니다. 아래 칸을 입력하고 [확인]을 누르세요.</div>
+      <div class="gnote hidden" id="gNote">이 서명지는 개인 코드가 필요 없습니다. 아래 칸을 입력하고 [확인]을 누르세요.</div>
       <div class="field hidden" id="gDeptRow"><label>소속</label><input type="text" id="gDept" placeholder="예: ○○역, △△회사" autocomplete="off" maxlength="30" enterkeyhint="next"></div>
       <div class="field hidden" id="gRankRow"><label>직위</label><input type="text" id="gRank" placeholder="예: 대리" autocomplete="off" maxlength="20" enterkeyhint="next"></div>
       <div class="field"><label id="nameLabel">이름</label><input type="text" id="name" placeholder="이름" autocomplete="off" maxlength="20"></div>
@@ -430,7 +431,7 @@
       <div class="who" id="doneWho"></div>
       <div class="hint" id="doneMsg"></div>
       <div class="doneClose hidden" id="doneClose">이제 이 창을 닫으셔도 됩니다.</div>
-      <div class="row" id="nextRow"><button class="btn pri" id="nextPerson">같은 교육 · 다음 사람 서명</button></div>
+      <div class="row" id="nextRow"><button class="btn pri" id="nextPerson">같은 서명지 · 다음 사람 서명</button></div>
       <div class="row" id="againRow"><button class="btn gray" id="again">처음으로</button></div>
     </div>
   </section>
@@ -469,29 +470,29 @@
       <div class="msg" id="aMsg"></div>
     </div>
     <div class="card" id="newCard">
-      <div class="nhead" id="nHead"><b>새 교육 열기</b> <span class="hint nhint">· 눌러서 펼치기</span></div>
+      <div class="nhead" id="nHead"><b>새 서명지 열기</b> <span class="hint nhint">· 눌러서 펼치기</span></div>
       <div class="nbody">
       <div class="field" id="nKindRow"><label class="vchk"><input type="checkbox" id="nVerify" checked> <b>본인 확인</b> <small>이름 + 개인 코드</small></label>
-        <div class="note hidden" id="nNoVerify">본인 확인 없음: 서명자가 소속·직위·성명을 직접 입력합니다. 교육을 연 뒤에는 바꿀 수 없습니다.</div></div>
+        <div class="note hidden" id="nNoVerify">본인 확인 없음: 서명자가 소속·직위·성명을 직접 입력합니다. 서명지를 연 뒤에는 바꿀 수 없습니다.</div></div>
       <div class="field"><label>양식</label><select id="nTpl"></select><div class="tprev hidden" id="nTplPrev"></div></div>
       <div class="field" id="nTitleRow"><label>교육명</label><input type="text" id="nTitle" placeholder="예: 4분기 비상대응 훈련" autocomplete="off"></div>
-      <div class="field" id="nDeptRow"><label>부서</label><input type="text" id="nDept" placeholder="예: 역무처" autocomplete="off"></div>
-      <div class="field" id="nDateRow"><label>날짜</label><input type="text" id="nDate" autocomplete="off"></div>
-      <div class="field" id="nCodeRow"><label>접속 코드 (숫자 4자리, 교육마다 다르게)</label><input type="text" id="nCode" placeholder="예: 1024" autocomplete="off" inputmode="numeric" maxlength="4" pattern="[0-9]*"></div>
+      <div class="fRow"><div class="field" id="nDeptRow"><label>부서명</label><input type="text" id="nDept" placeholder="예: 역무처" autocomplete="off"></div>
+      <div class="field" id="nDateRow"><label>날짜</label><input type="text" id="nDate" autocomplete="off"></div></div>
+      <div class="field" id="nCodeRow"><label>접속 코드 (숫자 4자리, 서명지마다 다르게)</label><input type="text" id="nCode" placeholder="예: 1024" autocomplete="off" inputmode="numeric" maxlength="4" pattern="[0-9]*"></div>
       <div class="note hidden" id="nRfNote">환불 등록: 접속 코드 없이 첫 화면 맨 위에 보이고, QR로 바로 들어옵니다. 제목은 "년.월.일.(요일) 운행 장애 환불건"으로 자동으로 정해집니다.</div>
-      <div class="row"><button class="btn pri" id="nCreate">교육 열기</button></div>
+      <div class="row"><button class="btn pri" id="nCreate">서명지 열기</button></div>
       <div class="msg" id="nMsg"></div>
       </div>
     </div>
     <div class="card">
-      <b>교육별 서명 현황</b> <span class="hint">· 교육을 눌러서 관리</span>
+      <b>서명지별 서명 현황</b> <span class="hint">· 서명지를 눌러서 관리</span>
       <div id="aEdus"></div>
     </div>
     <div class="card" id="empCard">
       <div class="nhead" id="eHead"><b>직원 등록</b> <span class="hint ehint">· 직원DB에 추가 · 수정</span></div>
       <div class="ebody">
         <div class="codeRow">
-          <div style="flex:1"><label class="hint">부서</label><input type="text" id="eDept" placeholder="예: 역무처" autocomplete="off"></div>
+          <div style="flex:1"><label class="hint">부서명</label><input type="text" id="eDept" placeholder="예: 역무처" autocomplete="off"></div>
           <div style="flex:1"><label class="hint">직책 (선택)</label><input type="text" id="ePost" placeholder="예: 팀장" autocomplete="off"></div>
           <div style="flex:1"><label class="hint">직위</label><input type="text" id="eRank" placeholder="예: 과장" autocomplete="off"></div>
         </div>
@@ -505,7 +506,7 @@
           <div class="row"><button class="btn gray" id="eCancel">취소</button><button class="btn pri" id="eUpdate">정보 수정</button><button class="btn pri hidden" id="eForce">새로 등록</button></div>
         </div>
         <div class="msg" id="eMsg"></div>
-        <div class="note">사번이 이미 있으면 등록하지 않고 알려 줍니다.<br>같은 사람이면 칸을 고친 뒤 [정보 수정]으로 부서·직위·이름을 바꿀 수 있습니다.<br>직책은 없으면 비워 두세요.<br>[정보 수정] 때 직책을 비우면 기존 직책이 유지됩니다.</div>
+        <div class="note">사번이 이미 있으면 등록하지 않고 알려 줍니다.<br>같은 사람이면 칸을 고친 뒤 [정보 수정]으로 부서명·직위·이름을 바꿀 수 있습니다.<br>직책은 없으면 비워 두세요.<br>[정보 수정] 때 직책을 비우면 기존 직책이 유지됩니다.</div>
       </div>
     </div>
     <div class="card" id="pcCard">
@@ -547,12 +548,12 @@
         <button class="btn gray sbtn" id="rBack">← 관리자 화면</button>
       </div>
       <div style="font-weight:700;font-size:16px;margin-top:8px" id="rTitle"></div>
-      <div class="warn hidden" id="rNoCol">이 교육의 양식에는 임무·역할 칸이 없어 서명지에는 들어가지 않습니다. (서명 화면과 로그에는 표시)</div>
+      <div class="warn hidden" id="rNoCol">이 서명지의 양식에는 임무·역할 칸이 없어 서명지에는 들어가지 않습니다. (서명 화면과 로그에는 표시)</div>
     </div>
     <div class="card" id="rHeadCard">
       <b>머릿글</b> <span class="hint" id="rHeadAt"></span>
       <input type="text" id="rHead" maxlength="30" autocomplete="off" placeholder="예: 임무, 역할">
-      <div class="note">서명지의 임무·역할 칸 제목입니다. 바꾸고 저장하면 이 교육의 서명지(모든 페이지)에 바로 반영됩니다. 양식은 그대로입니다.</div>
+      <div class="note">서명지의 임무·역할 칸 제목입니다. 바꾸고 저장하면 이 서명지(모든 페이지)에 바로 반영됩니다. 양식은 그대로입니다.</div>
     </div>
     <div class="card">
       <b>여러 명 한 번에 붙여넣기</b>
@@ -666,7 +667,7 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
     $('steps').classList.toggle('hidden', at < 0 || (!!rfEdu && id === 's3'));   // 환불 등록은 단계 표시 없음
     $('foot').classList.toggle('hidden', adminScr);
     if (id === 's3') {
-      $('nextPerson').textContent = rfEdu ? '다음 승객 등록' : '같은 교육 · 다음 사람 서명';
+      $('nextPerson').textContent = rfEdu ? '다음 승객 등록' : '같은 서명지 · 다음 사람 서명';
       var fin = !!(rfEdu && rfDirect);            // QR로 들어온 승객: 등록 후 끝 화면 (버튼 없이 '창을 닫으셔도 됩니다')
       $('doneClose').classList.toggle('hidden', !fin);
       $('nextRow').classList.toggle('hidden', fin); $('againRow').classList.toggle('hidden', fin);
@@ -782,7 +783,7 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
   }
   function renderEdus() {
     var box = $('edus'); box.innerHTML = '';
-    if (!edus.length) { box.innerHTML = '<div class="hint">현재 열려 있는 교육이 없습니다.</div>'; }
+    if (!edus.length) { box.innerHTML = '<div class="hint">현재 열려 있는 서명지가 없습니다.</div>'; }
     edus.forEach(function (e) {
       if (e.refund) { box.appendChild(rfItem(e)); return; }
       var closed = e.open === false;
@@ -1602,7 +1603,7 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
     $('rHeadCard').classList.toggle('hidden', !d.hasRoleCol);
     $('rHead').value = d.head || ''; $('rHeadAt').textContent = d.headAt ? '· ' + d.headAt + ' 칸' : '';
     var sel = $('rFrom'); sel.innerHTML = '';
-    var o0 = document.createElement('option'); o0.value = ''; o0.textContent = '다른 교육의 지정 불러오기…'; sel.appendChild(o0);
+    var o0 = document.createElement('option'); o0.value = ''; o0.textContent = '다른 서명지의 지정 불러오기…'; sel.appendChild(o0);
     d.others.forEach(function (x) {
       var o = document.createElement('option'); o.value = x.id;
       o.textContent = x.title + (x.date ? ' (' + x.date + ')' : '') + ' · 지정 ' + x.count + '명';
@@ -1816,7 +1817,7 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
       tplPreview($('nTplPrev'), sel.value); deptRow($('nDeptRow'), sel.value);
       $('nKindRow').classList.toggle('hidden', rf); $('nCodeRow').classList.toggle('hidden', rf); $('nRfNote').classList.toggle('hidden', !rf);
       $('nTitleRow').classList.toggle('hidden', rf); $('nDateRow').classList.toggle('hidden', rf);   // 비상: 제목·날짜 자동
-      $('nCreate').textContent = rf ? '환불 등록 열기' : '교육 열기';
+      $('nCreate').textContent = rf ? '환불 등록 열기' : '서명지 열기';
     };
     nTplUi(); sel.onchange = nTplUi;
     $('nVerify').onchange = function () { $('nNoVerify').classList.toggle('hidden', $('nVerify').checked); };
@@ -1825,7 +1826,7 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
     if (!$('nDept').value) { try { $('nDept').value = localStorage.getItem('sigDept') || ''; } catch (x) {} }
     if (!d.educations.length || !d.templates.length) $('newCard').classList.add('open');   // 열린 교육이 없으면 펼쳐 둠
     var box = $('aEdus'); box.innerHTML = '';
-    if (!d.educations.length) { box.innerHTML = '<div class="hint" style="margin-top:8px">열린 교육이 없습니다. 위에서 새 교육을 여세요.</div>'; }
+    if (!d.educations.length) { box.innerHTML = '<div class="hint" style="margin-top:8px">열린 서명지가 없습니다. 위에서 새 서명지를 여세요.</div>'; }
     // 순서: 접수 중인 비상 등록(새로 만든 것 위) → 일반 교육(만든 순서) → 마감된 비상 등록(새로 만든 것 위)
     var rfs = d.educations.filter(function (e) { return e.refund; }).reverse();
     rfs.filter(function (e) { return e.open; })
@@ -1838,7 +1839,7 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
 
   $('nCreate').onclick = function () {
     var useDept = tplHasDept($('nTpl').value), dept = useDept ? $('nDept').value.trim() : '', rfNew = isRfTpl($('nTpl').value);
-    var need = [['nTitle', '교육명'], ['nDept', '부서'], ['nDate', '날짜'], ['nCode', '접속 코드']].filter(function (f) {
+    var need = [['nTitle', '교육명'], ['nDept', '부서명'], ['nDate', '날짜'], ['nCode', '접속 코드']].filter(function (f) {
       if (rfNew && f[0] !== 'nDept') return false;   // 비상: 제목·날짜·접속 코드 입력 없음
       return (f[0] !== 'nDept' || useDept) && !$(f[0]).value.trim();
     });
@@ -1865,12 +1866,12 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
       '<div class="tap">눌러서 펼치기</div></div>' +
       '<div class="body">' +
       '<div class="row"><button class="btn b-open"></button></div>' +
-      '<div class="ibox"><div class="ihead"><b>교육 정보</b> <span class="hint ihint">· 교육명·부서·날짜 수정</span></div>' +
+      '<div class="ibox"><div class="ihead"><b>서명지 정보</b> <span class="hint ihint">· 교육명·부서명·날짜 수정</span></div>' +
       '<div class="ibody">' +
       '<div class="field"><label>교육명</label><input type="text" class="i-title" autocomplete="off"></div>' +
-      '<div class="field i-deptRow"><label>부서</label><input type="text" class="i-dept" autocomplete="off"></div>' +
-      '<div class="field i-dateRow"><label>날짜</label><input type="text" class="i-date" autocomplete="off"></div>' +
-      '<div class="row"><button class="btn gray b-info">교육 정보 저장</button></div>' +
+      '<div class="fRow"><div class="field i-deptRow"><label>부서명</label><input type="text" class="i-dept" autocomplete="off"></div>' +
+      '<div class="field i-dateRow"><label>날짜</label><input type="text" class="i-date" autocomplete="off"></div></div>' +
+      '<div class="row"><button class="btn gray b-info">서명지 정보 저장</button></div>' +
       '</div></div>' +
       '<div class="codeSec"><div style="margin-top:12px"><b>접속 코드</b></div>' +
       '<div class="codeRow" style="margin-top:6px"><input type="text" class="c-code" autocomplete="off" inputmode="numeric" maxlength="4" pattern="[0-9]*" placeholder="숫자 4자리"><button class="btn pri sbtn b-code">코드 저장</button></div>' +
@@ -1885,8 +1886,8 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
       '<div class="row"><button class="btn pri b-exp">내보내기 준비</button></div>' +
       '<div class="exp hidden"><div class="row"><button class="btn gray b-pdf">PDF 저장</button><button class="btn gray b-csv">CSV 저장</button><button class="btn gray b-html">HTML 저장</button></div>' +
       '</div>' +
-      '<div style="margin-top:12px"><b>교육 삭제</b></div>' +
-      '<div class="row"><button class="btn del b-del">교육 삭제</button></div>' +
+      '<div style="margin-top:12px"><b>서명지 삭제</b></div>' +
+      '<div class="row"><button class="btn del b-del">서명지 삭제</button></div>' +
       '<div class="msg m"></div></div>';
     var q = function (s) { return c.querySelector(s); };
     if (admOpen[e.id]) c.classList.add('open');
@@ -1911,7 +1912,7 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
 
     // 접수 열기/마감
     q('.b-open').innerHTML = e.refund ? (e.open ? '등록 마감' : '등록 다시 열기') :
-      e.open ? '교육 마감<small class="bsub">직책·직위 순으로 자동 정렬</small>' : '이 교육 접수 다시 열기';
+      e.open ? '서명지 마감<small class="bsub">직책·직위 순으로 자동 정렬</small>' : '이 서명지 접수 다시 열기';
     q('.b-open').className = 'btn b-open ' + (e.open ? 'del' : 'pri');
     q('.b-open').onclick = function () {
       var closing = !!e.open; q('.b-open').disabled = true;
@@ -2017,15 +2018,15 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
     q('.b-html').onclick = function () { var r = (admExp[e.id] || {}).log; if (!r) return; saveFile(r.base + '_서명로그.html', new Blob([r.html], { type: 'text/html;charset=utf-8' })); mark('html'); };
     var delLock = !!e.open && e.signers.length > 0;    // 서명(등록)이 없으면 접수 중이어도 바로 삭제 가능
     q('.b-del').disabled = delLock;
-    if (delLock) q('.b-del').textContent = '교육 삭제 (접수 마감 후 가능)';
+    if (delLock) q('.b-del').textContent = '서명지 삭제 (접수 마감 후 가능)';
     q('.b-del').onclick = function () {
       if (!sure) {
         sure = true; q('.b-del').classList.add('sure'); q('.b-del').textContent = '정말 삭제할까요? 한 번 더 누르세요';
-        msg(q('.m'), '로그 기록과 이 교육의 서명지 탭(모든 페이지)이 삭제되며 되돌릴 수 없습니다.' +
+        msg(q('.m'), '로그 기록과 이 서명지의 탭(모든 페이지)이 삭제되며 되돌릴 수 없습니다.' +
           (allSaved() ? '' : e.refund ? ' (CSV 파일을 아직 저장하지 않았습니다)' : ' (PDF·로그 파일을 아직 저장하지 않았습니다)'), '#c0392b');
         clearTimeout(sureTimer);
         sureTimer = setTimeout(function () {      // 8초 안에 다시 누르지 않으면 처음 상태로
-          sure = false; q('.b-del').classList.remove('sure'); q('.b-del').textContent = '교육 삭제'; msg(q('.m'), '');
+          sure = false; q('.b-del').classList.remove('sure'); q('.b-del').textContent = '서명지 삭제'; msg(q('.m'), '');
         }, 8000);
         return;
       }
@@ -2033,7 +2034,7 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
       q('.b-del').disabled = true;
       admCall('adminDeleteEdu', [e.id, admExp[e.id] && admExp[e.id].log ? admExp[e.id].log.count : null], function (d) {
         delete admExp[e.id]; delete admOpen[e.id]; renderAdmin(d);
-      }, q('.m'), function () { sure = false; q('.b-del').disabled = false; q('.b-del').classList.remove('sure'); q('.b-del').textContent = '교육 삭제'; });
+      }, q('.m'), function () { sure = false; q('.b-del').disabled = false; q('.b-del').classList.remove('sure'); q('.b-del').textContent = '서명지 삭제'; });
     };
     return c;
   }
