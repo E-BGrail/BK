@@ -49,7 +49,7 @@
   .qrOver .u { font-size:11px; font-weight:400; color:var(--sub); word-break:break-all; margin-top:6px; }
   .qrOver .close { display:block; margin-top:10px; font-size:12px; color:var(--sub); }
   .qrOver.picOnly .qrBox { padding:18px; } .qrOver.picOnly .u, .qrOver.picOnly .close { display:none; }   /* 환불 등록 QR: 그림과 안내문만 */
-  /* 관리자 로그인 팝업 (첫 화면 맨 아래 회사 이름을 누르면) */
+  /* 관리자 로그인 팝업 (첫 화면 열차를 왼쪽으로 밀면) */
   #admOver, #codeOver { align-items:flex-start; padding-top:10vh; }   /* 로그인 팝업은 화면 위쪽에 (휴대폰 키보드에 가리지 않게) */
   .qrOver .admBox { text-align:left; }
   .qrOver .admBox p { margin:0 0 4px; font-size:17px; }
@@ -58,7 +58,7 @@
   .hero h2 { margin:4px 0 4px; font-size:22px; line-height:1.35; }
   .hero p { margin:0; font-size:14px; opacity:.9; }
   .hero svg { display:block; width:100%; height:auto; margin-top:8px; }
-  .hero .run { animation:run 9s linear infinite; }
+  .hero .run { animation:run 9s linear infinite; touch-action:pan-y; user-select:none; -webkit-user-select:none; }   /* 왼쪽으로 밀면 관리자 로그인 (세로 스크롤은 그대로) */
   @keyframes run { from { transform:translateX(-260px); } to { transform:translateX(420px); } }
   @media (prefers-reduced-motion: reduce) { .hero .run { animation:none; transform:translateX(90px); } }
   /* 진행 단계 */
@@ -71,7 +71,6 @@
   .steps .st1.on { color:var(--pri); font-weight:700; }
   .steps .st1.done b { background:#e7ecfa; border-color:var(--pri); color:var(--pri); }
   footer { text-align:center; color:#98a1b3; font-size:14px; padding:6px 0 18px; }
-  #footLink { display:inline-block; padding:4px 6px; cursor:pointer; }   /* 관리자 로그인: 글자 주변만 눌림 */
   main { padding:14px; max-width:560px; margin:0 auto; }
   .card { background:var(--card); border-radius:16px; padding:16px; box-shadow:0 1px 2px rgba(16,24,40,.05), 0 4px 14px rgba(34,55,138,.07); margin-bottom:12px; }
   .card > b:first-child { font-size:16px; }
@@ -313,7 +312,7 @@
     <rect x="0" y="99" width="400" height="3" fill="#9fa9aa"/>
     <g fill="#c9d1e8"><rect x="34" y="102" width="9" height="18"/><rect x="134" y="102" width="9" height="18"/><rect x="234" y="102" width="9" height="18"/><rect x="334" y="102" width="9" height="18"/></g>
     <!-- 경전철 2량 (실제 열차처럼: 흰·회색 차체, 주황 지붕띠가 양 끝에서 아래로 내려옴, 검은 창, 가운데 연결막) -->
-    <g class="run">
+    <g class="run" id="train">
       <!-- 지붕 장비 -->
       <g fill="#eef0f2" stroke="#c3c8ce" stroke-width=".6">
         <rect x="22" y="53.5" width="20" height="5" rx="1"/><rect x="60" y="54.5" width="10" height="4" rx="1"/><rect x="88" y="53.5" width="20" height="5" rx="1"/>
@@ -456,7 +455,7 @@
     </div>
   </section>
 
-  <!-- 관리자 화면 (첫 화면 맨 아래 회사 이름 → 관리자 비밀번호 팝업) -->
+  <!-- 관리자 화면 (첫 화면 열차를 왼쪽으로 밀기 → 관리자 비밀번호 팝업) -->
   <section id="sa" class="hidden">
     <div class="card">
       <div class="adm-top">
@@ -585,7 +584,7 @@
     <div class="row"><button class="btn gray" id="codeCancel" type="button">취소</button><button class="btn pri" id="codeOk" type="button">확인</button></div>
   </div>
 </div>
-<!-- 관리자 로그인 (첫 화면 맨 아래 회사 이름을 누르면 열림) -->
+<!-- 관리자 로그인 (첫 화면 열차를 왼쪽으로 밀면 열림) -->
 <div class="qrOver hidden" id="admOver" role="dialog" aria-label="관리자 로그인">
   <div class="qrBox admBox">
     <p>관리자 로그인</p>
@@ -603,7 +602,7 @@
     <span class="close">아무 곳이나 누르면 닫힙니다</span>
   </div>
 </div>
-<footer id="foot"><span id="footLink">부산-김해경전철(주) · e-싸인</span></footer>
+<footer id="foot">부산-김해경전철(주) · e-싸인</footer>
 
 <script>
 /* ▼▼▼ 여기만 고치세요: 전자서명 웹 앱 배포 주소 (…/exec 로 끝남, 업무차량관리 index.html과 같은 주소) ▼▼▼ */
@@ -713,7 +712,7 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
       show('sa'); msg($('aMsg'), '불러오는 중…', '#6b7686');
       google.script.run.withFailureHandler(function () {
         admTok = null; show('s1');
-        msg($('msg1'), '관리자 접속 시간이 지나 처음 화면으로 돌아왔습니다. 맨 아래 회사 이름을 눌러 비밀번호를 다시 입력하세요.', '#c0392b');
+        msg($('msg1'), '관리자 접속 시간이 지나 처음 화면으로 돌아왔습니다. 열차를 왼쪽으로 밀어 비밀번호를 다시 입력하세요.', '#c0392b');
       }).withSuccessHandler(function (d) {
         msg($('aMsg'), ''); renderAdmin(d);
         if (st.s === 'so' && st.ordId && ordEduById(st.ordId)) openOrder(st.ordId);
@@ -1079,14 +1078,23 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
   }
   $('codeOk').onclick = submitCode;
 
-  /* ---------- 관리자 로그인: 첫 화면 맨 아래 회사 이름을 누르면 비밀번호 팝업 ---------- */
+  /* ---------- 관리자 로그인: 첫 화면 열차를 왼쪽으로 밀면 비밀번호 팝업 ---------- */
   function closeAdmLogin() { $('admOver').classList.add('hidden'); $('admPw').value = ''; msg($('admMsg'), ''); popSync(); }
-  $('footLink').onclick = function () {
-    if (curScreen !== 's1') return;          // 첫 화면에서만 (서명 중에 잘못 눌러도 뜨지 않게)
+  function openAdmLogin() {
+    if (curScreen !== 's1') return;          // 첫 화면에서만
     $('admPw').value = ''; msg($('admMsg'), ''); $('admOk').disabled = false;
     $('admOver').classList.remove('hidden'); popPush();
     setTimeout(function () { $('admPw').focus(); }, 50);
-  };
+  }
+  // 열차 그림 위에서 시작해 왼쪽으로 40px 넘게 밀고 떼면 열림 (누르기·오른쪽·세로로 밀기는 무시)
+  var trainX = null, trainY = 0;
+  $('train').addEventListener('pointerdown', function (e) { trainX = e.clientX; trainY = e.clientY; try { $('train').setPointerCapture(e.pointerId); } catch (x) {} });
+  $('train').addEventListener('pointercancel', function () { trainX = null; });
+  $('train').addEventListener('pointerup', function (e) {
+    if (trainX === null) return;
+    var dx = e.clientX - trainX, dy = e.clientY - trainY; trainX = null;
+    if (dx <= -40 && Math.abs(dy) < -dx) openAdmLogin();
+  });
   function admLogin() {
     var v = $('admPw').value.trim();
     if (!v) { msg($('admMsg'), '관리자 비밀번호를 입력하세요.', '#c0392b'); $('admPw').focus(); return; }
