@@ -2339,7 +2339,7 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
 
   /* ---------- 시작 ---------- */
   var DIALOG = !!(typeof INIT !== 'undefined' && INIT && INIT.dialog);
-  if (DIALOG) {                     // 시트 메뉴 '3. 관리 · PDF·로그 내려받기' 창: 바로 관리자 화면
+  if (DIALOG) {                     // 시트 메뉴 '3. 관리자 페이지 열기' 창: 바로 관리자 화면
     admTok = INIT.admin.token; renderAdmin(INIT.admin.data); INIT = null;
     $('aLogout').textContent = '닫기';
     show('sa');
