@@ -229,7 +229,6 @@
   .vchk input { width:20px; height:20px; margin:0; accent-color:var(--pri); flex:none; }
   .vchk small { color:var(--sub); font-size:12px; }
   .vRow { display:flex; gap:8px; } .vRow .vchk { flex:1; min-width:0; }   /* 본인 확인·명단 지정 한 줄 */
-  .ival { margin-top:4px; font-size:15px; }
   .lockRow { display:flex; align-items:center; justify-content:space-between; gap:8px; margin-top:8px; padding:8px 10px; border-radius:10px; background:#fdecea; color:#b42318; font-size:13px; font-weight:700; }
   .rfLeft.soon, .rfLeft.over { color:#c0392b; font-weight:700; }
   .lockRow .btn { background:#b42318; color:#fff; }
@@ -276,7 +275,6 @@
   /* 환불 등록 QR: 입력 화면이 다 불러질 때까지 다른 화면을 보이지 않음 */
   .rfBoot header, .rfBoot #hero, .rfBoot #steps, .rfBoot main, .rfBoot #foot { visibility:hidden; }
   .rfBoot body::before { content:'불러오는 중…'; position:fixed; inset:0; display:flex; align-items:center; justify-content:center; color:var(--sub); font-size:15px; }
-  .dupbox { margin-top:10px; background:#fff7e0; border:1px solid #f0d58a; color:#7a5a00; border-radius:10px; padding:10px 12px; font-size:14px; line-height:1.5; }
   /* 새 교육 열기: 접고 펼치기 */
   #newCard .nhead { cursor:pointer; position:relative; padding-right:34px; }
   #newCard .nhead::after { content:'▾'; position:absolute; right:2px; top:-2px; color:var(--sub); font-size:28px; line-height:1; transition:transform .2s; }
@@ -409,7 +407,8 @@
         <div class="hidden" id="chgForm">
           <div class="field"><label>이름</label><input type="text" id="chgName" autocomplete="off" maxlength="20"></div>
           <div class="field"><label>사번 (변경 불가)</label><input type="text" id="chgPinShow" readonly></div>
-          <div class="field"><label>부서명</label><input type="text" id="chgDept" autocomplete="off" maxlength="30"></div>
+          <div class="fRow"><div class="field"><label>부서명</label><input type="text" id="chgDept" autocomplete="off" maxlength="30"></div>
+          <div class="field"><label>팀 (선택)</label><input type="text" id="chgTeam" autocomplete="off" maxlength="30"></div></div>
           <div class="fRow"><div class="field"><label>직책 (선택)</label><input type="text" id="chgPost" autocomplete="off" maxlength="20"></div>
           <div class="field"><label>직위</label><input type="text" id="chgRank" autocomplete="off" maxlength="20"></div></div>
           <div class="row"><button class="btn pri" id="chgSend" type="button">변경 신청</button></div>
@@ -643,15 +642,16 @@
     </div>
     <div id="regForm" class="hidden">
       <p>직원 등록</p>
-      <div class="fRow"><div class="field"><label>이름</label><input type="text" id="regName" autocomplete="off" maxlength="20"></div>
+      <div class="fRow"><div class="field"><label>이름</label><input type="text" id="regName" placeholder="예: 홍길동" autocomplete="off" maxlength="20"></div>
       <div class="field"><label>사번</label><input type="text" id="regPin" autocomplete="off" inputmode="numeric" maxlength="20"></div></div>
-      <div class="field"><label>부서명</label><input type="text" id="regDept" autocomplete="off" maxlength="30"></div>
-      <div class="fRow"><div class="field"><label>직책 (선택)</label><input type="text" id="regPost" autocomplete="off" maxlength="20"></div>
-      <div class="field"><label>직위</label><input type="text" id="regRank" autocomplete="off" maxlength="20"></div></div>
+      <div class="fRow"><div class="field"><label>부서명</label><input type="text" id="regDept" placeholder="예: 역무처" autocomplete="off" maxlength="30"></div>
+      <div class="field"><label>팀 (선택)</label><input type="text" id="regTeam" placeholder="예: 1팀" autocomplete="off" maxlength="30"></div></div>
+      <div class="fRow"><div class="field"><label>직책 (선택)</label><input type="text" id="regPost" placeholder="예: 팀장" autocomplete="off" maxlength="20"></div>
+      <div class="field"><label>직위</label><input type="text" id="regRank" placeholder="예: 과장" autocomplete="off" maxlength="20"></div></div>
       <div class="fRow"><div class="field"><label>개인 코드</label><input type="text" id="regC1" class="secret" placeholder="숫자 4자리" autocomplete="off" inputmode="numeric" maxlength="4"></div>
       <div class="field"><label>한 번 더</label><input type="text" id="regC2" class="secret" placeholder="숫자 4자리" autocomplete="off" inputmode="numeric" maxlength="4"></div></div>
       <div class="note">같은 숫자 반복(1111), 연속 숫자(1234·4321), 사번 앞·뒤 4자리는 쓸 수 없습니다. 꼭 기억해 두세요.</div>
-      <div class="regInfo">수집 항목: 이름, 사번, 부서명, 직책, 직위, 개인 코드
+      <div class="regInfo">수집 항목: 이름, 사번, 부서명, 팀, 직책, 직위, 개인 코드
 이용 목적: 서명·차량 운행 시 본인 확인, 서명지 작성
 보유 기간: 퇴직 또는 초기화 때까지
 개인 코드는 암호화되어 관리자도 알 수 없습니다.</div>
@@ -1249,7 +1249,8 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
       try { localStorage.setItem('bglPin', pin); } catch (x) {}
       $('lgCode').value = '';
       setStaff({ token: r.token, name: r.name, disp: r.disp });
-      edus = []; enterList(); refreshInit();
+      edus = []; enterList();
+      if (r.init) loadInit(r.init); else refreshInit();
     }).withFailureHandler(function (e) {
       $('lgOk').disabled = false; $('lgCode').value = ''; msg($('lgMsg'), errText(e), '#c0392b');
     }).staffLogin({ pin: pin, pcode: pc });
@@ -1266,7 +1267,7 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
   function regStage(id) { ['regAsk', 'regForm', 'regCheck'].forEach(function (s) { $(s).classList.toggle('hidden', s !== id); }); }
   function closeReg() { $('regOver').classList.add('hidden'); $('regC1').value = ''; $('regC2').value = ''; popSync(); }
   function openReg(pin) {
-    ['regName', 'regDept', 'regPost', 'regRank', 'regC1', 'regC2'].forEach(function (id) { $(id).value = ''; });
+    ['regName', 'regDept', 'regTeam', 'regPost', 'regRank', 'regC1', 'regC2'].forEach(function (id) { $(id).value = ''; });
     $('regPin').value = pin; msg($('regMsg'), ''); msg($('regMsg2'), '');
     regStage('regAsk'); $('regOver').classList.remove('hidden'); popPush();
   }
@@ -1283,7 +1284,7 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
     if (v('regC1') !== v('regC2')) { $('regC2').value = ''; return bad('두 번 입력한 개인 코드가 다릅니다. 다시 입력하세요.', 'regC2'); }
     msg($('regMsg'), '');
     $('regShow').textContent = '';
-    [['이름', v('regName')], ['사번', v('regPin')], ['부서명', v('regDept')], ['직책', v('regPost') || '없음'], ['직위', v('regRank')]].forEach(function (x) {
+    [['이름', v('regName')], ['사번', v('regPin')], ['부서명', v('regDept')], ['팀', v('regTeam') || '없음'], ['직책', v('regPost') || '없음'], ['직위', v('regRank')]].forEach(function (x) {
       var d = document.createElement('div'); d.textContent = x[0] + ': ' + x[1]; $('regShow').appendChild(d);
     });
     regStage('regCheck');
@@ -1298,7 +1299,7 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
       msg($('lgMsg'), '등록 신청을 완료했습니다. 관리자가 승인하면 로그인할 수 있습니다.', '#12833b');
     }).withFailureHandler(function (e) {
       $('regSend').disabled = false; msg($('regMsg2'), errText(e), '#c0392b');
-    }).empApply({ pin: pin, name: $('regName').value, dept: $('regDept').value, post: $('regPost').value, rank: $('regRank').value,
+    }).empApply({ pin: pin, name: $('regName').value, dept: $('regDept').value, team: $('regTeam').value, post: $('regPost').value, rank: $('regRank').value,
       newCode: $('regC1').value.trim(), newCode2: $('regC2').value.trim(), device: devInfo });
   };
 
@@ -1314,7 +1315,7 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
       $('chgLoad').disabled = false; msg($('chgMsg'), '');
       if (!r.ok) { msg($('chgMsg'), '등록되지 않은 직원입니다.', '#c0392b'); return; }
       chgCred = { pin: pin, pcode: pc };
-      $('chgName').value = r.info.name; $('chgPinShow').value = r.info.pin; $('chgDept').value = r.info.dept; $('chgPost').value = r.info.post; $('chgRank').value = r.info.rank;
+      $('chgName').value = r.info.name; $('chgPinShow').value = r.info.pin; $('chgDept').value = r.info.dept; $('chgTeam').value = r.info.team || ''; $('chgPost').value = r.info.post; $('chgRank').value = r.info.rank;
       $('chgForm').classList.remove('hidden');
     }).withFailureHandler(function (e) {
       $('chgLoad').disabled = false; $('chgCode').value = ''; msg($('chgMsg'), errText(e), '#c0392b');
@@ -1328,7 +1329,7 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
       msg($('chgMsg'), '변경 신청을 완료했습니다. 관리자가 승인하면 바뀝니다.', '#12833b');
     }).withFailureHandler(function (e) {
       $('chgSend').disabled = false; msg($('chgMsg'), errText(e), '#c0392b');
-    }).empChange({ pin: chgCred.pin, pcode: chgCred.pcode, name: $('chgName').value, dept: $('chgDept').value, post: $('chgPost').value, rank: $('chgRank').value, device: devInfo });
+    }).empChange({ pin: chgCred.pin, pcode: chgCred.pcode, name: $('chgName').value, dept: $('chgDept').value, team: $('chgTeam').value, post: $('chgPost').value, rank: $('chgRank').value, device: devInfo });
   };
 
   /* ---------- 본인 확인 없는 서명지: 양식에 있는 칸 직접 입력 ---------- */
@@ -2030,8 +2031,8 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
       var r = document.createElement('div'); r.className = 'apRow';
       r.innerHTML = '<div><b></b><small class="l1"></small><small class="l2"></small></div><button class="btn gray sbtn" type="button">거절</button><button class="btn pri sbtn" type="button">승인</button>';
       r.querySelector('b').textContent = a.name + ' · ' + a.pin + (a.kind === '변경' ? ' (정보 변경)' : '');
-      r.querySelector('.l1').textContent = [a.rank, a.post, a.dept].filter(Boolean).join(' · ') + ' · ' + a.at;
-      if (a.old) r.querySelector('.l2').textContent = '지금: ' + [a.old.name, a.old.rank, a.old.post, a.old.dept].filter(Boolean).join(' · ');
+      r.querySelector('.l1').textContent = [a.rank, a.post, a.dept, a.team].filter(Boolean).join(' · ') + ' · ' + a.at;
+      if (a.old) r.querySelector('.l2').textContent = '지금: ' + [a.old.name, a.old.rank, a.old.post, a.old.dept, a.old.team].filter(Boolean).join(' · ');
       var bs = r.querySelectorAll('button');
       var run = function (fn) {
         bs[0].disabled = true; bs[1].disabled = true;

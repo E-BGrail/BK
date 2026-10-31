@@ -81,7 +81,6 @@
   .card h2 { margin:0 0 12px; font-size:19px; }
   .box { background:#f3f6fd; border-radius:12px; padding:12px 14px; }
   .kmBox { display:flex; flex-direction:column; gap:8px; }
-  .kmThumb { width:100%; max-height:170px; object-fit:contain; background:#111; border-radius:8px; display:block; }
   .photos { display:grid; gap:8px; }
   .photos.two { grid-template-columns:repeat(2, minmax(0,1fr)); }
   .photos figure { margin:0; display:flex; flex-direction:column; gap:4px; }
@@ -106,9 +105,6 @@
   input[type=text], input[type=tel] { width:100%; font-size:17px; padding:11px 12px; border:1px solid var(--line); border-radius:10px; min-width:0; }
   input:focus { outline:none; border-color:var(--pri); box-shadow:0 0 0 3px rgba(50,78,179,.15); }
   .secret { -webkit-text-security:disc; letter-spacing:4px; }
-  .saved { display:flex; align-items:center; justify-content:space-between; gap:8px; font-size:13px; color:var(--ok); font-weight:700; }
-  .chk { display:flex; align-items:center; gap:8px; font-size:14px; min-height:44px; }
-  .chk input { width:20px; height:20px; margin:0; accent-color:var(--pri); }
   .chips { display:grid; grid-template-columns:repeat(4, minmax(0,1fr)); gap:6px; margin-top:6px; }
   .chips button { height:46px; border-radius:12px; border:1px solid #c9d0ee; background:#fff; color:var(--pri2); font-size:14px; padding:0 2px; line-height:1.15; word-break:keep-all; }
   .chips button.on { background:var(--pri); border-color:var(--pri); color:#fff; font-weight:800; }
@@ -187,7 +183,6 @@
   .recTbl .n { text-align:right; font-variant-numeric:tabular-nums; } .recTbl .n b { color:var(--pri2); }
   .recTbl .c { text-align:center; }
   .recTbl button.rcv { height:28px; padding:0 10px; border-radius:7px; border:1px solid #f0c48a; color:#9a5b00; background:#fff8ec; font-size:12px; font-weight:700; }
-  .recHint { font-size:12px; color:var(--sub); margin-top:8px; }
   /* 전표 창 */
   .rcOver { position:fixed; inset:0; z-index:45; background:rgba(0,0,0,.88); display:flex; flex-direction:column; align-items:center; justify-content:center; padding:16px; gap:10px; }
   .rcOver img { max-width:100%; max-height:84vh; border-radius:8px; background:#fff; }
@@ -200,10 +195,6 @@
   .carItem .go { flex:none; font-size:14px; font-weight:700; color:var(--pri); }
   .tag { display:inline-block; font-size:12px; font-weight:800; border-radius:6px; padding:2px 7px; margin-right:6px; vertical-align:1px; }
   .tag.run { background:#fdebdd; color:#8a3f0a; } .tag.idle { background:#e3f4ea; color:#17663a; }
-  .hTop { display:flex; align-items:center; justify-content:space-between; gap:8px; }
-  .hTop b { font-size:22px; color:var(--pri2); }
-  .hBtns { display:grid; grid-template-columns:repeat(2, minmax(0,1fr)); gap:8px; margin-top:12px; }
-  .hBtns a { display:flex; align-items:center; justify-content:center; height:48px; border-radius:12px; font-size:15px; font-weight:700; text-decoration:none; }
   .carList a { display:block; padding:14px; border:1px solid var(--line); border-radius:12px; text-decoration:none; color:var(--text); font-size:17px; font-weight:700; }
   .spin { display:inline-block; width:16px; height:16px; border:2px solid rgba(255,255,255,.5); border-top-color:#fff; border-radius:50%; animation:sp 1s linear infinite; vertical-align:-3px; margin-right:6px; }
   @keyframes sp { to { transform:rotate(360deg); } }
@@ -491,7 +482,7 @@ function boot() {
   appSwitch($('appSw'), 'car', { sign: SIGN, car: HOME });
   var q = new URLSearchParams(location.search), car = q.get('car') || '';
   if (!car && !isStaff()) { location.replace(SIGN); return; }   // 차량 QR이 아니면 로그인부터
-  if (q.has('rec') || q.has('hist')) return showRec(q.get('rec') || q.get('hist') || '');   // 예전 주소(?hist=)도 운행기록으로
+  if (q.has('rec')) return showRec(q.get('rec') || '');
   if (!car) return showHome();
   $('camTitle').textContent = '차량 정보 불러오는 중…';
   $('shCar').textContent = car; $('shState').textContent = '확인 중';
