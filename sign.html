@@ -213,6 +213,8 @@
   .rfSeg button { flex:1; min-width:0; font-size:16px; font-weight:700; padding:12px 4px; border:0; border-radius:10px; background:#e4e7ec; color:var(--sub); }
   .rfSeg button.on { background:var(--pri); color:#fff; }
   .rfStRow { display:flex; gap:8px; } .rfStRow .field { flex:1; min-width:0; }
+  #rfAcc .field:last-child { flex:2; }   /* 계좌번호가 한 번에 보이게 (은행 1 : 계좌번호 2) */
+  #rfAcc .field:first-child input { padding-left:8px; padding-right:8px; }   /* 좁은 은행 칸에 이름이 보이게 */
   #rfFields .field label { font-size:16px; font-weight:700; color:var(--text); }   /* 환불 등록: 칸 이름 크게 */
   select { width:100%; font-size:16px; padding:11px; border:1px solid var(--line); border-radius:10px; margin-top:4px; background:#fff; }
   .slist { margin-top:8px; border:1px solid var(--line); border-radius:10px; overflow:hidden; }
