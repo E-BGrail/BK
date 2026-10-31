@@ -286,7 +286,7 @@
   .ihead::after { content:'▾'; position:absolute; right:2px; top:-2px; color:var(--sub); font-size:28px; line-height:1; transition:transform .2s; }
   .ibox.open .ihead::after { transform:rotate(180deg); }
   .ibox .ibody { display:none; }
-  .ibox.open .ibody { display:block; margin-top:8px; padding:2px 12px 12px; background:#f3f6fd; border:1.5px solid var(--pri); border-radius:12px; }   /* 펼치면 박스 안의 박스로 */
+  .ibox.open .ibody { display:block; margin:8px -12px 0; padding:2px 12px 12px; background:#f3f6fd; border-top:1.5px solid var(--pri); border-bottom:1.5px solid var(--pri); }   /* 펼치면 카드 좌우 끝까지 연한 파랑, 위아래 줄 (입력칸 폭은 그대로) */
   .gnote { margin-top:10px; background:#fff1e6; border:1px solid #f9c79c; color:#9a3d06; border-radius:10px; padding:8px 12px; font-size:14px; }
 </style>
 </head>
@@ -470,7 +470,7 @@
       <div class="hint" id="doneMsg"></div>
       <div class="doneClose hidden" id="doneClose">이제 이 창을 닫으셔도 됩니다.</div>
       <div class="row" id="nextRow"><button class="btn pri" id="nextPerson">같은 서명지 · 다음 사람 서명</button></div>
-      <div class="row" id="againRow"><button class="btn gray" id="again">처음으로</button></div>
+      <div class="row" id="againRow"><button class="btn gray" id="again">서명지 목록 보기</button></div>
     </div>
   </section>
 
@@ -525,7 +525,7 @@
       <div class="fRow"><div class="field" id="nDeptRow"><label>부서명</label><input type="text" id="nDept" placeholder="예: 역무처" autocomplete="off"></div>
       <div class="field" id="nDateRow"><label>날짜</label><input type="text" id="nDate" autocomplete="off"></div></div>
       <div class="field" id="nCodeRow"><label>접속 코드 (숫자 4자리, 서명지마다 다르게)</label><input type="text" id="nCode" placeholder="예: 1024" autocomplete="off" inputmode="numeric" maxlength="4" pattern="[0-9]*"></div>
-      <div class="note hidden" id="nRfNote">환불 등록: 접속 코드 없이 첫 화면 맨 위에 보이고, QR로 바로 들어옵니다. 제목은 "년.월.일.(요일) 운행 장애 환불건"으로 자동으로 정해집니다.</div>
+      <div class="note hidden" id="nRfNote">환불 등록: 접속 코드 없이 첫 화면 맨 위에 보이고, QR로 바로 들어옵니다. 제목은 "년.월.일.(요일) 운행 장애 환불 신청"으로 자동으로 정해집니다.</div>
       <div class="row"><button class="btn pri" id="nCreate">서명지 열기</button></div>
       <div class="msg" id="nMsg"></div>
       </div>
@@ -733,7 +733,7 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
     $('steps').classList.toggle('hidden', at < 0 || (!!rfEdu && id === 's3'));   // 환불 등록은 단계 표시 없음
     $('foot').classList.toggle('hidden', adminScr);
     if (id === 's3') {
-      $('nextPerson').textContent = rfEdu ? '다음 승객 등록' : edu && edu.guest ? '같은 서명지 · 다음 사람 서명' : '로그아웃 · 다음 사람 서명';
+      $('nextPerson').textContent = rfEdu ? '다음 승객 등록' : edu && edu.guest ? '같은 서명지 · 다음 사람 서명' : '로그아웃';
       var fin = !!(rfEdu && rfDirect);            // QR로 들어온 승객: 등록 후 끝 화면 (버튼 없이 '창을 닫으셔도 됩니다')
       $('doneClose').classList.toggle('hidden', !fin);
       $('nextRow').classList.toggle('hidden', fin); $('againRow').classList.toggle('hidden', fin);
@@ -826,7 +826,7 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
     var closed = e.open === false;
     var w = document.createElement('div'); w.className = 'rfItem' + (closed ? ' closed' : '');
     w.innerHTML = '<button class="rfMain"><span class="rfTag">운행 장애 · 환불 등록</span><span class="rfWho">(직원용)</span><b></b><span class="rank"></span><span class="rfGo"></span></button>';
-    // 제목 '2026.10.28.(수) 운행 장애 환불건' → 날짜 다음 줄에 '운행 장애 환불건'
+    // 제목 '2026.10.28.(수) 운행 장애 환불 신청' → 날짜 다음 줄에 '운행 장애 환불 신청'
     var tm = String(e.title || '').match(/^(\d{4}\.\d{2}\.\d{2}\.\(.\))\s+(.+)$/), tb = w.querySelector('b');
     if (tm) { tb.appendChild(document.createTextNode(tm[1])); tb.appendChild(document.createElement('br')); tb.appendChild(document.createTextNode(tm[2])); }
     else tb.textContent = e.title;
