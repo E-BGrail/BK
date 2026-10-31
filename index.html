@@ -412,7 +412,8 @@ var API = 'https://script.google.com/macros/s/AKfycbwjudREVuPqSxXknvG5XClW_tQKbD
 /* ▲▲▲ */
 var INIT = {};
 var S = { mode: 'start', km: '', kmImg: '', receipt: '', reason: '', route: '', busy: false };
-var ME_KEY = 'bglPin';     // 이 휴대폰에서 마지막으로 쓴 사번 (e-싸인 로그인과 같은 칸). 개인 코드는 저장하지 않음
+var ME_KEY = 'bglPin';     // 이 휴대폰에서 마지막으로 쓴 사번 (e-싸인 로그인과 같은 칸)
+var CODE_KEY = 'bglCarCode';   // 운행 시작·종료 화면에서만 자동 완성할 개인 코드 (전표 등록·e-싸인은 직접 입력)
 try { localStorage.removeItem('bglCarMe'); } catch (e) {}   // 예전에 개인 코드까지 저장한 값 지움
 var $ = function (id) { return document.getElementById(id); };
 function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
@@ -477,6 +478,8 @@ document.addEventListener('select', function (e) { var el = e.target; if (el && 
 /** 차량번호 + 차종 표시 */
 function carLabel(no, model) { return (no || '') + (model ? ' ' + model : ''); }
 function saveMe(pin) { try { localStorage.setItem(ME_KEY, pin); } catch (e) {} }
+function loadCode() { try { return localStorage.getItem(CODE_KEY) || ''; } catch (e) { return ''; } }
+function saveCode(v) { try { if (v) localStorage.setItem(CODE_KEY, v); else localStorage.removeItem(CODE_KEY); } catch (e) {} }
 /** 미등록·승인 대기 응답 안내 문구 */
 function unregText(r) { return r.pending ? '등록 신청을 관리자가 확인 중입니다. 승인 후 이용할 수 있습니다.' : '등록되지 않은 직원입니다. e-싸인에서 직원 등록을 신청해 주세요.'; }
 /** e-싸인에 직원으로 로그인해 있는지 (같은 탭에서 넘어온 경우) */
@@ -724,7 +727,7 @@ $('rRows').addEventListener('click', function (e) {
 /* 주유 전표 보기 */
 function openReceipt(r, b) {
   var t = b.textContent; b.disabled = true; b.textContent = '불러오는 중…';
-  fetch(API + '?api=car&fn=receipt&id=' + encodeURIComponent(r.id)).then(function (x) { return x.json(); }).then(function (j) {
+  fetch(API + '?api=car&fn=receipt&id=' + encodeURIComponent(r.id) + '&car=' + encodeURIComponent(REC.car)).then(function (x) { return x.json(); }).then(function (j) {
     b.disabled = false; b.textContent = t;
     if (!j.ok) throw new Error(j.error);
     $('rcBig').src = j.data.img || j.data.url;
@@ -1171,8 +1174,8 @@ function openConfirm(note) {
     $('km').value = S.km;
     kmCheck();
   }
-  // 사번: 이 휴대폰에서 마지막으로 쓴 값 (다른 사람이면 칸을 고쳐 쓰면 됨). 개인 코드는 직접 입력
-  $('nm').value = loadMe(); $('pc').value = '';
+  // 사번·개인 코드: 이 휴대폰에서 마지막으로 성공한 값 (다른 사람이면 칸을 고쳐 쓰면 됨)
+  $('nm').value = loadMe(); $('pc').value = $('nm').value ? loadCode() : '';
   $('regLink').classList.add('hidden');
   // 종료: 행선지·운행목적
   $('endBox').classList.toggle('hidden', !end);
@@ -1200,6 +1203,7 @@ $('km0').addEventListener('input', kmCheck);
 $('km').addEventListener('input', kmCheck);
 $('retake').addEventListener('click', function () { openCam(); });
 $('pc').addEventListener('input', function () { this.value = digits(this.value).slice(0, 4); });
+$('nm').addEventListener('input', function () { $('pc').value = ''; });     // 사번을 고치면 저장된 코드는 그 사람 것이 아님
 
 function drawChips(id, list, sel) {
   $(id).innerHTML = (list || []).map(function (t) {
@@ -1241,7 +1245,7 @@ function busy(on) {
 }
 function payload() {
   var end = S.mode === 'end';
-  var p = { car: INIT.car, km: end ? digits($('km').value) : '', startKm: end ? digits($('km0').value) : '', img: S.kmImg, pin: $('nm').value.trim(), pcode: digits($('pc').value), device: device() };
+  var p = { car: INIT.car, km: end ? digits($('km').value) : (S.ocrKm != null ? String(S.ocrKm) : ''), startKm: end ? digits($('km0').value) : '', img: S.kmImg, pin: $('nm').value.trim(), pcode: digits($('pc').value), device: device() };
   if (S.mode === 'end') {
     p.id = INIT.st.run.id; p.reason = S.reason; p.reasonEtc = $('reasonEtc').value; p.route = S.route; p.routeEtc = $('routeEtc').value;
     p.receipt = S.reason === '주유' ? S.receipt : '';
@@ -1267,7 +1271,7 @@ function submit() {
   msg(''); busy(true);
   call(S.mode === 'end' ? 'carEnd' : 'carStart', p).then(function (r) {
     busy(false);
-    if (r.unregistered) { msg(unregText(r)); $('regLink').classList.toggle('hidden', !!r.pending); return; }   // 미등록: 운행은 저장되지 않음
+    if (r.unregistered) { saveCode(''); msg(unregText(r)); $('regLink').classList.toggle('hidden', !!r.pending); return; }   // 미등록: 운행은 저장되지 않음
     if (r.needCode) { msg('코드를 입력해 주세요.'); $('pc').focus(); return; }
     if (r.running) {                                  // 이미 운행 중 → 종료부터
       setInit(r.init); S.mode = 'end'; S.receipt = '';
@@ -1278,10 +1282,13 @@ function submit() {
       return openConfirm('이 차량의 운행은 이미 종료되었습니다. 새 운행을 시작하려면 아래 내용을 확인하세요.');
     }
     if (r.ok) {
-      saveMe(p.pin);     // 다음에 열면 사번 자동 입력
+      saveMe(p.pin); saveCode(p.pcode);     // 다음에 열면 자동 입력
       showDone(r);
     }
-  }).catch(function (e) { busy(false); msg(errText(e)); });
+  }).catch(function (e) {
+    busy(false); msg(errText(e));
+    if (/코드가 틀렸/.test(errText(e))) { saveCode(''); $('pc').value = ''; }   // 초기화 등으로 저장된 코드가 맞지 않으면 지움
+  });
 }
 function showDone(r) {
   var end = r.mode === 'end';
