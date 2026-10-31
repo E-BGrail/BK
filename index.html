@@ -118,8 +118,6 @@
   .rc .t { flex:1; display:flex; flex-direction:column; font-size:14px; font-weight:700; }
   .rc .t small { font-size:12px; font-weight:400; color:var(--sub); }
   .sbtn { height:44px; padding:0 14px; border:0; border-radius:10px; background:var(--pri); color:#fff; font-size:14px; font-weight:700; display:inline-flex; align-items:center; }
-  .setupBox { margin-top:12px; background:#f3f6fd; border:1px solid #d6def5; border-radius:12px; padding:4px 12px 12px; }
-  .setupBox .t { font-weight:800; color:var(--pri); margin-top:10px; }
   .btn { width:100%; font-size:17px; padding:15px; border:0; border-radius:12px; font-weight:700; }
   .pri { background:linear-gradient(180deg, #3b58c0, var(--pri)); color:#fff; box-shadow:0 2px 6px rgba(50,78,179,.3); }
   .pri:disabled { opacity:.45; box-shadow:none; }
@@ -158,6 +156,8 @@
   .crcRow { text-align:left; padding:10px; border:1px solid var(--line); border-radius:10px; background:#fff; font-size:14px; color:var(--text); }
   .crcRow.on { border-color:var(--pri); background:#eef1fb; font-weight:700; } .crcRow em { font-style:normal; font-size:12px; color:#9a5b00; margin-left:6px; }
   .crcShot { display:block; width:100%; margin-top:8px; padding:12px; font-size:15px; text-align:center; background:#e4e7ec; color:var(--text); }
+  .crcShots { display:flex; gap:8px; } .crcShots .crcShot { flex:1; min-width:0; }
+  .rcBtns { display:flex; flex-direction:column; gap:6px; flex:none; } .rcBtns .sbtn { justify-content:center; } .sbtn.alt { background:#e4e7ec; color:var(--text); }
   #crcThumb { display:block; max-width:100%; max-height:180px; margin:8px auto 0; border-radius:8px; }
   .recTbl td.rcCell { cursor:pointer; }
   .carAddBtn.on { background:var(--pri); color:#fff; border-color:var(--pri); }
@@ -302,21 +302,10 @@
       </div>
 
       <div class="grid2" style="margin-top:4px">
-        <div class="fld"><label for="nm">이름</label><input type="text" id="nm" autocomplete="name" maxlength="20"></div>
+        <div class="fld"><label for="nm">사번</label><input type="text" id="nm" autocomplete="off" inputmode="numeric" maxlength="20"></div>
         <div class="fld"><label for="pc">개인 코드</label><input type="text" id="pc" class="secret" inputmode="numeric" maxlength="4" autocomplete="off"></div>
       </div>
-      <div class="fld hidden" id="pinRow"><label for="pin">사번 <span style="font-weight:400;font-size:12px;color:var(--sub)">같은 이름이 있어 사번도 확인합니다</span></label><input type="text" id="pin" autocomplete="off" maxlength="20"></div>
-
-      <div class="setupBox hidden" id="setupBox">
-        <div class="t">개인 코드 만들기</div>
-        <div class="hint" style="font-size:13px;color:var(--sub);margin-top:4px">아직 개인 코드가 없습니다. 사번으로 본인 확인 후 숫자 4자리를 정하세요. (e-싸인과 같은 코드)</div>
-        <div class="fld"><label for="suPin">사번</label><input type="text" id="suPin" autocomplete="off" maxlength="20"></div>
-        <div class="grid2">
-          <div class="fld"><label for="suC1">새 개인 코드</label><input type="text" id="suC1" class="secret" inputmode="numeric" maxlength="4" autocomplete="off"></div>
-          <div class="fld"><label for="suC2">한 번 더</label><input type="text" id="suC2" class="secret" inputmode="numeric" maxlength="4" autocomplete="off"></div>
-        </div>
-        <button class="btn pri" id="suGo" type="button" style="margin-top:12px">개인 코드 만들고 계속</button>
-      </div>
+      <a class="btn gray hidden" id="regLink" href="sign.html" style="display:block;text-align:center;margin-top:10px;text-decoration:none">e-싸인에서 직원 등록 신청</a>
 
       <div id="endBox" class="hidden">
         <div class="sec"><span class="lbl">행선지<small>이 차량에서 자주 쓰는 곳 자동 선택</small></span><div class="chips" id="routes" role="group" aria-label="행선지"></div>
@@ -325,8 +314,9 @@
           <input type="text" id="reasonEtc" class="hidden" placeholder="운행목적 입력" maxlength="30" style="margin-top:8px" aria-label="기타 운행목적"></div>
         <div class="rc hidden" id="rcBox">
           <img id="rcThumb" class="hidden" alt="신용카드 전표">
-          <div class="t">신용카드 전표<small id="rcText">주유 시 전표를 찍어 주세요</small></div>
-          <label class="sbtn" id="rcBtn">전표 촬영<input type="file" id="rcFile" accept="image/*" capture="environment" hidden></label>
+          <div class="t">신용카드 전표<small id="rcText"></small></div>
+          <div class="rcBtns"><label class="sbtn" id="rcBtn">전표 촬영<input type="file" id="rcFile" accept="image/*" capture="environment" hidden></label>
+            <label class="sbtn alt">사진 선택<input type="file" id="rcFile2" accept="image/*" hidden></label></div>
         </div>
       </div>
       <div class="msg" id="msg"></div>
@@ -367,9 +357,9 @@
         <div class="crcList" id="crcList"></div>
         <div class="hidden" id="crcForm">
           <img id="crcThumb" class="hidden" alt="전표 사진">
-          <label class="btn gray crcShot" id="crcShot">전표 촬영<input type="file" id="crcFile" accept="image/*" capture="environment" hidden></label>
-          <input type="text" id="crcName" placeholder="이름" autocomplete="off" maxlength="20">
-          <input type="text" id="crcPin" class="hidden" placeholder="사번 (같은 이름이 있어 함께 확인)" autocomplete="off" inputmode="numeric">
+          <div class="crcShots"><label class="btn gray crcShot" id="crcShot">전표 촬영<input type="file" id="crcFile" accept="image/*" capture="environment" hidden></label>
+            <label class="btn gray crcShot">사진 선택<input type="file" id="crcFile2" accept="image/*" hidden></label></div>
+          <input type="text" id="crcPin" placeholder="사번" autocomplete="off" inputmode="numeric" maxlength="20">
           <input type="text" id="crcPc" class="secret" placeholder="개인 코드 4자리" autocomplete="off" inputmode="numeric" maxlength="4">
         </div>
         <div class="carPanelBtns"><button type="button" class="btn gray" id="crcNo">취소</button><button type="button" class="btn pri" id="crcOk" disabled>등록</button></div>
@@ -421,8 +411,9 @@
 var API = 'https://script.google.com/macros/s/AKfycbwjudREVuPqSxXknvG5XClW_tQKbD-4wkCJkyeZt0KKY-spuDCymTt9O5j_6L28Z9QK/exec';
 /* ▲▲▲ */
 var INIT = {};
-var S = { mode: 'start', km: '', kmImg: '', receipt: '', reason: '', route: '', needPin: false, busy: false };
-var ME_KEY = 'bglCarMe';
+var S = { mode: 'start', km: '', kmImg: '', receipt: '', reason: '', route: '', busy: false };
+var ME_KEY = 'bglPin';     // 이 휴대폰에서 마지막으로 쓴 사번 (e-싸인 로그인과 같은 칸). 개인 코드는 저장하지 않음
+try { localStorage.removeItem('bglCarMe'); } catch (e) {}   // 예전에 개인 코드까지 저장한 값 지움
 var $ = function (id) { return document.getElementById(id); };
 function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
 function fmt(n) { return (n === '' || n == null || isNaN(n)) ? '' : Number(n).toLocaleString('ko-KR'); }
@@ -477,7 +468,7 @@ window.addEventListener('popstate', function () {
   if (CUR === 'cf') openCam();
   else if (CUR === 'cam' || CUR === 'done') { stopCam(); location.replace(HOME); }
 });
-function loadMe() { try { var v = JSON.parse(localStorage.getItem(ME_KEY) || 'null'); return v && v.name ? v : null; } catch (e) { return null; } }
+function loadMe() { try { return localStorage.getItem(ME_KEY) || ''; } catch (e) { return ''; } }
 /** 개인 코드 칸: 복사·잘라내기·끌기·길게 눌러 메뉴·선택 막기 */
 ['copy', 'cut', 'dragstart', 'contextmenu'].forEach(function (t) {
   document.addEventListener(t, function (e) { if (e.target && e.target.classList && e.target.classList.contains('secret')) e.preventDefault(); });
@@ -485,13 +476,18 @@ function loadMe() { try { var v = JSON.parse(localStorage.getItem(ME_KEY) || 'nu
 document.addEventListener('select', function (e) { var el = e.target; if (el && el.classList && el.classList.contains('secret')) { var n = el.value.length; el.setSelectionRange(n, n); } });
 /** 차량번호 + 차종 표시 */
 function carLabel(no, model) { return (no || '') + (model ? ' ' + model : ''); }
-function saveMe(v) { try { localStorage.setItem(ME_KEY, JSON.stringify(v)); } catch (e) {} }
+function saveMe(pin) { try { localStorage.setItem(ME_KEY, pin); } catch (e) {} }
+/** 미등록·승인 대기 응답 안내 문구 */
+function unregText(r) { return r.pending ? '등록 신청을 관리자가 확인 중입니다. 승인 후 이용할 수 있습니다.' : '등록되지 않은 직원입니다. e-싸인에서 직원 등록을 신청해 주세요.'; }
+/** e-싸인에 직원으로 로그인해 있는지 (같은 탭에서 넘어온 경우) */
+function isStaff() { try { var s = JSON.parse(sessionStorage.getItem('bglStaff') || 'null'); return !!(s && s.token); } catch (e) { return false; } }
 
 /* ===================== 시작 ===================== */
 /** QR(주소?car=차량번호)로 열리면: 카메라를 먼저 켜고, 그동안 차량 정보를 받아 옴 */
 function boot() {
   appSwitch($('appSw'), 'car', { sign: SIGN, car: HOME });
   var q = new URLSearchParams(location.search), car = q.get('car') || '';
+  if (!car && !isStaff()) { location.replace(SIGN); return; }   // 차량 QR이 아니면 로그인부터
   if (q.has('rec') || q.has('hist')) return showRec(q.get('rec') || q.get('hist') || '');   // 예전 주소(?hist=)도 운행기록으로
   if (!car) return showHome();
   $('camTitle').textContent = '차량 정보 불러오는 중…';
@@ -531,6 +527,7 @@ function appSwitch(sw, here, urls) {
       e.preventDefault();
       var k = b.dataset.k, url = urls[k];
       if (gone || !url) return;
+      if (CUR === 'cam' || CUR === 'cf' || CUR === 'done') return;   // 운행 시작·종료 화면에서는 반응 없음
       if (k === here && !location.search) return;            // 이미 첫 화면
       gone = true; sw.classList.add('go'); light(k);
       setTimeout(function () { location.href = url; }, 220);
@@ -624,11 +621,9 @@ function crcSync() {
 }
 $('carList2').addEventListener('click', function (e) {
   var b = e.target.closest('.carRc'); if (!b) return;
-  var me = loadMe();
   CRC = { car: b.getAttribute('data-car'), id: '', img: '' };
   $('crcTitle').textContent = carLabel(CRC.car, b.getAttribute('data-model')) + ' 기록 선택';
-  $('crcName').value = me ? me.name : ''; $('crcPc').value = me ? me.pcode : ''; $('crcPin').value = me && me.pin ? me.pin : '';
-  $('crcPin').classList.toggle('hidden', !(me && me.pin));
+  $('crcPin').value = loadMe(); $('crcPc').value = '';     // 사번만 자동 완성, 코드는 직접 입력
   $('crcMsg').textContent = ''; $('carNote').textContent = ''; $('crcList').textContent = '운행 기록을 불러오는 중…';
   carPanel('carRcBox'); crcSync();
   var car = CRC.car;
@@ -645,7 +640,7 @@ $('crcList').addEventListener('click', function (e) {
   [].forEach.call($('crcList').children, function (x) { x.classList.toggle('on', x === b); });
   CRC.id = b.getAttribute('data-id'); crcSync();
 });
-$('crcFile').addEventListener('change', function () {
+function crcFileChange() {
   var f = this.files && this.files[0]; this.value = '';
   if (!f) return;
   loadImg(f).then(function (img) {
@@ -656,17 +651,19 @@ $('crcFile').addEventListener('change', function () {
     $('crcMsg').textContent = CRC.img ? '' : '사진이 너무 큽니다. 전표만 가까이 다시 찍어 주세요.';
     crcSync();
   }).catch(function () { $('crcMsg').textContent = '사진을 열 수 없습니다. 다시 찍어 주세요.'; });
-});
+}
+$('crcFile').addEventListener('change', crcFileChange);
+$('crcFile2').addEventListener('change', crcFileChange);
 $('crcNo').onclick = function () { CRC = { car: '', id: '', img: '' }; carPanel('carAddBox'); };
 $('crcOk').onclick = function () {
-  var name = $('crcName').value.trim(), pc = $('crcPc').value.trim(), pin = $('crcPin').classList.contains('hidden') ? '' : $('crcPin').value.trim();
-  if (!name || !pc) { $('crcMsg').textContent = '이름과 개인 코드를 입력하세요.'; return; }
+  var pc = $('crcPc').value.trim(), pin = $('crcPin').value.trim();
+  if (!pin || !pc) { $('crcMsg').textContent = '사번과 개인 코드를 입력하세요.'; return; }
   $('crcOk').disabled = true; $('crcMsg').textContent = '저장 중…';
-  call('carReceiptAdd', { car: CRC.car, id: CRC.id, receipt: CRC.img, name: name, pcode: pc, pin: pin, device: device() }).then(function (r) {
+  call('carReceiptAdd', { car: CRC.car, id: CRC.id, receipt: CRC.img, pcode: pc, pin: pin, device: device() }).then(function (r) {
     $('crcOk').disabled = false;
-    if (r.needPin) { $('crcPin').classList.remove('hidden'); $('crcMsg').textContent = '같은 이름의 직원이 있습니다. 사번도 입력하세요.'; $('crcPin').focus(); return; }
-    if (r.setup) { $('crcMsg').textContent = '개인 코드가 아직 없습니다. 주행거리 촬영에서 먼저 만들어 주세요.'; return; }
-    saveMe({ name: name, pcode: pc, pin: pin });
+    if (r.unregistered) { $('crcMsg').textContent = unregText(r); return; }
+    if (r.needCode) { $('crcMsg').textContent = '코드를 입력해 주세요.'; $('crcPc').focus(); return; }
+    saveMe(pin);
     var car = CRC.car; CRC = { car: '', id: '', img: '' };
     carManage(false); $('carNote').style.color = 'var(--ok)'; $('carNote').textContent = car + ' 전표를 등록했습니다.';
   }, function (e) { $('crcOk').disabled = false; $('crcMsg').textContent = errText(e); });
@@ -812,6 +809,7 @@ function startCam() {
       if (!CAM.on) return;
       CAM.caps = (CAM.track && CAM.track.getCapabilities) ? CAM.track.getCapabilities() : {};
       $('torch').classList.toggle('hidden', !CAM.caps.torch);
+      if ((CAM.caps.focusMode || []).indexOf('continuous') > -1) CAM.track.applyConstraints({ advanced: [{ focusMode: 'continuous' }] }).catch(function () {});   // 자동 초점 (지원하는 기기만)
       setZoom(3);                                  // 기본 3배
       initExposure();                              // 야간 빛 번짐 대비 밝기(노출) 조절
       loadOcr();
@@ -1173,11 +1171,9 @@ function openConfirm(note) {
     $('km').value = S.km;
     kmCheck();
   }
-  // 이름·개인 코드: 이 휴대폰에서 마지막으로 쓴 값 (다른 사람이면 칸을 고쳐 쓰면 됨)
-  var me = loadMe();
-  $('nm').value = me ? me.name : ''; $('pc').value = me ? me.pcode : ''; $('pin').value = me && me.pin ? me.pin : '';
-  $('pinRow').classList.toggle('hidden', !(me && me.pin)); S.needPin = !!(me && me.pin);
-  $('setupBox').classList.add('hidden');
+  // 사번: 이 휴대폰에서 마지막으로 쓴 값 (다른 사람이면 칸을 고쳐 쓰면 됨). 개인 코드는 직접 입력
+  $('nm').value = loadMe(); $('pc').value = '';
+  $('regLink').classList.add('hidden');
   // 종료: 행선지·운행목적
   $('endBox').classList.toggle('hidden', !end);
   if (end) { drawChips('reasons', INIT.reasons, S.reason); drawChips('routes', INIT.routes, S.route); syncEnd(); }
@@ -1203,7 +1199,7 @@ function kmCheck() {
 $('km0').addEventListener('input', kmCheck);
 $('km').addEventListener('input', kmCheck);
 $('retake').addEventListener('click', function () { openCam(); });
-['pc', 'suC1', 'suC2'].forEach(function (id) { $(id).addEventListener('input', function () { this.value = digits(this.value).slice(0, 4); }); });
+$('pc').addEventListener('input', function () { this.value = digits(this.value).slice(0, 4); });
 
 function drawChips(id, list, sel) {
   $(id).innerHTML = (list || []).map(function (t) {
@@ -1218,11 +1214,11 @@ function syncEnd() {
   $('routeEtc').classList.toggle('hidden', S.route !== '기타');
   $('rcBox').classList.toggle('hidden', S.reason !== '주유');
   $('rcThumb').classList.toggle('hidden', !S.receipt); if (S.receipt) $('rcThumb').src = S.receipt;
-  $('rcText').textContent = S.receipt ? '촬영됨 · 다시 찍으려면 버튼을 누르세요' : '주유 시 전표를 찍어 주세요';
+  $('rcText').textContent = S.receipt ? '등록됨 · 바꾸려면 버튼을 누르세요' : '지금 등록하거나, 나중에 차량 관리의 전표 등록에서 등록할 수 있습니다';
   $('rcBtn').firstChild.nodeValue = S.receipt ? '다시 촬영' : '전표 촬영';
 }
 /** 신용카드 전표: 흑백, 셀 한도 안으로 줄여서 */
-$('rcFile').addEventListener('change', function () {
+function rcFileChange() {
   var f = this.files && this.files[0]; this.value = '';
   if (!f) return;
   loadImg(f).then(function (img) {
@@ -1233,17 +1229,19 @@ $('rcFile').addEventListener('change', function () {
     if (!S.receipt) alert('사진이 너무 큽니다. 전표만 가까이 다시 찍어 주세요.');
     syncEnd();
   }).catch(function () { alert('사진을 열 수 없습니다. 다시 찍어 주세요.'); });
-});
+}
+$('rcFile').addEventListener('change', rcFileChange);
+$('rcFile2').addEventListener('change', rcFileChange);
 
 /* ===================== 제출 ===================== */
 function msg(t) { $('msg').textContent = t || ''; }
 function busy(on) {
-  S.busy = on; $('submit').disabled = on; $('suGo').disabled = on;
+  S.busy = on; $('submit').disabled = on;
   $('submit').innerHTML = on ? '<span class="spin"></span>저장 중…' : esc(S.mode === 'end' ? '운행 종료' : '운행 시작');
 }
 function payload() {
   var end = S.mode === 'end';
-  var p = { car: INIT.car, km: end ? digits($('km').value) : '', startKm: end ? digits($('km0').value) : '', img: S.kmImg, name: $('nm').value.trim(), pcode: digits($('pc').value), pin: S.needPin ? $('pin').value.trim() : '', device: device() };
+  var p = { car: INIT.car, km: end ? digits($('km').value) : '', startKm: end ? digits($('km0').value) : '', img: S.kmImg, pin: $('nm').value.trim(), pcode: digits($('pc').value), device: device() };
   if (S.mode === 'end') {
     p.id = INIT.st.run.id; p.reason = S.reason; p.reasonEtc = $('reasonEtc').value; p.route = S.route; p.routeEtc = $('routeEtc').value;
     p.receipt = S.reason === '주유' ? S.receipt : '';
@@ -1257,21 +1255,20 @@ function submit() {
   if (S.mode === 'end' && !p.startKm) { msg('탑승 km를 입력하세요.'); $('km0').focus(); return; }
   if (S.mode === 'end' && !p.km) { msg('하차 km를 입력하세요.'); $('km').focus(); return; }
   if (!p.img && !confirm('사진 없이 진행할까요?')) return;
-  if (!p.name) { msg('이름을 입력하세요.'); $('nm').focus(); return; }
-  if (!$('setupBox').classList.contains('hidden')) { msg('먼저 개인 코드를 만들어 주세요.'); return; }
+  if (!p.pin) { msg('사번을 입력하세요.'); $('nm').focus(); return; }
   if (p.pcode.length !== 4) { msg('개인 코드 숫자 4자리를 입력하세요.'); $('pc').focus(); return; }
   if (S.mode === 'end') {
     if (Number(p.km) < Number(p.startKm)) { msg('하차 km가 탑승 km보다 작습니다.'); $('km').focus(); return; }
     if (S.reason === '기타' && !p.reasonEtc.trim()) { msg('운행목적을 입력하세요.'); $('reasonEtc').focus(); return; }
     if (S.route === '기타' && !p.routeEtc.trim()) { msg('행선지를 입력하세요.'); $('routeEtc').focus(); return; }
-    if (S.reason === '주유' && !S.receipt && !confirm('신용카드 전표 사진 없이 운행을 종료할까요?')) return;
+    if (S.reason === '주유' && !S.receipt && !confirm('전표 없이 운행을 종료할까요? 전표는 나중에 차량 관리의 전표 등록에서 등록할 수 있습니다.')) return;
   }
   S.km = p.km; S.km0 = p.startKm || null;
   msg(''); busy(true);
   call(S.mode === 'end' ? 'carEnd' : 'carStart', p).then(function (r) {
     busy(false);
-    if (r.needPin && !r.setup) { S.needPin = true; $('pinRow').classList.remove('hidden'); msg('같은 이름의 직원이 있어 사번도 입력해야 합니다.'); $('pin').focus(); return; }
-    if (r.setup) { openSetup(r.needPin); return; }
+    if (r.unregistered) { msg(unregText(r)); $('regLink').classList.toggle('hidden', !!r.pending); return; }   // 미등록: 운행은 저장되지 않음
+    if (r.needCode) { msg('코드를 입력해 주세요.'); $('pc').focus(); return; }
     if (r.running) {                                  // 이미 운행 중 → 종료부터
       setInit(r.init); S.mode = 'end'; S.receipt = '';
       return openConfirm('이 차량은 ' + r.init.st.run.driver + ' 님 운행 중(' + r.init.st.run.startAt + ' 시작)으로 기록돼 있습니다. 먼저 운행을 종료해 주세요. 방금 찍은 사진을 하차 사진으로 넣었습니다.');
@@ -1281,36 +1278,11 @@ function submit() {
       return openConfirm('이 차량의 운행은 이미 종료되었습니다. 새 운행을 시작하려면 아래 내용을 확인하세요.');
     }
     if (r.ok) {
-      saveMe({ name: p.name, pcode: p.pcode, pin: p.pin });     // 다음에 열면 자동 입력
+      saveMe(p.pin);     // 다음에 열면 사번 자동 입력
       showDone(r);
     }
   }).catch(function (e) { busy(false); msg(errText(e)); });
 }
-function openSetup(needPin) {
-  $('setupBox').classList.remove('hidden');
-  $('pc').value = '';
-  if (needPin) { S.needPin = true; }
-  msg('');
-  $('suPin').value = $('pin').value; $('suC1').value = ''; $('suC2').value = '';
-  $('suPin').focus();
-}
-$('suGo').addEventListener('click', function () {
-  if (S.busy) return;
-  var p = { name: $('nm').value.trim(), pin: $('suPin').value.trim(), newCode: digits($('suC1').value), newCode2: digits($('suC2').value), device: device() };
-  if (!p.name) { msg('이름을 입력하세요.'); return; }
-  if (!p.pin) { msg('사번을 입력하세요.'); return; }
-  if (p.newCode.length !== 4) { msg('새 개인 코드 숫자 4자리를 입력하세요.'); return; }
-  if (p.newCode !== p.newCode2) { msg('개인 코드를 두 번 똑같이 입력하세요.'); return; }
-  busy(true); msg('');
-  call('carRegisterPc', p).then(function () {
-    busy(false);
-    $('setupBox').classList.add('hidden');
-    $('pc').value = p.newCode;
-    if (S.needPin) { $('pin').value = p.pin; $('pinRow').classList.remove('hidden'); }
-    submit();
-  }).catch(function (e) { busy(false); msg(errText(e)); });
-});
-
 function showDone(r) {
   var end = r.mode === 'end';
   $('bandTitle').textContent = end ? '운행 종료' : '운행 시작';
