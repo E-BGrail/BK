@@ -49,7 +49,7 @@
   .qrOver .u { font-size:11px; font-weight:400; color:var(--sub); word-break:break-all; margin-top:6px; }
   .qrOver .close { display:block; margin-top:10px; font-size:12px; color:var(--sub); }
   .qrOver.picOnly .qrBox { padding:18px; } .qrOver.picOnly .u, .qrOver.picOnly .close { display:none; }   /* 환불 등록 QR: 그림과 안내문만 */
-  /* 관리자 로그인 팝업 (첫 화면 열차를 왼쪽으로 밀면) */
+  /* 관리자 로그인 팝업 (서명지 목록 열차를 왼쪽으로 밀면) */
   #admOver, #codeOver { align-items:flex-start; padding-top:10vh; }   /* 로그인 팝업은 화면 위쪽에 (휴대폰 키보드에 가리지 않게) */
   .qrOver .admBox { text-align:left; }
   .qrOver .admBox p { margin:0 0 4px; font-size:17px; }
@@ -501,7 +501,7 @@
     </div>
   </section>
 
-  <!-- 관리자 화면 (첫 화면 열차를 왼쪽으로 밀기 → 관리자 비밀번호 팝업) -->
+  <!-- 관리자 화면 (서명지 목록 열차를 왼쪽으로 밀기 → 관리자 비밀번호 팝업) -->
   <section id="sa" class="hidden">
     <div class="card">
       <div class="adm-top">
@@ -616,7 +616,7 @@
     <div class="row"><button class="btn gray" id="codeCancel" type="button">취소</button><button class="btn pri" id="codeOk" type="button">확인</button></div>
   </div>
 </div>
-<!-- 관리자 로그인 (첫 화면 열차를 왼쪽으로 밀면 열림) -->
+<!-- 관리자 로그인 (관리자로 등록된 직원이 서명지 목록 열차를 왼쪽으로 밀면 열림) -->
 <div class="qrOver hidden" id="admOver" role="dialog" aria-label="관리자 로그인">
   <div class="qrBox admBox">
     <p>관리자 로그인</p>
@@ -723,7 +723,7 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
   var $ = function (id) { return document.getElementById(id); };
   var drawn = 0, drawing = false, last = null, submitting = false;   // submitting: 서명 제출 중 (서명 칸·지우기·뒤로 막음)
   var edus = [], selId = '', code = '', edu = null, person = null;
-  var staff = null;                      // 로그인: { token, name, disp } 또는 게스트 { guest: true } (이 탭에서만 기억, 개인 코드는 저장 안 함)
+  var staff = null;                      // 로그인: { token, name, disp, admin } 또는 게스트 { guest: true } (이 탭에서만 기억, 개인 코드는 저장 안 함)
   try { staff = JSON.parse(sessionStorage.getItem('bglStaff') || 'null'); } catch (x) {}
 
   function show(id) {
@@ -781,7 +781,7 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
       show('sa'); msg($('aMsg'), '불러오는 중…', '#6b7686');
       google.script.run.withFailureHandler(function () {
         admTok = null; resetAll();
-        msg($(staff ? 'msg1' : 'lgMsg'), '관리자 접속 시간이 지나 처음 화면으로 돌아왔습니다. 열차를 왼쪽으로 밀어 비밀번호를 다시 입력하세요.', '#c0392b');
+        msg($(staff ? 'msg1' : 'lgMsg'), '관리자 접속 시간이 지나 처음 화면으로 돌아왔습니다. 서명지 목록의 열차를 왼쪽으로 밀어 비밀번호를 다시 입력하세요.', '#c0392b');
       }).withSuccessHandler(function (d) {
         msg($('aMsg'), ''); renderAdmin(d);
         if (st.s === 'so' && st.ordId && ordEduById(st.ordId)) openOrder(st.ordId);
@@ -1157,10 +1157,11 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
   }
   $('codeOk').onclick = submitCode;
 
-  /* ---------- 관리자 로그인: 첫 화면 열차를 왼쪽으로 밀면 비밀번호 팝업 ---------- */
+  /* ---------- 관리자 로그인: 관리자로 등록된 직원이 서명지 목록 열차를 왼쪽으로 밀면 비밀번호 팝업 ---------- */
   function closeAdmLogin() { $('admOver').classList.add('hidden'); $('admPw').value = ''; msg($('admMsg'), ''); popSync(); }
+  function admGate() { return curScreen === 's1' && !!(staff && staff.admin); }   // 관리자로 등록된 직원의 서명지 목록에서만
   function openAdmLogin() {
-    if (curScreen !== 's1' && curScreen !== 'sl') return;          // 로그인·서명지 목록 화면에서만
+    if (!admGate()) return;
     $('admPw').value = ''; msg($('admMsg'), ''); $('admOk').disabled = false;
     $('admOver').classList.remove('hidden'); popPush();
     setTimeout(function () { $('admPw').focus(); }, 50);
@@ -1170,6 +1171,7 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
   function trainShift(px, slide) { trainDrag.style.transition = slide ? 'transform .2s ease-out' : 'none'; trainDrag.style.transform = px ? 'translateX(' + px + 'px)' : ''; }
   function trainRelease() { trainX = null; trainShift(0, true); $('train').style.animationPlayState = ''; }
   trainHit.addEventListener('pointerdown', function (e) {
+    if (!admGate()) return;                                        // 그 밖에는 눌러도 반응 없음
     trainX = e.clientX; trainY = e.clientY; $('train').style.animationPlayState = 'paused';
     try { trainHit.setPointerCapture(e.pointerId); } catch (x) {}
   });
@@ -1198,8 +1200,10 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
       $('admOk').disabled = false; closeAdmLogin();
       admTok = r.token; admExp = {}; admOpen = {}; admTab = 'open'; renderAdmin(r.data); show('sa');
     }).withFailureHandler(function (e) {
-      $('admOk').disabled = false; msg($('admMsg'), errText(e), '#c0392b'); $('admPw').select();
-    }).adminLogin(v);
+      $('admOk').disabled = false;
+      if (/로그인이 필요/.test(errText(e))) { closeAdmLogin(); logout(errText(e)); return; }
+      msg($('admMsg'), errText(e), '#c0392b'); $('admPw').select();
+    }).adminLogin(v, staff && staff.token || '');
   }
   $('admOk').onclick = admLogin;
   $('admCancel').onclick = closeAdmLogin;
@@ -1250,7 +1254,7 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
       if (r.needCode) { msg($('lgMsg'), '코드를 입력해 주세요', '#c0392b'); $('lgCode').focus(); return; }
       try { localStorage.setItem('bglPin', pin); } catch (x) {}
       $('lgCode').value = '';
-      setStaff({ token: r.token, name: r.name, disp: r.disp });
+      setStaff({ token: r.token, name: r.name, disp: r.disp, admin: !!r.admin });
       edus = []; enterList();
       if (r.init) loadInit(r.init); else refreshInit();
     }).withFailureHandler(function (e) {
@@ -2316,18 +2320,16 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
     if (pcStep === 0) {                            // 첫째: 누구인지 보여 주고 묻기
       $('pcReset').disabled = true;
       admCall('adminPcLookup', [v], function (d) {
-        $('pcReset').disabled = false; pcStep = 1; pcLabel = d.label;
-        pcArmNext(d.label + ' 님을 초기화할까요? 개인 코드와 직원DB 정보가 삭제됩니다.');
+        $('pcReset').disabled = false; pcStep = 1;
+        pcArmNext(d.label + ' 님을 초기화할까요? 개인 코드와 직원DB 정보가 삭제되고 다시 등록 신청해야 합니다. 한 번 더 누르면 실행됩니다.');
       }, $('pcMsg'), function () { $('pcReset').disabled = false; });
       return;
     }
-    if (pcStep === 1) { pcStep = 2; pcArmNext('정말 삭제합니다. ' + pcLabel + ' 님은 다시 등록 신청해야 합니다. 한 번 더 누르면 실행됩니다.'); return; }   // 둘째: 다시 묻기
-    pcDisarm(); $('pcReset').disabled = true;
+    pcDisarm(); $('pcReset').disabled = true;      // 둘째: 실행
     admCall('adminPcReset', [v], function (d) {
       $('pcReset').disabled = false; $('pcPin').value = ''; msg($('pcMsg'), d.note, '#12833b');
     }, $('pcMsg'), function () { $('pcReset').disabled = false; });
   };
-  var pcLabel = '';
   $('pcPin').addEventListener('input', pcDisarm);
 
   $('aLogout').onclick = function () {
