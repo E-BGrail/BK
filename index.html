@@ -292,9 +292,9 @@
         <button class="link" id="retake" type="button">사진 다시 촬영</button>
       </div>
 
-      <div class="grid2" style="margin-top:4px">
+      <div class="grid2 hidden" id="idBox" style="margin-top:4px">
         <div class="fld"><label for="nm">사번</label><input type="text" id="nm" autocomplete="off" inputmode="numeric" maxlength="20"></div>
-        <div class="fld"><label for="pc">개인 코드</label><input type="text" id="pc" class="secret" inputmode="numeric" maxlength="4" autocomplete="off"></div>
+        <div class="fld"><label for="pc">개인 코드</label><input type="text" id="pc" class="secret" inputmode="numeric" maxlength="6" autocomplete="off"></div>
       </div>
       <a class="btn gray hidden" id="regLink" href="sign.html" style="display:block;text-align:center;margin-top:10px;text-decoration:none">e-싸인에서 직원 등록 신청</a>
 
@@ -309,6 +309,8 @@
           <div class="rcBtns"><label class="sbtn" id="rcBtn">전표 촬영<input type="file" id="rcFile" accept="image/*" capture="environment" hidden></label>
             <label class="sbtn alt">사진 선택<input type="file" id="rcFile2" accept="image/*" hidden></label></div>
         </div>
+        <div class="sec"><span class="lbl"><label for="memo">특이사항</label><small>차량 관련 내용이 있으면 입력 (선택)</small></span>
+          <input type="text" id="memo" placeholder="예: 타이어 공기압 경고등 켜짐" maxlength="100" autocomplete="off"></div>
       </div>
       <div class="msg" id="msg"></div>
     </div>
@@ -351,7 +353,7 @@
           <div class="crcShots"><label class="btn gray crcShot" id="crcShot">전표 촬영<input type="file" id="crcFile" accept="image/*" capture="environment" hidden></label>
             <label class="btn gray crcShot">사진 선택<input type="file" id="crcFile2" accept="image/*" hidden></label></div>
           <input type="text" id="crcPin" placeholder="사번" autocomplete="off" inputmode="numeric" maxlength="20">
-          <input type="text" id="crcPc" class="secret" placeholder="개인 코드 4자리" autocomplete="off" inputmode="numeric" maxlength="4">
+          <input type="text" id="crcPc" class="secret" placeholder="개인 코드 6자리" autocomplete="off" inputmode="numeric" maxlength="6">
         </div>
         <div class="carPanelBtns"><button type="button" class="btn gray" id="crcNo">취소</button><button type="button" class="btn pri" id="crcOk" disabled>등록</button></div>
         <div class="msg" id="crcMsg"></div>
@@ -404,8 +406,7 @@ var API = 'https://script.google.com/macros/s/AKfycbwjudREVuPqSxXknvG5XClW_tQKbD
 var INIT = {};
 var S = { mode: 'start', km: '', kmImg: '', receipt: '', reason: '', route: '', busy: false };
 var ME_KEY = 'bglPin';     // 이 휴대폰에서 마지막으로 쓴 사번 (e-싸인 로그인과 같은 칸)
-var CODE_KEY = 'bglCarCode';   // 운행 시작·종료 화면에서만 자동 완성할 개인 코드 (전표 등록·e-싸인은 직접 입력)
-try { localStorage.removeItem('bglCarMe'); } catch (e) {}   // 예전에 개인 코드까지 저장한 값 지움
+try { localStorage.removeItem('bglCarMe'); localStorage.removeItem('bglCarCode'); } catch (e) {}   // 예전에 개인 코드까지 저장한 값 지움
 var $ = function (id) { return document.getElementById(id); };
 function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
 function fmt(n) { return (n === '' || n == null || isNaN(n)) ? '' : Number(n).toLocaleString('ko-KR'); }
@@ -469,8 +470,6 @@ document.addEventListener('select', function (e) { var el = e.target; if (el && 
 /** 차량번호 + 차종 표시 */
 function carLabel(no, model) { return (no || '') + (model ? ' ' + model : ''); }
 function saveMe(pin) { try { localStorage.setItem(ME_KEY, pin); } catch (e) {} }
-function loadCode() { try { return localStorage.getItem(CODE_KEY) || ''; } catch (e) { return ''; } }
-function saveCode(v) { try { if (v) localStorage.setItem(CODE_KEY, v); else localStorage.removeItem(CODE_KEY); } catch (e) {} }
 /** 미등록·승인 대기 응답 안내 문구 */
 function unregText(r) { return r.pending ? '등록 신청을 관리자가 확인 중입니다. 승인 후 이용할 수 있습니다.' : '등록되지 않은 직원입니다. e-싸인에서 직원 등록을 신청해 주세요.'; }
 /** e-싸인에 직원으로 로그인해 있는지 (같은 탭에서 넘어온 경우) */
@@ -698,12 +697,12 @@ function drawRec() {
   $('rPrev').disabled = i >= REC.months.length - 1; $('rNext').disabled = i <= 0;
   $('rXlsx').disabled = !rows.length;
   // 엑셀 같은 표 (보고용 운행일지와 같은 열). [보기]는 주유 전표
-  $('rRows').innerHTML = rows.length ? '<div class="recTbl"><table><thead><tr><th>날짜</th><th>운전자</th><th>출발 km</th><th>도착 km</th><th>운행거리</th><th>행선지</th><th>운행목적</th><th>전표</th></tr></thead><tbody>' +
+  $('rRows').innerHTML = rows.length ? '<div class="recTbl"><table><thead><tr><th>날짜</th><th>운전자</th><th>출발 km</th><th>도착 km</th><th>운행거리</th><th>행선지</th><th>운행목적</th><th>전표</th><th>특이사항</th></tr></thead><tbody>' +
     rows.map(function (r) {
       return '<tr><td>' + esc(dayText(r)) + '</td><td>' + esc(r.driver) + '</td>' +
         '<td class="n">' + fmt(r.startKm) + '</td><td class="n">' + fmt(r.endKm) + '</td><td class="n"><b>' + fmt(r.dist) + '</b></td>' +
         '<td>' + esc(r.route) + '</td><td>' + esc(r.reason) + '</td>' +
-        (r.receipt ? '<td class="c rcCell" data-rc="' + esc(r.id) + '"><button type="button" class="rcv">보기</button></td>' : '<td class="c"></td>') + '</tr>';
+        (r.receipt ? '<td class="c rcCell" data-rc="' + esc(r.id) + '"><button type="button" class="rcv">보기</button></td>' : '<td class="c"></td>') + '<td>' + esc(r.memo || '') + '</td></tr>';
     }).join('') + '</tbody></table></div>'
     : '<div style="padding:14px 0;color:var(--sub);font-size:14px">이 달의 운행 기록이 없습니다.</div>';
 }
@@ -741,13 +740,13 @@ function loadXlsx() {
 $('rXlsx').addEventListener('click', function () {
   var rows = recRows().slice().reverse(), btn = this;
   if (!rows.length) return;
-  var head = ['날짜', '요일', '운전자', '주행거리 출발 시(km)', '주행거리 도착 시(km)', '운행거리(km)', '행선지', '운행목적'];
-  var aoa = [head].concat(rows.map(function (r) { return [r.date, r.dow, r.driver, r.startKm, r.endKm, r.dist, r.route, r.reason]; }));
+  var head = ['날짜', '요일', '운전자', '주행거리 출발 시(km)', '주행거리 도착 시(km)', '운행거리(km)', '행선지', '운행목적', '특이사항'];
+  var aoa = [head].concat(rows.map(function (r) { return [r.date, r.dow, r.driver, r.startKm, r.endKm, r.dist, r.route, r.reason, r.memo || '']; }));
   var name = '운행일지_' + REC.car + '_' + (REC.month || '전체');
   btn.disabled = true; btn.textContent = '…';
   loadXlsx().then(function (X) {
     var ws = X.utils.aoa_to_sheet(aoa);
-    ws['!cols'] = [12, 6, 10, 18, 18, 13, 14, 16].map(function (w) { return { wch: w }; });
+    ws['!cols'] = [12, 6, 10, 18, 18, 13, 14, 16, 40].map(function (w) { return { wch: w }; });
     var wb = X.utils.book_new(); X.utils.book_append_sheet(wb, ws, String(REC.car).slice(0, 31));
     X.writeFile(wb, name + '.xlsx');
   }).catch(function () {                              // 엑셀 도구를 못 불러오면 CSV(엑셀에서 열림)로
@@ -779,7 +778,7 @@ function openCam() {
   $('shState').textContent = end ? '운행 중' : '대기 중';
   $('shState').style.cssText = end ? 'background:#fdebdd;color:#8a3f0a;font-weight:700' : 'background:#e3f4ea;color:#17663a;font-weight:700';
   var rows = end
-    ? [['운전자', st.run.driver], ['시작 시각', st.run.startAt], ['이전 종료 km', st.last ? fmt(st.last.km) + ' km' : '기록 없음']]
+    ? [['시작 시각', st.run.startAt], ['이전 종료 km', st.last ? fmt(st.last.km) + ' km' : '기록 없음']]
     : [['이전 종료 km', st.last ? fmt(st.last.km) + ' km' : '기록 없음'], ['최근 운행', st.last ? st.last.at : '-']];
   shRows(rows);
   $('live').textContent = ''; $('guide').classList.remove('hit');
@@ -1165,9 +1164,11 @@ function openConfirm(note) {
     $('km').value = S.km;
     kmCheck();
   }
-  // 사번·개인 코드: 이 휴대폰에서 마지막으로 성공한 값 (다른 사람이면 칸을 고쳐 쓰면 됨)
-  $('nm').value = loadMe(); $('pc').value = $('nm').value ? loadCode() : '';
+  // 사번·개인 코드는 종료 때만: 사번은 이 휴대폰에서 마지막으로 성공한 값 (다른 사람이면 칸을 고쳐 쓰면 됨), 코드는 직접 입력
+  $('idBox').classList.toggle('hidden', !end);
+  $('nm').value = loadMe(); $('pc').value = '';
   $('regLink').classList.add('hidden');
+  if (!end) $('memo').value = '';
   // 종료: 행선지·운행목적
   $('endBox').classList.toggle('hidden', !end);
   if (end) { drawChips('reasons', INIT.reasons, S.reason); drawChips('routes', INIT.routes, S.route); syncEnd(); }
@@ -1193,8 +1194,7 @@ function kmCheck() {
 $('km0').addEventListener('input', kmCheck);
 $('km').addEventListener('input', kmCheck);
 $('retake').addEventListener('click', function () { openCam(); });
-$('pc').addEventListener('input', function () { this.value = digits(this.value).slice(0, 4); });
-$('nm').addEventListener('input', function () { $('pc').value = ''; });     // 사번을 고치면 저장된 코드는 그 사람 것이 아님
+$('pc').addEventListener('input', function () { this.value = digits(this.value).slice(0, 6); });
 
 function drawChips(id, list, sel) {
   $(id).innerHTML = (list || []).map(function (t) {
@@ -1236,8 +1236,9 @@ function busy(on) {
 }
 function payload() {
   var end = S.mode === 'end';
-  var p = { car: INIT.car, km: end ? digits($('km').value) : (S.ocrKm != null ? String(S.ocrKm) : ''), startKm: end ? digits($('km0').value) : '', img: S.kmImg, pin: $('nm').value.trim(), pcode: digits($('pc').value), device: device() };
+  var p = { car: INIT.car, km: end ? digits($('km').value) : (S.ocrKm != null ? String(S.ocrKm) : ''), startKm: end ? digits($('km0').value) : '', img: S.kmImg, device: device() };
   if (S.mode === 'end') {
+    p.pin = $('nm').value.trim(); p.pcode = digits($('pc').value); p.memo = $('memo').value;
     p.id = INIT.st.run.id; p.reason = S.reason; p.reasonEtc = $('reasonEtc').value; p.route = S.route; p.routeEtc = $('routeEtc').value;
     p.receipt = S.reason === '주유' ? S.receipt : '';
   }
@@ -1250,9 +1251,9 @@ function submit() {
   if (S.mode === 'end' && !p.startKm) { msg('탑승 km를 입력하세요.'); $('km0').focus(); return; }
   if (S.mode === 'end' && !p.km) { msg('하차 km를 입력하세요.'); $('km').focus(); return; }
   if (!p.img && !confirm('사진 없이 진행할까요?')) return;
-  if (!p.pin) { msg('사번을 입력하세요.'); $('nm').focus(); return; }
-  if (p.pcode.length !== 4) { msg('개인 코드 숫자 4자리를 입력하세요.'); $('pc').focus(); return; }
   if (S.mode === 'end') {
+    if (!p.pin) { msg('사번을 입력하세요.'); $('nm').focus(); return; }
+    if (p.pcode.length !== 6) { msg('개인 코드 숫자 6자리를 입력하세요.'); $('pc').focus(); return; }
     if (Number(p.km) < Number(p.startKm)) { msg('하차 km가 탑승 km보다 작습니다.'); $('km').focus(); return; }
     if (S.reason === '기타' && !p.reasonEtc.trim()) { msg('운행목적을 입력하세요.'); $('reasonEtc').focus(); return; }
     if (S.route === '기타' && !p.routeEtc.trim()) { msg('행선지를 입력하세요.'); $('routeEtc').focus(); return; }
@@ -1262,23 +1263,24 @@ function submit() {
   msg(''); busy(true);
   call(S.mode === 'end' ? 'carEnd' : 'carStart', p).then(function (r) {
     busy(false);
-    if (r.unregistered) { saveCode(''); msg(unregText(r)); $('regLink').classList.toggle('hidden', !!r.pending); return; }   // 미등록: 운행은 저장되지 않음
+    if (r.unregistered) { msg(unregText(r)); $('regLink').classList.toggle('hidden', !!r.pending); return; }   // 미등록: 운행은 저장되지 않음
     if (r.needCode) { msg('코드를 입력해 주세요.'); $('pc').focus(); return; }
     if (r.running) {                                  // 이미 운행 중 → 종료부터
       setInit(r.init); S.mode = 'end'; S.receipt = '';
-      return openConfirm('이 차량은 ' + r.init.st.run.driver + ' 님 운행 중(' + r.init.st.run.startAt + ' 시작)으로 기록돼 있습니다. 먼저 운행을 종료해 주세요. 방금 찍은 사진을 하차 사진으로 넣었습니다.');
+      return openConfirm('이 차량은 운행 중(' + r.init.st.run.startAt + ' 시작)으로 기록돼 있습니다. 먼저 운행을 종료해 주세요. 방금 찍은 사진을 하차 사진으로 넣었습니다.');
     }
     if (r.notRunning) {                               // 그 사이 다른 사람이 종료 → 새 운행 시작으로
       setInit(r.init); S.mode = 'start';
       return openConfirm('이 차량의 운행은 이미 종료되었습니다. 새 운행을 시작하려면 아래 내용을 확인하세요.');
     }
     if (r.ok) {
-      saveMe(p.pin); saveCode(p.pcode);     // 다음에 열면 자동 입력
+      if (p.pin) saveMe(p.pin);     // 다음에 열면 사번 자동 입력
+      $('memo').value = '';
       showDone(r);
     }
   }).catch(function (e) {
     busy(false); msg(errText(e));
-    if (/코드가 틀렸/.test(errText(e))) { saveCode(''); $('pc').value = ''; }   // 초기화 등으로 저장된 코드가 맞지 않으면 지움
+    if (/코드가 틀렸/.test(errText(e))) $('pc').value = '';
   });
 }
 function showDone(r) {
@@ -1287,7 +1289,7 @@ function showDone(r) {
   $('doneTitle').textContent = end ? '운행이 종료되었습니다' : '운행이 시작되었습니다';
   var rows = end
     ? [['차량', carLabel(r.car, INIT.model)], ['운전자', r.name], ['탑승 → 하차', fmt(r.startKm) + ' → ' + fmt(r.km) + ' km'], ['운행거리', fmt(r.dist) + ' km'], ['행선지 · 목적', r.route + ' · ' + r.reason], ['종료 시각', r.at]]
-    : [['차량', carLabel(r.car, INIT.model)], ['운전자', r.name], ['시작 시각', r.at], ['km · 행선지 · 목적', '운행 종료 때 입력']];
+    : [['차량', carLabel(r.car, INIT.model)], ['시작 시각', r.at], ['km · 행선지 · 목적', '운행 종료 때 입력']];
   $('doneRows').innerHTML = rows.map(function (x) { return '<div class="kv"><span>' + esc(x[0]) + '</span><b>' + esc(x[1]) + '</b></div>'; }).join('');
   show('done');
 }

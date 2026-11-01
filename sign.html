@@ -378,7 +378,7 @@
       <div class="lgTabs"><button type="button" class="on" id="lgStaff">직원</button><button type="button" id="lgGuest">게스트</button></div>
       <div id="lgFields">
       <div class="field"><label>사번</label><input type="text" id="lgPin" placeholder="사번" autocomplete="off" inputmode="numeric" maxlength="20" enterkeyhint="next"></div>
-      <div class="field"><label>개인 코드</label><input type="text" id="lgCode" class="secret" placeholder="숫자 4자리" autocomplete="off" inputmode="numeric" maxlength="4" enterkeyhint="go"></div>
+      <div class="field"><label>개인 코드</label><input type="text" id="lgCode" class="secret" placeholder="숫자 6자리" autocomplete="off" inputmode="numeric" maxlength="6" enterkeyhint="go"></div>
       </div>
       <div class="msg" id="lgMsg"></div>
       <div class="row"><button class="btn pri" id="lgOk" type="button">로그인</button></div>
@@ -403,7 +403,7 @@
         <div class="note">본인 사번과 개인 코드를 직접 입력하면 지금 정보가 나옵니다. 고친 뒤 신청하면 관리자 승인 후 바뀝니다. 사번은 바꿀 수 없고, 코드는 관리자만 초기화할 수 있습니다.</div>
         <div class="codeRow">
           <div style="flex:1"><input type="text" id="chgPin" placeholder="사번" autocomplete="off" inputmode="numeric" maxlength="20"></div>
-          <div style="flex:1"><input type="text" id="chgCode" class="secret" placeholder="개인 코드" autocomplete="off" inputmode="numeric" maxlength="4"></div>
+          <div style="flex:1"><input type="text" id="chgCode" class="secret" placeholder="개인 코드" autocomplete="off" inputmode="numeric" maxlength="6"></div>
           <button class="btn gray sbtn" id="chgLoad" type="button" style="flex:none">확인</button>
         </div>
         <div class="hidden" id="chgForm">
@@ -650,9 +650,9 @@
       <div class="field"><label>팀 (선택)</label><input type="text" id="regTeam" placeholder="예: 1팀" autocomplete="off" maxlength="30"></div></div>
       <div class="fRow"><div class="field"><label>직책 (선택)</label><input type="text" id="regPost" placeholder="예: 팀장" autocomplete="off" maxlength="20"></div>
       <div class="field"><label>직위</label><input type="text" id="regRank" placeholder="예: 과장" autocomplete="off" maxlength="20"></div></div>
-      <div class="fRow"><div class="field"><label>개인 코드</label><input type="text" id="regC1" class="secret" placeholder="숫자 4자리" autocomplete="off" inputmode="numeric" maxlength="4"></div>
-      <div class="field"><label>한 번 더</label><input type="text" id="regC2" class="secret" placeholder="숫자 4자리" autocomplete="off" inputmode="numeric" maxlength="4"></div></div>
-      <div class="note">같은 숫자 반복(1111), 연속 숫자(1234·4321), 사번 앞·뒤 4자리는 쓸 수 없습니다. 꼭 기억해 두세요.</div>
+      <div class="fRow"><div class="field"><label>개인 코드</label><input type="text" id="regC1" class="secret" placeholder="숫자 6자리" autocomplete="off" inputmode="numeric" maxlength="6"></div>
+      <div class="field"><label>한 번 더</label><input type="text" id="regC2" class="secret" placeholder="숫자 6자리" autocomplete="off" inputmode="numeric" maxlength="6"></div></div>
+      <div class="note">같은 숫자 반복(111111), 연속 숫자(123456·654321), 사번 앞·뒤 6자리는 쓸 수 없습니다. 꼭 기억해 두세요.</div>
       <div class="regInfo">수집 항목: 이름, 사번, 부서명, 팀, 직책, 직위, 개인 코드
 이용 목적: 서명·차량 운행 시 본인 확인, 서명지 작성
 보유 기간: 퇴직 또는 초기화 때까지
@@ -1285,7 +1285,7 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
     if (!v('regPin')) return bad('사번을 입력하세요.', 'regPin');
     if (!v('regDept')) return bad('부서명을 입력하세요.', 'regDept');
     if (!v('regRank')) return bad('직위를 입력하세요.', 'regRank');
-    if (!/^\d{4}$/.test(v('regC1'))) return bad('개인 코드는 숫자 4자리로 정해 주세요.', 'regC1');
+    if (!/^\d{6}$/.test(v('regC1'))) return bad('개인 코드는 숫자 6자리로 정해 주세요.', 'regC1');
     if (v('regC1') !== v('regC2')) { $('regC2').value = ''; return bad('두 번 입력한 개인 코드가 다릅니다. 다시 입력하세요.', 'regC2'); }
     msg($('regMsg'), '');
     $('regShow').textContent = '';
