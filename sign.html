@@ -1166,12 +1166,11 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
     $('admOver').classList.remove('hidden'); popPush();
     setTimeout(function () { $('admPw').focus(); }, 50);
   }
-  // 열차 높이의 띠(좌우 끝까지)에서 시작해 왼쪽으로 120px 넘게 밀고 떼면 열림. 미는 동안 열차가 멈춰 따라오고, 떼면 제자리로 돌아가 다시 달림
+  // 열차 높이의 띠(좌우 끝까지)에서 시작해 왼쪽으로 120px 넘게 밀고 떼면 열림 (밀기는 누구나, 창은 admGate). 미는 동안 열차가 멈춰 따라오고, 떼면 제자리로 돌아가 다시 달림
   var trainX = null, trainY = 0, trainHit = $('trainHit'), trainDrag = $('trainDrag');
   function trainShift(px, slide) { trainDrag.style.transition = slide ? 'transform .2s ease-out' : 'none'; trainDrag.style.transform = px ? 'translateX(' + px + 'px)' : ''; }
   function trainRelease() { trainX = null; trainShift(0, true); $('train').style.animationPlayState = ''; }
   trainHit.addEventListener('pointerdown', function (e) {
-    if (!admGate()) return;                                        // 그 밖에는 눌러도 반응 없음
     trainX = e.clientX; trainY = e.clientY; $('train').style.animationPlayState = 'paused';
     try { trainHit.setPointerCapture(e.pointerId); } catch (x) {}
   });
