@@ -400,7 +400,7 @@
     <div class="card" id="chgCard">
       <div class="nhead" id="chgHead"><b>개인정보 변경</b></div>
       <div class="ebody">
-        <div class="note">사번과 개인 코드를 직접 입력하면 지금 정보가 나옵니다. 고친 뒤 신청하면 관리자 승인 후 바뀝니다. 사번은 바꿀 수 없고, 코드는 관리자만 초기화할 수 있습니다.</div>
+        <div class="note">본인 사번과 개인 코드를 직접 입력하면 지금 정보가 나옵니다. 고친 뒤 신청하면 관리자 승인 후 바뀝니다. 사번은 바꿀 수 없고, 코드는 관리자만 초기화할 수 있습니다.</div>
         <div class="codeRow">
           <div style="flex:1"><input type="text" id="chgPin" placeholder="사번" autocomplete="off" inputmode="numeric" maxlength="20"></div>
           <div style="flex:1"><input type="text" id="chgCode" class="secret" placeholder="개인 코드" autocomplete="off" inputmode="numeric" maxlength="4"></div>
@@ -1324,7 +1324,7 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
       $('chgForm').classList.remove('hidden');
     }).withFailureHandler(function (e) {
       $('chgLoad').disabled = false; $('chgCode').value = ''; msg($('chgMsg'), errText(e), '#c0392b');
-    }).empInfo({ pin: pin, pcode: pc });
+    }).empInfo({ pin: pin, pcode: pc, token: staff && staff.token || '' });
   };
   $('chgSend').onclick = function () {
     if (!chgCred) return;
@@ -1334,7 +1334,7 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
       msg($('chgMsg'), '변경 신청을 완료했습니다. 관리자가 승인하면 바뀝니다.', '#12833b');
     }).withFailureHandler(function (e) {
       $('chgSend').disabled = false; msg($('chgMsg'), errText(e), '#c0392b');
-    }).empChange({ pin: chgCred.pin, pcode: chgCred.pcode, name: $('chgName').value, dept: $('chgDept').value, team: $('chgTeam').value, post: $('chgPost').value, rank: $('chgRank').value, device: devInfo });
+    }).empChange({ pin: chgCred.pin, pcode: chgCred.pcode, token: staff && staff.token || '', name: $('chgName').value, dept: $('chgDept').value, team: $('chgTeam').value, post: $('chgPost').value, rank: $('chgRank').value, device: devInfo });
   };
 
   /* ---------- 본인 확인 없는 서명지: 양식에 있는 칸 직접 입력 ---------- */
