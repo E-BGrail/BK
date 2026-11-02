@@ -41,7 +41,7 @@
            box-shadow:0 2px 10px rgba(0,0,0,.25); display:flex; flex-direction:column; align-items:center; gap:1px; cursor:pointer; }
   .qrBtn span { display:block; width:58px; height:58px; flex:none; } .hero .qrBtn span svg { width:100%; height:100%; display:block; margin:0; }
   .qrBtn b { font-size:10px; color:var(--pri2); letter-spacing:.5px; }
-  .qrOver { position:fixed; inset:0; z-index:50; background:rgba(16,24,48,.72); display:flex; align-items:center; justify-content:center; padding:20px;
+  .qrOver { position:fixed; top:var(--vvt, 0px); left:0; right:0; height:var(--vvh, 100%); z-index:50; background:rgba(16,24,48,.72); display:flex; align-items:center; justify-content:center; padding:20px;
             animation:fadeIn .15s ease-out; }
   .qrOver .qrBox { background:#fff; border-radius:18px; padding:18px 18px 14px; width:min(88vw, 380px); text-align:center; animation:pop .2s ease-out; }
   .qrOver #qrBig svg { width:100%; height:auto; display:block; }
@@ -51,6 +51,9 @@
   .qrOver.picOnly .qrBox { padding:18px; } .qrOver.picOnly .u, .qrOver.picOnly .close { display:none; }   /* 환불 등록 QR: 그림과 안내문만 */
   /* 관리자 로그인 팝업 (서명지 목록 열차를 왼쪽으로 밀면) */
   #admOver, #codeOver { align-items:flex-start; padding-top:10vh; }   /* 로그인 팝업은 화면 위쪽에 (휴대폰 키보드에 가리지 않게) */
+  body.kbOpen .qrOver, body.kbOpen #admOver, body.kbOpen #codeOver { align-items:flex-start; padding:10px 14px; }   /* 키보드가 올라오면 보이는 영역 맨 위로 */
+  .qrOver .qrBox { max-height:calc(var(--vvh, 100vh) - 20px); overflow-y:auto; }
+  .qrOver .msg { overflow-wrap:anywhere; }
   .qrOver .admBox { text-align:left; }
   .qrOver .admBox p { margin:0 0 4px; font-size:17px; }
   @keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
@@ -76,7 +79,7 @@
   .card { background:var(--card); border-radius:16px; padding:16px; box-shadow:0 1px 2px rgba(16,24,40,.05), 0 4px 14px rgba(34,55,138,.07); margin-bottom:12px; }
   .card > b:first-child { font-size:16px; }
   .hidden { display:none !important; }
-  input[type=text], input[type=tel], input[type=password] {
+  input[type=text], input[type=tel], input[type=email], input[type=password] {
     width:100%; font-size:17px; padding:12px; border:1px solid var(--line); border-radius:10px; margin-top:8px; }
   .list { display:flex; flex-direction:column; gap:8px; margin-top:10px; }
   .person { display:flex; align-items:center; justify-content:space-between; padding:14px; border:1px solid var(--line);
@@ -268,7 +271,24 @@
   .meBar { display:flex; align-items:center; gap:6px; } .meBar b { flex:1; min-width:0; font-size:15px; }
   .meAdm { display:inline-block; margin-left:6px; padding:1px 7px; border-radius:999px; background:var(--pri); color:#fff; font-size:12px; font-weight:700; vertical-align:1px; }
   .rfTime { margin-top:6px; font-size:14px; font-weight:700; color:var(--sub); } .rfTime.soon { color:#c0392b; }
-  .regBox { max-height:88vh; overflow:auto; } .regInfo { white-space:pre-line; font-size:12px; line-height:1.6; color:var(--sub); background:#f6f7f9; border-radius:8px; padding:8px 10px; margin-top:10px; }
+  .qrOver .regBox { padding:0; overflow-x:hidden; }
+  .regHead { display:flex; align-items:center; gap:12px; padding:16px 18px; color:#fff; background:linear-gradient(160deg, #3d5cc8 0%, var(--pri) 45%, var(--pri2) 100%); }
+  .regIco { flex:none; width:42px; height:42px; border-radius:12px; background:rgba(255,255,255,.16); display:flex; align-items:center; justify-content:center; }
+  .regIco svg { width:24px; height:24px; display:block; }
+  .regHead b { display:block; font-size:17px; line-height:1.3; } .regHead small { display:block; margin-top:2px; font-size:12.5px; opacity:.85; }
+  .regSteps { display:flex; margin:0; padding:12px 18px 0; list-style:none; }
+  .regSteps li { flex:1; position:relative; font-size:12px; font-weight:600; color:var(--sub); text-align:center; }
+  .regSteps li i { display:block; width:24px; height:24px; line-height:22px; margin:0 auto 3px; border:1px solid var(--line); border-radius:50%; background:#fff; font-style:normal; font-size:12px; position:relative; z-index:1; }
+  .regSteps li + li::before { content:''; position:absolute; top:12px; left:-50%; width:100%; height:1px; background:var(--line); }
+  .regSteps li.on { color:var(--pri); font-weight:700; } .regSteps li.on i { background:var(--pri); border-color:var(--pri); color:#fff; box-shadow:0 0 0 4px rgba(50,78,179,.16); }
+  .regSteps li.done i { background:#e7ecfa; border-color:var(--pri); color:var(--pri); } .regSteps li.done + li::before, .regSteps li.on + li::before { background:var(--line); } .regSteps li.done::before, .regSteps li.on::before { background:var(--pri) !important; }
+  .regBody { padding:14px 18px 16px; }
+  .regAskText { font-size:15px; line-height:1.6; color:var(--text); } .regAskText b { color:var(--pri2); }
+  .regMailTo { font-size:14px; line-height:1.5; color:var(--text); background:#f3f6fd; border-radius:10px; padding:9px 12px; overflow-wrap:anywhere; }
+  .codeCells { position:relative; display:flex; gap:6px; margin-top:12px; } .codeCells i { flex:1; min-width:0; height:52px; line-height:50px; border:1.5px solid var(--line); border-radius:10px; background:#fff; color:var(--text); font-style:normal; font-size:24px; font-weight:700; text-align:center; transition:border-color .12s, box-shadow .12s; }
+  .codeCells i.fill { border-color:#9db0e6; background:#f7f9fe; } .codeCells.focus i.cur { border-color:var(--pri); box-shadow:0 0 0 3px rgba(50,78,179,.16); }
+  .codeCells input[type=tel] { position:absolute; inset:0; width:100%; height:100%; margin:0; padding:0; opacity:0; border:0; font-size:16px; }
+  .regInfo { white-space:pre-line; font-size:12px; line-height:1.6; color:var(--sub); background:#f6f7f9; border-radius:8px; padding:8px 10px; margin-top:10px; }
   .regChk { font-size:14px; line-height:1.8; background:#f3f6fd; border-radius:8px; padding:8px 10px; margin-top:8px; }
   input[readonly] { background:#eef1f5; color:var(--sub); }
   .apRow { border-top:1px solid var(--line); padding:10px 0; display:flex; align-items:center; gap:8px; font-size:14px; } .apRow > div { flex:1; min-width:0; } .apRow small { display:block; color:var(--sub); font-size:12px; }
@@ -646,29 +666,31 @@
 <!-- 직원 등록: 미등록 안내 → 입력 → 다시 확인 -->
 <div class="qrOver hidden" id="regOver" role="dialog" aria-label="직원 등록">
   <div class="qrBox admBox regBox">
+    <div class="regHead">
+      <span class="regIco"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2.5"></rect><path d="m4 7.5 8 6 8-6"></path></svg></span>
+      <div><b id="regHeadT"></b><small id="regHeadS"></small></div>
+    </div>
+    <ol class="regSteps hidden" id="regSteps"><li><i>1</i>메일</li><li><i>2</i>인증 코드</li><li><i>3</i>정보 입력</li></ol>
+    <div class="regBody">
     <div id="regAsk">
-      <p>등록되지 않은 직원입니다.</p>
-      <div class="hint">등록하시겠습니까?</div>
-      <div class="row"><button class="btn gray" id="regNo" type="button">취소</button><button class="btn pri" id="regGo" type="button">등록</button></div>
+      <div class="regAskText">사번 <b id="regAskPin"></b>은(는) 아직 등록되지 않았습니다.<br>사내 메일로 본인을 확인한 뒤 직접 등록할 수 있습니다.</div>
+      <div class="row"><button class="btn gray" id="regNo" type="button">취소</button><button class="btn pri" id="regGo" type="button">등록 시작</button></div>
     </div>
     <div id="regMailStep" class="hidden">
-      <p>사내 메일 인증</p>
-      <div class="field"><label>사내 메일</label><input type="email" id="regMail" autocomplete="off" inputmode="email" maxlength="80"></div>
+      <div class="field" style="margin-top:0"><label>사내 메일</label><input type="email" id="regMail" autocomplete="off" inputmode="email" maxlength="80" enterkeyhint="send"></div>
       <div class="note">입력한 메일로 인증 코드를 보냅니다. 메일은 직원DB에 기록됩니다.</div>
       <div class="msg" id="regMsgM"></div>
       <div class="row"><button class="btn gray" id="regMailNo" type="button">취소</button><button class="btn pri" id="regMailSend" type="button">인증 코드 받기</button></div>
     </div>
     <div id="regCodeStep" class="hidden">
-      <p>인증 코드 입력</p>
-      <div class="hint" id="regMailShow"></div>
-      <div class="field"><input type="tel" id="regMailCode" placeholder="인증 코드 6자리" autocomplete="one-time-code" inputmode="numeric" pattern="[0-9]*" maxlength="6"></div>
+      <div class="regMailTo" id="regMailShow"></div>
+      <div class="codeCells" id="regCells"><input type="tel" id="regMailCode" aria-label="인증 코드 6자리" autocomplete="one-time-code" inputmode="numeric" pattern="[0-9]*" maxlength="6"><i></i><i></i><i></i><i></i><i></i><i></i></div>
       <div class="msg" id="regMsgC"></div>
       <div class="row"><button class="btn gray" id="regMailAgain" type="button">메일 다시 입력</button><button class="btn pri" id="regCodeOk" type="button">확인</button></div>
     </div>
     <div id="regForm" class="hidden">
-      <p>직원 등록</p>
-      <div class="fRow"><div class="field"><label>이름</label><input type="text" id="regName" placeholder="예: 홍길동" autocomplete="off" maxlength="20"></div>
-      <div class="field"><label>사번</label><input type="tel" id="regPin" autocomplete="off" inputmode="numeric" maxlength="20" readonly></div></div>
+      <div class="fRow"><div class="field" style="margin-top:0"><label>이름</label><input type="text" id="regName" placeholder="예: 홍길동" autocomplete="off" maxlength="20"></div>
+      <div class="field" style="margin-top:0"><label>사번</label><input type="tel" id="regPin" autocomplete="off" inputmode="numeric" maxlength="20" readonly></div></div>
       <div class="fRow"><div class="field"><label>부서명</label><input type="text" id="regDept" placeholder="예: 역무처" autocomplete="off" maxlength="30"></div>
       <div class="field"><label>팀 (선택)</label><input type="text" id="regTeam" placeholder="예: 1팀" autocomplete="off" maxlength="30"></div></div>
       <div class="fRow"><div class="field"><label>직책 (선택)</label><input type="text" id="regPost" placeholder="예: 팀장" autocomplete="off" maxlength="20"></div>
@@ -684,10 +706,10 @@
       <div class="row"><button class="btn gray" id="regCancel" type="button">취소</button><button class="btn pri" id="regNext" type="button">다음</button></div>
     </div>
     <div id="regCheck" class="hidden">
-      <p>정보가 맞는지 다시 확인하세요</p>
-      <div class="regChk" id="regShow"></div>
+      <div class="regChk" id="regShow" style="margin-top:0"></div>
       <div class="msg" id="regMsg2"></div>
-      <div class="row"><button class="btn gray" id="regBack" type="button">수정</button><button class="btn pri" id="regSend" type="button">확인</button></div>
+      <div class="row"><button class="btn gray" id="regBack" type="button">수정</button><button class="btn pri" id="regSend" type="button">등록 완료</button></div>
+    </div>
     </div>
   </div>
 </div>
@@ -1304,12 +1326,33 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
   $('meOut').onclick = function () { logout(); };
 
   /* ---------- 직원 등록: 미등록 안내 → 사내 메일 → 인증 코드 → 입력 → 다시 확인 → 직원DB에 기록 ---------- */
-  function regStage(id) { ['regAsk', 'regMailStep', 'regCodeStep', 'regForm', 'regCheck'].forEach(function (s) { $(s).classList.toggle('hidden', s !== id); }); }
+  var REG_UI = { regAsk: [0, '직원 등록', '등록되지 않은 사번입니다'], regMailStep: [1, '사내 메일 인증', '본인 메일로 인증 코드를 보내 드립니다'], regCodeStep: [2, '인증 코드 입력', '메일로 받은 숫자 6자리를 입력하세요'],
+    regForm: [3, '직원 정보 입력', '서명지에 표시될 정보입니다'], regCheck: [3, '입력 내용 확인', '맞는지 다시 확인하세요'] };
+  function regStage(id) {
+    ['regAsk', 'regMailStep', 'regCodeStep', 'regForm', 'regCheck'].forEach(function (s) { $(s).classList.toggle('hidden', s !== id); });
+    var u = REG_UI[id]; $('regHeadT').textContent = u[1]; $('regHeadS').textContent = u[2];
+    $('regSteps').classList.toggle('hidden', !u[0]);
+    [].forEach.call($('regSteps').children, function (li, i) { li.classList.toggle('on', i + 1 === u[0]); li.classList.toggle('done', i + 1 < u[0]); li.firstChild.textContent = i + 1 < u[0] ? '✓' : String(i + 1); });
+    document.querySelector('.regBox').scrollTop = 0;
+  }
+  /** 인증 코드 칸: 입력은 투명한 칸 하나(문자 자동 입력·숫자패드 그대로), 보이는 것은 숫자 6칸 */
+  function regCodeDraw() {
+    var v = $('regMailCode').value;
+    [].forEach.call($('regCells').querySelectorAll('i'), function (c, i) { c.textContent = v.charAt(i); c.classList.toggle('fill', i < v.length); c.classList.toggle('cur', i === Math.min(v.length, 5)); });
+  }
+  function regCodeSet(v) { $('regMailCode').value = v; regCodeDraw(); }
+  $('regMailCode').addEventListener('input', function () {
+    regCodeSet(this.value.replace(/\D/g, '').slice(0, 6));
+    if (this.value.length === 6 && !$('regCodeOk').disabled) $('regCodeOk').click();   // 6자리를 다 넣으면 바로 확인
+  });
+  $('regMailCode').addEventListener('focus', function () { $('regCells').classList.add('focus'); });
+  $('regMailCode').addEventListener('blur', function () { $('regCells').classList.remove('focus'); });
+  $('regMail').addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); $('regMailSend').click(); } });
   var regTicket = '';
-  function closeReg() { $('regOver').classList.add('hidden'); $('regC1').value = ''; $('regC2').value = ''; $('regMailCode').value = ''; regTicket = ''; popSync(); }
+  function closeReg() { $('regOver').classList.add('hidden'); $('regC1').value = ''; $('regC2').value = ''; regCodeSet(''); regTicket = ''; popSync(); }
   function openReg(pin, domain) {
-    ['regName', 'regDept', 'regTeam', 'regPost', 'regRank', 'regC1', 'regC2', 'regMail', 'regMailCode'].forEach(function (id) { $(id).value = ''; });
-    $('regPin').value = pin; regTicket = ''; ['regMsg', 'regMsg2', 'regMsgM', 'regMsgC'].forEach(function (id) { msg($(id), ''); });
+    ['regName', 'regDept', 'regTeam', 'regPost', 'regRank', 'regC1', 'regC2', 'regMail'].forEach(function (id) { $(id).value = ''; });
+    regCodeSet(''); $('regPin').value = pin; $('regAskPin').textContent = pin; regTicket = ''; ['regMsg', 'regMsg2', 'regMsgM', 'regMsgC'].forEach(function (id) { msg($(id), ''); });
     $('regMail').placeholder = domain ? '이름@' + domain : '사내 메일';
     regStage('regAsk'); $('regOver').classList.remove('hidden'); popPush();
   }
@@ -1320,8 +1363,8 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
     $('regMailSend').disabled = true; msg($('regMsgM'), '보내는 중…', '#6b7686');
     google.script.run.withSuccessHandler(function (r) {
       $('regMailSend').disabled = false; msg($('regMsgM'), ''); msg($('regMsgC'), '');
-      $('regMailShow').textContent = r.mail + ' 로 보낸 코드를 10분 안에 입력하세요.';
-      $('regMailCode').value = ''; regStage('regCodeStep'); setTimeout(function () { $('regMailCode').focus(); }, 50);
+      $('regMailShow').textContent = r.mail + ' 로 보냈습니다. 10분 안에 입력하세요.';
+      regCodeSet(''); regStage('regCodeStep'); setTimeout(function () { $('regMailCode').focus(); }, 50);
     }).withFailureHandler(function (e) {
       $('regMailSend').disabled = false; msg($('regMsgM'), errText(e), '#c0392b');
     }).empMailSend({ pin: $('regPin').value.trim(), mail: $('regMail').value.trim() });
@@ -1332,7 +1375,7 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
       $('regCodeOk').disabled = false; msg($('regMsgC'), '');
       regTicket = r.ticket; regStage('regForm'); setTimeout(function () { $('regName').focus(); }, 50);
     }).withFailureHandler(function (e) {
-      $('regCodeOk').disabled = false; $('regMailCode').value = ''; msg($('regMsgC'), errText(e), '#c0392b');
+      $('regCodeOk').disabled = false; regCodeSet(''); $('regMailCode').focus(); msg($('regMsgC'), errText(e), '#c0392b');
     }).empMailVerify({ pin: $('regPin').value.trim(), code: $('regMailCode').value.trim() });
   };
   $('regNo').onclick = closeReg; $('regCancel').onclick = closeReg;
@@ -2417,6 +2460,22 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
     admTok = null; admData = null; admExp = {}; admOpen = {}; admOrder = {}; admInfo = {};
     resetAll();
   };
+
+  /* ---------- 휴대폰 키보드: 팝업을 보이는 영역 안에 두고, 입력 칸이 가리지 않게 ---------- */
+  (function () {
+    var v = window.visualViewport, root = document.documentElement;
+    if (!v) return;
+    var inPop = function (el) { return el && el.closest && el.closest('.qrBox') && /^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName); };
+    var showField = function () { var el = document.activeElement; if (inPop(el)) el.scrollIntoView({ block: 'center' }); };
+    var sync = function () {
+      root.style.setProperty('--vvh', v.height + 'px'); root.style.setProperty('--vvt', v.offsetTop + 'px');
+      document.body.classList.toggle('kbOpen', window.innerHeight - v.height > 120);
+      showField();
+    };
+    v.addEventListener('resize', sync); v.addEventListener('scroll', sync);
+    document.addEventListener('focusin', function () { setTimeout(showField, 300); });
+    sync();
+  })();
 
   /* ---------- 시작 ---------- */
   var DIALOG = !!(typeof INIT !== 'undefined' && INIT && INIT.dialog);
