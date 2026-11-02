@@ -325,6 +325,8 @@
   .skB strong { font-size:22px; color:var(--pri); }
   .skB small { font-size:12px; color:var(--sub); }
   .skB.done strong { color:var(--ok); }
+  .skPdfB { width:100%; margin-top:8px; padding:10px; border:1.5px solid var(--line); border-radius:12px; background:#fff; font-size:14px; font-weight:700; color:var(--pri); }
+  .skPdfB:disabled { color:#98a2b3; background:#f4f5f7; }
   .skItem.closed { border-color:var(--line); background:#f4f5f7; color:#98a2b3; }
   .skItem.closed .skB { color:#98a2b3; } .skItem.closed .skB strong { color:#98a2b3; }
   /* 점검자 화면 */
@@ -334,16 +336,18 @@
   .skGrid button.done { border-color:#bfe3cb; background:#eef8f1; } .skGrid button.done small { color:var(--ok); }
   .skGrp { margin-top:14px; font-size:13px; font-weight:800; color:var(--pri2); border-bottom:1px solid var(--line); padding-bottom:4px; }
   .skIt { padding:10px 0; border-bottom:1px dashed var(--line); }
-  .skIt .t { font-size:15px; } .skIt .q { color:var(--sub); font-size:12px; margin-left:4px; white-space:pre-line; }
+  .skIt .t { font-size:15px; }
   .skIt .rfSeg { margin-top:6px; } .skIt .rfSeg button { padding:9px 4px; }
   .skIt .rfSeg button.x.on { background:#c0392b; }
   .skIt.miss { background:#fff5f4; }
   .skIt input { margin-top:6px; font-size:15px; padding:9px 10px; }
-  #sk textarea, #nSkAdd { width:100%; font-size:15px; padding:10px; border:1px solid var(--line); border-radius:10px; margin-top:6px; font-family:inherit; }
+  #sk textarea { width:100%; font-size:15px; padding:10px; border:1px solid var(--line); border-radius:10px; margin-top:6px; font-family:inherit; }
   .skChecks { display:grid; grid-template-columns:repeat(3, 1fr); gap:4px 8px; margin-top:6px; }
   .skChecks label { display:flex; align-items:center; gap:5px; font-size:14px; color:var(--text); }
   .skChecks input { width:18px; height:18px; margin:0; accent-color:var(--pri); flex:none; }
-  #skPad { height:200px; }
+  .skQ { display:flex; gap:6px; } .skQ .qi { flex:0 0 40%; min-width:0; } .skQ .ni { flex:1; min-width:0; }   /* 수량 · 비고 */
+  .skQ input::placeholder { color:#98a2b3; }
+  @media (orientation: landscape) and (max-height: 600px) { .lvPadW canvas { height:min(200px, calc(100dvh - 190px)); min-height:90px; } }
   /* 체크리스트 모양 (점검자 최종 확인 · 팀장 확인) */
   .skPaper { background:#fff; border:1px solid #c9ced8; border-radius:6px; padding:10px; color:#111; font-size:12px; }
   .skPaper .pT { text-align:center; font-size:17px; font-weight:800; margin:2px 0 8px; }
@@ -617,8 +621,7 @@
       <div class="field hidden" id="nSkBox"><label>점검할 역</label>
         <label class="vchk" style="margin-top:6px"><input type="checkbox" id="nSkAll" checked> <b>전체 선택</b></label>
         <div class="skChecks" id="nSkList"></div>
-        <input type="text" id="nSkAdd" placeholder="직접 입력 (쉼표로 여러 역)" autocomplete="off" maxlength="200">
-        <div class="note">안전점검: 접속 코드 없이 서명지 목록에 점검자·팀장 박스로 보입니다. 점검자는 역을 골라 입력하고 서명, 팀장(직책에 '팀장')은 역마다 확인하고 서명합니다. 역은 서명지를 연 뒤에는 바꿀 수 없습니다.</div></div>
+        <div class="note">안전점검(역무처): 제목은 "안전점검의 날 체크리스트"로 고정, 접속 코드 없이 서명지 목록에 점검자·팀장 박스로 보입니다. 점검자는 역을 골라 입력하고 서명, 팀장(직책에 '팀장')은 역마다 확인하고 서명합니다. 역은 서명지를 연 뒤에는 바꿀 수 없습니다.</div></div>
       <div class="field" id="nTitleRow"><label id="nTitleLabel">교육명</label><input type="text" id="nTitle" placeholder="예: 4분기 비상대응 훈련" autocomplete="off"></div>
       <div class="fRow"><div class="field" id="nDeptRow"><label>부서명</label><select id="nDept"></select></div>
       <div class="field" id="nTeamRow"><label>팀</label><select id="nTeam"></select></div></div>
@@ -726,6 +729,12 @@
         <div class="field"><label><b style="color:var(--text);font-size:15px">특이사항</b> <span class="hint">(선택)</span></label><textarea id="skSp" rows="3" maxlength="300"></textarea></div>
         <div class="row"><button class="btn gray" id="skFormBack" type="button">역 목록</button><button class="btn pri" id="skDone" type="button">완료</button></div>
       </div>
+      <div id="skPdf" class="hidden">
+        <div class="who" style="margin-top:10px">PDF 출력</div>
+        <div class="hint">팀장 확인이 끝난 역만 받을 수 있습니다. 서명지 양식 그대로 PDF로 저장되니 출력해서 보관하세요.</div>
+        <div class="list" id="skPdfList"></div>
+        <div class="row"><button class="btn gray" id="skPdfBack" type="button">서명지 목록</button><button class="btn pri" id="skPdfAll" type="button">전체 PDF</button></div>
+      </div>
       <div id="skRev" class="hidden">
         <div class="hint" style="margin-bottom:8px">입력한 내용을 확인하세요. 맞으면 [최종 확인]을 누르고 서명합니다.</div>
         <div id="skPaperBox"></div>
@@ -733,9 +742,14 @@
       </div>
       <div id="skSig" class="hidden">
         <div class="who" id="skSigName" style="margin-top:10px"></div>
-        <div class="hint">✍️ 아래 칸에 손가락으로 서명하세요.</div>
-        <div class="padarea"><canvas id="skPad"></canvas></div>
-        <div class="row"><button class="btn gray" id="skClear" type="button">지우기</button><button class="btn gray" id="skSigBack" type="button">뒤로</button><button class="btn pri" id="skSend" type="button">다음</button></div>
+        <div class="rot">✍️ 아래 칸에 손가락으로 서명 · 📱 <b>가로로 돌리면</b> 칸이 커집니다</div>
+        <div class="padarea">
+          <div class="padwrap"><canvas id="skPad"></canvas></div>
+          <div class="actions">
+            <div class="row"><button class="btn gray" id="skClear" type="button">지우기</button><button class="btn gray" id="skSigBack" type="button">뒤로</button></div>
+            <div class="row sub"><button class="btn pri" id="skSend" type="button">다음</button></div>
+          </div>
+        </div>
       </div>
       <div class="msg" id="skMsg"></div>
     </div>
@@ -2023,36 +2037,68 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
     var w = document.createElement('div'); w.className = 'skItem' + (closed ? ' closed' : '');
     w.innerHTML = '<div class="skTop"><span class="skTag">안전점검의 날</span><b></b><span class="rank"></span></div>' +
       '<div class="skBoxes"><button type="button" class="skB ins"><em>점검자 서명</em><strong></strong><small></small></button>' +
-      '<button type="button" class="skB lead"><em>팀장 확인</em><strong></strong><small></small></button></div>';
+      '<button type="button" class="skB lead"><em>팀장 확인</em><strong></strong><small></small></button></div>' +
+      '<button type="button" class="skPdfB"></button>';
     var q = function (x) { return w.querySelector(x); };
     q('b').textContent = e.title; q('.rank').textContent = [e.dept, e.date].filter(Boolean).join(' · ');
     q('.ins strong').textContent = c.ins + ' / ' + c.n; q('.lead strong').textContent = c.lead + ' / ' + c.n;
     q('.ins').classList.toggle('done', c.n > 0 && c.ins >= c.n); q('.lead').classList.toggle('done', c.n > 0 && c.lead >= c.n);
     q('.ins small').textContent = closed ? '접수 마감' : c.ins >= c.n ? '모든 역 완료' : '눌러서 역 선택';
     q('.lead small').textContent = closed ? '접수 마감' : '팀장만';
+    q('.skPdfB').textContent = '📄 PDF 출력 · 팀장 확인 완료 ' + c.lead + '개 역'; q('.skPdfB').disabled = !c.lead;   // 마감 후에도 받을 수 있음
+    q('.skPdfB').onclick = function () { skOpen(e.id, false, null, true); };
     if (closed) { q('.ins').disabled = true; q('.lead').disabled = true; }
     else { q('.ins').onclick = function () { skOpen(e.id, false); }; q('.lead').onclick = function () { skLeadOpen(e.id); }; }
     return w;
   }
 
   /* ---------- 점검자 ---------- */
-  function skOpen(id, again, stName) {
+  function skOpen(id, again, stName, pdf) {
     msg($('msg1'), '불러오는 중…', '#6b7686');
     google.script.run.withSuccessHandler(function (d) {
       msg($('msg1'), ''); sk = d;
       $('skTitle').textContent = d.title; $('skDate').textContent = d.date || '';
       var st = stName && d.stations.filter(function (x) { return x.st === stName; })[0];
-      if (st) skForm(st); else skStage('pick');
+      if (st) skForm(st); else if (pdf) skPdfShow(); else skStage('pick');
       show('sk');
     }).withFailureHandler(function (e) { msg($('msg1'), errText(e), '#c0392b'); }).safetyOpen(staff && staff.token || '', id);
   }
   function skStage(s) {
     skStep = s;
-    ['pick', 'form', 'rev', 'sig'].forEach(function (k) { $('sk' + { pick: 'Pick', form: 'Form', rev: 'Rev', sig: 'Sig' }[k]).classList.toggle('hidden', k !== s); });
+    ['pick', 'form', 'rev', 'sig', 'pdf'].forEach(function (k) { $('sk' + { pick: 'Pick', form: 'Form', rev: 'Rev', sig: 'Sig', pdf: 'Pdf' }[k]).classList.toggle('hidden', k !== s); });
     if (s === 'pick') skGrid();
-    if (s === 'sig') setTimeout(function () { skPad.setup(); }, 30);
+    if (s === 'sig') setTimeout(function () { skPad.setup(); }, 30);   // 서명 칸 높이는 skPad.fit이 맞춤
     window.scrollTo(0, 0); saveState();
   }
+  /* ---------- PDF 출력: 팀장 확인이 끝난 역 (마감된 서명지도 받을 수 있음) ---------- */
+  var skPdfBusy = false;
+  function skPdfShow() {
+    skSt = null; skStage('pdf');
+    var box = $('skPdfList'), done = sk.stations.filter(function (x) { return x.lead; }); box.innerHTML = '';
+    if (!done.length) box.innerHTML = '<div class="hint">팀장 확인이 끝난 역이 없습니다.</div>';
+    $('skPdfAll').disabled = !done.length;
+    done.forEach(function (x) {
+      var b = document.createElement('button'); b.type = 'button'; b.className = 'person';
+      b.innerHTML = '<span><b></b><br><span class="rank"></span></span><span class="badge">PDF 저장</span>';
+      b.querySelector('b').textContent = x.st; b.querySelector('.rank').textContent = '점검자 ' + (x.ins ? x.ins.name : '') + ' · 팀장 확인 완료';
+      b.onclick = function () { skPdfGet(x.st); };
+      box.appendChild(b);
+    });
+  }
+  function skPdfGet(st) {
+    if (skPdfBusy) return;
+    skPdfBusy = true; $('skPdfAll').disabled = true; msg($('skMsg'), 'PDF 만드는 중… (10초 이상 걸릴 수 있습니다)', '#6b7686');
+    google.script.run.withSuccessHandler(function (r) {
+      skPdfBusy = false; $('skPdfAll').disabled = false;
+      if (r.pdf) saveFile(r.base + '.pdf', b64Blob(r.pdf, 'application/pdf'));
+      else r.pdfs.forEach(function (b64, i) { setTimeout(function () { saveFile(r.base + '_' + (r.names[i] || i + 1) + '.pdf', b64Blob(b64, 'application/pdf')); }, i * 700); });
+      msg($('skMsg'), 'PDF를 저장했습니다 (' + r.names.length + '개 역). 컴퓨터·휴대폰 다운로드 폴더를 확인하세요.', '#12833b');
+    }).withFailureHandler(function (e) {
+      skPdfBusy = false; $('skPdfAll').disabled = false; msg($('skMsg'), errText(e), '#c0392b');
+    }).safetyPdf(staff && staff.token || '', sk.id, st || '');
+  }
+  $('skPdfAll').onclick = function () { skPdfGet(''); };
+  $('skPdfBack').onclick = function () { if (!skPdfBusy) resetAll(); };
   function skGrid() {
     var g = $('skGrid'); g.innerHTML = '';
     sk.stations.forEach(function (x) {
@@ -2064,11 +2110,21 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
       g.appendChild(b);
     });
   }
+  /** 수량 정리 (서버와 같게): 비었거나 0이면 '-', 줄바꿈은 '/'로도 입력 */
+  function skQNorm(v) {
+    var lines = String(v == null ? '' : v).split(/[\n\/]/).map(function (x) { return x.replace(/\s+/g, ' ').trim().slice(0, 30); }).filter(Boolean);
+    var zero = function (x) { return /^(?:[^:：]*[:：]\s*)?0*\s*(개소|개|식)?$/.test(x) || x === '-'; };
+    return !lines.length || lines.every(zero) ? '-' : lines.join('\n');
+  }
+  function skQtyOut() { var o = {}; skSt.items.forEach(function (it) { o[it.i] = skQNorm(skQty[it.i]); }); return o; }
+  function skItemsEdited() { return skSt.items.map(function (it) { return { i: it.i, f: it.f, t: it.t, q: skQNorm(skQty[it.i]) }; }); }
+  var skQty = {};
   function skDraftKey() { return SK_I + sk.id + ':' + skSt.st; }
   function skForm(x) {
     skSt = x;
     var dr = lsGet(skDraftKey());                     // 입력 중이던 값 (창을 닫았다 열어도)
     skRes = JSON.parse(JSON.stringify((dr && dr.res) || x.def || {}));
+    skQty = {}; x.items.forEach(function (it) { skQty[it.i] = dr && dr.qty && dr.qty[it.i] !== undefined ? dr.qty[it.i] : it.q === '-' ? '' : it.q.replace(/\n/g, ' / '); });
     $('skStName').textContent = x.st;
     $('skDefNote').textContent = dr ? '입력하던 내용을 불러왔습니다.' : x.ins ? '이 서명지에 낸 값입니다. 고친 뒤 다시 서명하면 바뀝니다.' + (x.lead ? ' (팀장 확인은 다시 받아야 합니다)' : '') :
       x.def ? '지난 점검 값이 기본으로 선택되어 있습니다. 바뀐 곳만 고치세요.' : '첫 점검입니다. 모든 항목을 고르세요.';
@@ -2078,10 +2134,11 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
       if (it.f !== lastF) { var h = document.createElement('div'); h.className = 'skGrp'; h.textContent = it.f; box.appendChild(h); lastF = it.f; }
       var v = skRes[it.i] || (skRes[it.i] = ['', '']);
       var d = document.createElement('div'); d.className = 'skIt'; d.setAttribute('data-i', it.i);
-      d.innerHTML = '<div><span class="t"></span><span class="q"></span></div><div class="rfSeg"><button type="button">O 양호</button><button type="button" class="x">X 불량</button></div>' +
-        '<input type="text" maxlength="60" placeholder="비고(조치사항)" autocomplete="off">';
-      d.querySelector('.t').textContent = it.t; d.querySelector('.q').textContent = it.q === '-' ? '' : '(' + it.q.replace(/\n/g, ', ') + ')';
-      var bs = d.querySelectorAll('.rfSeg button'), inp = d.querySelector('input');
+      d.innerHTML = '<div><span class="t"></span></div><div class="rfSeg"><button type="button">O 양호</button><button type="button" class="x">X 불량</button></div>' +
+        '<div class="skQ"><input type="text" class="qi" maxlength="30" placeholder="수량 (없으면 -)" autocomplete="off"><input type="text" class="ni" maxlength="60" placeholder="비고(조치사항)" autocomplete="off"></div>';
+      d.querySelector('.t').textContent = it.t;
+      var bs = d.querySelectorAll('.rfSeg button'), inp = d.querySelector('.ni'), qin = d.querySelector('.qi');
+      qin.value = skQty[it.i]; qin.oninput = function () { skQty[it.i] = qin.value; skDraft(); };
       var paint = function () { bs[0].classList.toggle('on', v[0] === 'O'); bs[1].classList.toggle('on', v[0] === 'X'); };
       bs[0].onclick = function () { v[0] = 'O'; d.classList.remove('miss'); paint(); skDraft(); };
       bs[1].onclick = function () { v[0] = 'X'; d.classList.remove('miss'); paint(); skDraft(); };
@@ -2090,7 +2147,7 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
     });
     skStage('form');
   }
-  function skDraft() { if (sk && skSt) lsSet(skDraftKey(), { res: skRes, sp: $('skSp').value }); }
+  function skDraft() { if (sk && skSt) lsSet(skDraftKey(), { res: skRes, sp: $('skSp').value, qty: skQty }); }
   $('skSp').oninput = skDraft;
   $('skHome').onclick = function () { resetAll(); };
   $('skFormBack').onclick = function () { skStage('pick'); };
@@ -2099,7 +2156,7 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
     [].forEach.call($('skItems').querySelectorAll('.skIt'), function (d) { d.classList.toggle('miss', miss.some(function (it) { return String(it.i) === d.getAttribute('data-i'); })); });
     if (miss.length) { msg($('skMsg'), '점검결과를 고르지 않은 항목 ' + miss.length + '개가 있습니다.', '#c0392b'); var f = $('skItems').querySelector('.miss'); if (f) f.scrollIntoView({ block: 'center' }); return; }
     msg($('skMsg'), '');
-    $('skPaperBox').innerHTML = skPaper(skSt, skRes, $('skSp').value, null, '', '', sk.title, sk.date, true);
+    $('skPaperBox').innerHTML = skPaper({ st: skSt.st, items: skItemsEdited() }, skRes, $('skSp').value, null, '', '', sk.title, sk.date, true);
     skStage('rev');
   };
   $('skRevBack').onclick = function () { skStage('form'); };
@@ -2111,18 +2168,20 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
     if (skBusy) return;
     if (!skPad.strokes.length) { msg($('skMsg'), '서명해 주세요.', '#c0392b'); return; }
     if (skPad.n < 6) { msg($('skMsg'), '서명이 너무 짧습니다. 조금 더 크게 서명해 주세요.', '#c0392b'); return; }
-    skBusy = true; $('skSend').disabled = true; msg($('skMsg'), '제출 중…', '#6b7686');
+    skBusy = true; skPad.locked = true; $('skPad').classList.add('locked'); $('skSend').disabled = true; $('skClear').disabled = true; $('skSigBack').disabled = true; msg($('skMsg'), '제출 중…', '#6b7686');
+    var unlock = function () { skBusy = false; skPad.locked = false; $('skPad').classList.remove('locked'); $('skSend').disabled = false; $('skClear').disabled = false; $('skSigBack').disabled = false; };
     google.script.run.withSuccessHandler(function (r) {
-      skBusy = false; $('skSend').disabled = false; lsSet(skDraftKey(), null);
+      unlock(); lsSet(skDraftKey(), null);
       var done = r.st + ' 점검 서명을 ' + (r.resigned ? '다시 ' : '') + '제출했습니다.' + (r.reLead ? ' 팀장 확인은 다시 받아야 합니다.' : '');
       google.script.run.withSuccessHandler(function (d) { sk = d; skStage('pick'); msg($('skMsg'), done, '#12833b'); })
         .withFailureHandler(function () { skStage('pick'); msg($('skMsg'), done, '#12833b'); }).safetyOpen(staff && staff.token || '', sk.id);
     }).withFailureHandler(function (e) {
-      skBusy = false; $('skSend').disabled = false; msg($('skMsg'), errText(e), '#c0392b');
-    }).safetySubmit({ token: staff && staff.token || '', eduId: sk.id, st: skSt.st, res: skRes, sp: $('skSp').value, dataUrl: skPad.png(), device: devInfo });
+      unlock(); msg($('skMsg'), errText(e), '#c0392b');
+    }).safetySubmit({ token: staff && staff.token || '', eduId: sk.id, st: skSt.st, res: skRes, qty: skQtyOut(), sp: $('skSp').value, dataUrl: skPad.png(), device: devInfo });
   };
   function skBack() {                                // 휴대폰 뒤로가기: 한 단계씩
-    if (skBusy) return;
+    if (skBusy || skPdfBusy) return;
+    if (skStep === 'pdf') { resetAll(); return; }
     if (skStep === 'sig') skStage('rev'); else if (skStep === 'rev') skStage('form'); else if (skStep === 'form') skStage('pick'); else resetAll();
   }
 
@@ -2171,7 +2230,9 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
         c2.stroke();
       });
     };
+    P.locked = false;                                   // 제출 중에는 서명 칸에 더 그려지지 않게
     P.setup = function () {
+      if (P.fit) P.fit();
       if (!cv.clientWidth) return;
       var r = window.devicePixelRatio || 1; cv.width = cv.clientWidth * r; cv.height = cv.clientHeight * r;
       c2.setTransform(r, 0, 0, r, 0, 0); c2.lineWidth = 3; c2.lineCap = 'round'; c2.lineJoin = 'round'; c2.strokeStyle = '#000'; c2.fillStyle = '#000';
@@ -2180,6 +2241,7 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
     P.clear = function () { P.strokes = []; P.n = 0; vw = 0; vh = 0; c2.clearRect(0, 0, cv.clientWidth, cv.clientHeight); };
     cv.addEventListener('pointerdown', function (e) {
       e.preventDefault();
+      if (P.locked) return;
       if (e.pointerType === 'mouse') { msg(msgEl, '서명은 휴대폰이나 태블릿 화면에 손가락(또는 펜)으로 해 주세요.', '#c0392b'); return; }
       try { cv.setPointerCapture(e.pointerId); } catch (x) {}
       if (!vw) { vw = cv.clientWidth; vh = cv.clientHeight; }
@@ -2212,6 +2274,14 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
     return P;
   }
   var skPad = makePad($('skPad'), $('skMsg'));
+  /* 세로 화면: 서명 칸 높이를 남은 화면에 맞춤 (160~280px) → 아래 버튼까지 한 화면에 보이게 (가로는 CSS) */
+  skPad.fit = function () {
+    var cv = $('skPad');
+    if (!window.matchMedia || !window.matchMedia('(orientation: portrait)').matches) { cv.style.height = ''; return; }
+    var top = cv.getBoundingClientRect().top + (window.scrollY || 0), acts = document.querySelector('#skSig .actions');
+    var h = Math.round(window.innerHeight - top - ((acts ? acts.offsetHeight : 110) + 12 + 14));
+    cv.style.height = Math.max(160, Math.min(280, h)) + 'px';
+  };
   var lvPadP = makePad($('lvPad'), $('lvMsg'), function () { $('lvOld').classList.add('hidden'); });
 
   /* ---------- 팀장 확인 ---------- */
@@ -2623,8 +2693,6 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
     var nTplUi = function () {
       var rf = isRfTpl(sel.value), skT = isSkTpl(sel.value);
       $('nSkBox').classList.toggle('hidden', !skT);
-      $('nTitleLabel').textContent = skT ? '제목' : '교육명';
-      $('nTitle').placeholder = skT ? '안전점검의 날 체크리스트' : '예: 4분기 비상대응 훈련';
       if (skT) { skChecks(sel.value); if (!$('nDate').value || $('nDate').value === today()) $('nDate').value = skToday(); }
       else if ($('nDate').value === skToday()) $('nDate').value = today();
       var gNew = !$('nVerify').checked;
@@ -2638,8 +2706,7 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
       $('nRosterBox').classList.toggle('hidden', rf || !$('nVerify').checked || !$('nUseRoster').checked);
       if (skT) {                                   // 안전점검: 본인 확인(직원 로그인)만, 명단·접속 코드 없음
         $('nVerify').checked = true; $('nNoVerify').classList.add('hidden');
-        ['nKindRow', 'nCodeRow', 'nRosterBox'].forEach(function (id) { $(id).classList.add('hidden'); });
-        ['nDeptRow', 'nTeamRow', 'nDeptNote'].forEach(function (id) { $(id).classList.remove('hidden'); });
+        ['nKindRow', 'nCodeRow', 'nRosterBox', 'nTitleRow', 'nDeptRow', 'nTeamRow', 'nDeptNote'].forEach(function (id) { $(id).classList.add('hidden'); });   // 제목·부서명(역무처)은 고정
       }
     };
     nTplUi(); sel.onchange = nTplUi; $('nUseRoster').onchange = nTplUi;
@@ -2706,12 +2773,11 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
       return;
     }
     if (skNew) {
-      var sts = [].filter.call($('nSkList').querySelectorAll('input'), function (x) { return x.checked; }).map(function (x) { return x.value; })
-        .concat($('nSkAdd').value.split(/[,，]/).map(function (x) { return x.trim(); }).filter(Boolean));
+      var sts = [].filter.call($('nSkList').querySelectorAll('input'), function (x) { return x.checked; }).map(function (x) { return x.value; });
       if (!sts.length) { msg($('nMsg'), '점검할 역을 하나 이상 고르세요.', '#c0392b'); return; }
       $('nCreate').disabled = true;
-      admCall('adminCreateEdu', [{ tpl: $('nTpl').value, title: $('nTitle').value, dept: dept, team: dept ? $('nTeam').value : '', date: $('nDate').value, stations: sts }], function (d) {
-        $('nCreate').disabled = false; $('nTitle').value = ''; $('nSkAdd').value = ''; $('nDept').innerHTML = '';
+      admCall('adminCreateEdu', [{ tpl: $('nTpl').value, date: $('nDate').value, stations: sts }], function (d) {
+        $('nCreate').disabled = false;
         $('newCard').classList.remove('open'); admTab = 'open'; renderAdmin(d);
       }, $('nMsg'), function () { $('nCreate').disabled = false; });
       setTimeout(function () { $('nCreate').disabled = false; }, 20000);
@@ -2844,7 +2910,7 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
     q('.roleBox').classList.toggle('hidden', !e.hasRole || !!e.guest || !!e.refund);
     // 비상(환불 등록): 접속 코드·서명자 순서 없음
     q('.codeSec').classList.toggle('hidden', !!e.refund || !!e.safety); q('.ordSec').classList.toggle('hidden', !!e.refund || !!e.safety);   // 안전점검: 접속 코드·순서 없음 (역 순서)
-    if (e.safety) { q('.roleBox').classList.add('hidden'); q('.i-title').previousElementSibling.textContent = '제목'; }
+    if (e.safety) { q('.roleBox').classList.add('hidden'); q('.i-title').parentElement.classList.add('hidden'); q('.i-deptRow').classList.add('hidden'); q('.i-teamRow').classList.add('hidden'); }
     q('.b-pdf').classList.toggle('hidden', !!e.refund); q('.b-html').classList.toggle('hidden', !!e.refund);
     if (e.refund) q('.expTitle').textContent = '등록 명단 내보내기 (CSV)';
     if (e.refund) {
