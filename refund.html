@@ -726,7 +726,7 @@
 <footer id="foot">부산-김해경전철(주) · e-싸인</footer>
 
 <script>
-/* ▼▼▼ 여기만 고치세요: 전자서명 웹 앱 배포 주소 (…/exec 로 끝남, 업무차량관리 index.html과 같은 주소) ▼▼▼ */
+/* ▼▼▼ 여기만 고치세요: 전자서명 웹 앱 배포 주소 (…/exec 로 끝남, 업무차량관리 car.html과 같은 주소) ▼▼▼ */
 var API = 'https://script.google.com/macros/s/AKfycbwjudREVuPqSxXknvG5XClW_tQKbD-4wkCJkyeZt0KKY-spuDCymTt9O5j_6L28Z9QK/exec';
 /* ▲▲▲ */
 /* GitHub Pages용 전자서명 화면: 구글 웹 앱 화면 위의 '구글 사용자가 만든 앱' 알림 없이 열림.
@@ -2524,7 +2524,7 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
    환불 등록 QR(주소?e=…)은 입력 화면을 다 받은 뒤에 보여 줌 */
 (function () {
   var q = new URLSearchParams(location.search), e = String(q.get('e') || '').replace(/[^\w]/g, '').slice(0, 20);
-  var base = { url: SIGN_HOME, carPage: SIGN_HOME.replace(/[^\/]*$/, ''), educations: [] };   // QR은 이 화면 주소로, 업무차량관리는 같은 저장소의 index.html
+  var base = { url: SIGN_HOME, carPage: SIGN_HOME.replace(/[^\/]*$/, '') + 'car.html', educations: [] };   // QR은 이 화면 주소로, 업무차량관리는 같은 저장소의 car.html
   try { localStorage.removeItem('bglSignInit'); } catch (x) {}          // 예전에 저장한 목록 지움
   var onRefund = /refund\.html$/.test(location.pathname);               // 환불 등록 QR은 refund.html, e-싸인은 sign.html
   if (e && !onRefund) { location.replace('refund.html' + location.search); return; }
