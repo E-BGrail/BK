@@ -293,10 +293,10 @@
       </div>
 
       <div class="grid2 hidden" id="idBox" style="margin-top:4px">
-        <div class="fld"><label for="nm">사번</label><input type="text" id="nm" autocomplete="off" inputmode="numeric" maxlength="20"></div>
+        <div class="fld"><label for="nm">사번</label><input type="tel" id="nm" autocomplete="off" inputmode="numeric" pattern="[0-9]*" maxlength="20"></div>
         <div class="fld"><label for="pc">개인 코드</label><input type="text" id="pc" class="secret" inputmode="numeric" maxlength="6" autocomplete="off"></div>
       </div>
-      <a class="btn gray hidden" id="regLink" href="sign.html" style="display:block;text-align:center;margin-top:10px;text-decoration:none">e-싸인에서 직원 등록 신청</a>
+      <a class="btn gray hidden" id="regLink" href="sign.html" style="display:block;text-align:center;margin-top:10px;text-decoration:none">e-싸인에서 직원 등록</a>
 
       <div id="endBox" class="hidden">
         <div class="sec"><span class="lbl">행선지<small>이 차량에서 자주 쓰는 곳 자동 선택</small></span><div class="chips" id="routes" role="group" aria-label="행선지"></div>
@@ -352,7 +352,7 @@
           <img id="crcThumb" class="hidden" alt="전표 사진">
           <div class="crcShots"><label class="btn gray crcShot" id="crcShot">전표 촬영<input type="file" id="crcFile" accept="image/*" capture="environment" hidden></label>
             <label class="btn gray crcShot">사진 선택<input type="file" id="crcFile2" accept="image/*" hidden></label></div>
-          <input type="text" id="crcPin" placeholder="사번" autocomplete="off" inputmode="numeric" maxlength="20">
+          <input type="tel" id="crcPin" placeholder="사번" autocomplete="off" inputmode="numeric" pattern="[0-9]*" maxlength="20">
           <input type="text" id="crcPc" class="secret" placeholder="개인 코드 6자리" autocomplete="off" inputmode="numeric" maxlength="6">
         </div>
         <div class="carPanelBtns"><button type="button" class="btn gray" id="crcNo">취소</button><button type="button" class="btn pri" id="crcOk" disabled>등록</button></div>
@@ -470,8 +470,8 @@ document.addEventListener('select', function (e) { var el = e.target; if (el && 
 /** 차량번호 + 차종 표시 */
 function carLabel(no, model) { return (no || '') + (model ? ' ' + model : ''); }
 function saveMe(pin) { try { localStorage.setItem(ME_KEY, pin); } catch (e) {} }
-/** 미등록·승인 대기 응답 안내 문구 */
-function unregText(r) { return r.pending ? '등록 신청을 관리자가 확인 중입니다. 승인 후 이용할 수 있습니다.' : '등록되지 않은 직원입니다. e-싸인에서 직원 등록을 신청해 주세요.'; }
+/** 미등록 응답 안내 문구 */
+function unregText() { return '등록되지 않은 직원입니다. e-싸인에서 직원 등록을 해 주세요.'; }
 /** e-싸인에 직원으로 로그인해 있는지 (같은 탭에서 넘어온 경우) */
 function isStaff() { try { var s = JSON.parse(sessionStorage.getItem('bglStaff') || 'null'); return !!(s && s.token); } catch (e) { return false; } }
 
@@ -1263,7 +1263,7 @@ function submit() {
   msg(''); busy(true);
   call(S.mode === 'end' ? 'carEnd' : 'carStart', p).then(function (r) {
     busy(false);
-    if (r.unregistered) { msg(unregText(r)); $('regLink').classList.toggle('hidden', !!r.pending); return; }   // 미등록: 운행은 저장되지 않음
+    if (r.unregistered) { msg(unregText(r)); $('regLink').classList.remove('hidden'); return; }   // 미등록: 운행은 저장되지 않음
     if (r.needCode) { msg('코드를 입력해 주세요.'); $('pc').focus(); return; }
     if (r.running) {                                  // 이미 운행 중 → 종료부터
       setInit(r.init); S.mode = 'end'; S.receipt = '';
