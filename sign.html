@@ -258,16 +258,14 @@
   .tprev th.k-sign { background:#dfe6fb; color:var(--pri2); }
   .tprev td.more { color:var(--sub); font-size:9px; height:11px; padding:0; }
   /* 직원 등록 카드 */
-  #chgCard .nhead, #pcCard .nhead { cursor:pointer; position:relative; padding-right:34px; }
-  #chgCard .nhead::after, #pcCard .nhead::after { content:'▾'; position:absolute; right:2px; top:-2px; color:var(--sub); font-size:28px; line-height:1; transition:transform .2s; }
-  #chgCard.open .nhead::after, #pcCard.open .nhead::after { transform:rotate(180deg); }
-  #chgCard .ebody, #pcCard .ebody { display:none; } #chgCard.open .ebody, #pcCard.open .ebody { display:block; }
+  #chgCard .nhead, #pcCard .nhead, #gstCard .nhead { cursor:pointer; position:relative; padding-right:34px; }
+  #chgCard .nhead::after, #pcCard .nhead::after, #gstCard .nhead::after { content:'▾'; position:absolute; right:2px; top:-2px; color:var(--sub); font-size:28px; line-height:1; transition:transform .2s; }
+  #chgCard.open .nhead::after, #pcCard.open .nhead::after, #gstCard.open .nhead::after { transform:rotate(180deg); }
+  #chgCard .ebody, #pcCard .ebody, #gstCard .ebody { display:none; } #chgCard.open .ebody, #pcCard.open .ebody, #gstCard.open .ebody { display:block; }
   #chgCard .codeRow, #pcCard .codeRow { align-items:flex-end; }
   /* 개인 코드: 입력 글자를 점으로 가림 (비밀번호 칸이 아니라서 휴대폰·브라우저가 저장하자고 묻지 않음) */
   .secret { -webkit-text-security:disc; letter-spacing:4px; }
   /* 로그인 */
-  .lgTabs { display:flex; gap:8px; margin-bottom:6px; } .lgTabs button { flex:1; height:42px; border-radius:10px; border:1px solid var(--line); background:#fff; color:var(--text); font-size:15px; font-weight:700; }
-  .lgTabs button.on { background:var(--pri); border-color:var(--pri); color:#fff; }
   .meBar { display:flex; align-items:center; gap:6px; } .meBar b { flex:1; min-width:0; font-size:15px; }
   .meAdm { display:inline-block; margin-left:6px; padding:1px 7px; border-radius:999px; background:var(--pri); color:#fff; font-size:12px; font-weight:700; vertical-align:1px; }
   .rfTime { margin-top:6px; font-size:14px; font-weight:700; color:var(--sub); } .rfTime.soon { color:#c0392b; }
@@ -398,18 +396,16 @@
 </div>
 
 <main>
-  <!-- 로그인: 사번 + 개인 코드, 또는 게스트 -->
+  <!-- 로그인: 사번 + 개인 코드 (외부 참석자는 배포용 아이디 + 코드) -->
   <section id="sl">
     <div class="card">
-      <div class="lgTabs"><button type="button" class="on" id="lgStaff">직원</button><button type="button" id="lgGuest">게스트</button></div>
       <div id="lgFields">
       <div class="field"><label>사번</label><input type="tel" id="lgPin" placeholder="사번" autocomplete="off" inputmode="numeric" pattern="[0-9]*" maxlength="20" enterkeyhint="next"></div>
       <div class="field"><label>개인 코드</label><input type="text" id="lgCode" class="secret" placeholder="숫자 6자리" autocomplete="off" inputmode="numeric" maxlength="6" enterkeyhint="go"></div>
       </div>
       <div class="msg" id="lgMsg"></div>
       <div class="row"><button class="btn pri" id="lgOk" type="button">로그인</button></div>
-      <div class="hint" id="lgHintStaff">처음이면 사번만 입력하고 [로그인]을 눌러 사내 메일 인증으로 직원 등록하세요.<br>개인 코드 분실시 관리자에게 문의하세요.</div>
-      <div class="hint hidden" id="lgHintGuest">게스트는 본인 확인이 없는 서명지만 볼 수 있습니다.</div>
+      <div class="hint" id="lgHintStaff">처음이면 사번만 입력하고 [로그인]을 눌러 사내 메일 인증으로 직원 등록하세요.<br>개인 코드 분실시 관리자에게 문의하세요.<br>외부 참석자는 담당자에게 받은 아이디와 코드를 입력하세요.</div>
     </div>
   </section>
 
@@ -574,6 +570,16 @@
       <b>서명지별 현황</b>
       <div class="eTabs"><button type="button" id="aTabOpen"></button><button type="button" id="aTabClosed"></button></div>
       <div id="aEdus"></div>
+    </div>
+    <div class="card" id="gstCard">
+      <div class="nhead" id="gstHead"><b>배포용 아이디</b></div>
+      <div class="ebody">
+        <div class="note">외부 참석자가 함께 쓰는 아이디입니다. 이 아이디로 로그인하면 본인 확인 없는 서명지만 보입니다. 저장하면 기존 로그인은 끊깁니다. 둘 다 비우고 저장하면 사용하지 않습니다.</div>
+        <div class="fRow"><div class="field"><label>아이디 (숫자 4자리 이상)</label><input type="tel" id="gstId" autocomplete="off" inputmode="numeric" pattern="[0-9]*" maxlength="20"></div>
+        <div class="field"><label>코드 (숫자 6자리)</label><input type="tel" id="gstCode" autocomplete="off" inputmode="numeric" pattern="[0-9]*" maxlength="6"></div></div>
+        <div class="row"><button class="btn pri" id="gstSave" type="button">저장</button></div>
+        <div class="msg" id="gstMsg"></div>
+      </div>
     </div>
     <div class="card" id="pcCard">
       <div class="nhead" id="pcHead"><b>개인 코드 관리</b></div>
@@ -755,7 +761,7 @@ function appSwitch(sw, here, urls) {
     b.addEventListener('click', function (e) {
       e.preventDefault();
       var k = b.dataset.k;
-      if (!swAllowed || gone || k === here || !urls[k]) return;   // 로그인 전·게스트는 눌러도 반응 없음
+      if (!swAllowed || gone || k === here || !urls[k]) return;   // 로그인 전·배포용 아이디는 눌러도 반응 없음
       gone = true; sw.classList.add('go');
       [].forEach.call(sw.querySelectorAll('.sw'), function (x) { var on = x === b; x.classList.toggle('on', on); x.setAttribute('aria-selected', on); });
       setTimeout(function () { window.open(urls[k], '_top'); }, 220);
@@ -772,8 +778,9 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
   var $ = function (id) { return document.getElementById(id); };
   var drawn = 0, drawing = false, last = null, submitting = false;   // submitting: 서명 제출 중 (서명 칸·지우기·뒤로 막음)
   var edus = [], selId = '', code = '', edu = null, person = null;
-  var staff = null;                      // 로그인: { token, name, disp, admin } 또는 게스트 { guest: true } (이 탭에서만 기억, 개인 코드는 저장 안 함)
+  var staff = null;                      // 로그인: { token, name, disp, admin } 또는 배포용 아이디 { token, guest: true } (이 탭에서만 기억, 개인 코드는 저장 안 함)
   try { staff = JSON.parse(sessionStorage.getItem('bglStaff') || 'null'); } catch (x) {}
+  if (staff && !staff.token) staff = null;   // 예전 게스트 표시
 
   function show(id) {
     ['sl', 's1', 'sp', 's2', 's3', 'sf', 'sx', 'sa', 'so', 'sr'].forEach(function (s) { $(s).classList.toggle('hidden', s !== id); });
@@ -793,9 +800,9 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
       el.classList.toggle('on', i === at); el.classList.toggle('done', i < at);
       el.querySelector('b').textContent = (i < at || id === 's3') ? '✓' : String(i + 1);
     });
-    document.querySelector('header h1').textContent = adminScr ? '관리자' : DIRECT ? '환불 등록' : 'e-싸인';
+    document.querySelector('header h1').textContent = adminScr ? '관리자' : DIRECT || NOQR ? '환불 등록' : 'e-싸인';
     var swOn = !!(CAR_PAGE && (id === 's1' || id === 'sl') && !adminScr && !(typeof DIALOG !== 'undefined' && DIALOG));   // 로그인·서명지 목록에서 전환 버튼
-    swAllowed = !!(swOn && id === 's1' && staff && staff.token);
+    swAllowed = !!(swOn && id === 's1' && staff && staff.token && !staff.guest);
     $('appSw').classList.toggle('hidden', !swOn); document.querySelector('header h1').classList.toggle('hidden', swOn);
     window.scrollTo(0, 0);
     curScreen = id; saveState();
@@ -1272,7 +1279,7 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
   document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !$('admOver').classList.contains('hidden')) closeAdmLogin(); });
   $('code').addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); submitCode(); } });
 
-  /* ---------- 로그인: 사번 + 개인 코드, 또는 게스트 ---------- */
+  /* ---------- 로그인: 사번 + 개인 코드, 또는 배포용 아이디 ---------- */
   function setStaff(v) {
     staff = v;
     try { if (v) sessionStorage.setItem('bglStaff', JSON.stringify(v)); else sessionStorage.removeItem('bglStaff'); } catch (x) {}
@@ -1281,7 +1288,7 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
   /** 서명지 목록으로 */
   function enterList() {
     var g = !!(staff && staff.guest);
-    $('meName').textContent = g ? '게스트' : ((staff.disp ? staff.disp + ' ' : '') + staff.name + ' 님').trim();
+    $('meName').textContent = g ? '외부 참석자' : ((staff.disp ? staff.disp + ' ' : '') + staff.name + ' 님').trim();
     if (!g && staff.admin) { var ma = document.createElement('span'); ma.className = 'meAdm'; ma.textContent = '관리자'; $('meName').appendChild(ma); }
     $('chgCard').classList.toggle('hidden', g);
     if (!edus.length) $('edus').innerHTML = '<div class="hint">불러오는 중…</div>';
@@ -1293,16 +1300,7 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
     $('lgPin').value = savedPin(); $('lgCode').value = '';
     if (text) msg($('lgMsg'), text, '#c0392b');
   }
-  var lgGuestOn = false;
-  function lgMode(guest) {
-    lgGuestOn = guest;
-    $('lgStaff').classList.toggle('on', !guest); $('lgGuest').classList.toggle('on', guest);
-    $('lgFields').classList.toggle('hidden', guest);
-    $('lgHintStaff').classList.toggle('hidden', guest); $('lgHintGuest').classList.toggle('hidden', !guest);
-    msg($('lgMsg'), '');
-  }
   function lgSubmit() {
-    if (lgGuestOn) { lgMode(false); setStaff({ guest: true }); edus = []; enterList(); refreshInit(); return; }
     var pin = $('lgPin').value.trim(), pc = $('lgCode').value.trim();
     if (!pin) { msg($('lgMsg'), '사번을 입력하세요.', '#c0392b'); $('lgPin').focus(); return; }
     $('lgOk').disabled = true; msg($('lgMsg'), '확인 중…', '#6b7686');
@@ -1312,9 +1310,10 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
         openReg(pin, r.mailDomain); return;
       }
       if (r.needCode) { msg($('lgMsg'), '코드를 입력해 주세요', '#c0392b'); $('lgCode').focus(); return; }
-      try { localStorage.setItem('bglPin', pin); } catch (x) {}
+      if (!r.guest) { try { localStorage.setItem('bglPin', pin); } catch (x) {} }   // 함께 쓰는 아이디는 기억하지 않음
       $('lgCode').value = '';
-      setStaff({ token: r.token, name: r.name, disp: r.disp, admin: !!r.admin });
+      if (r.guest) { $('lgPin').value = ''; setStaff({ token: r.token, guest: true }); }
+      else setStaff({ token: r.token, name: r.name, disp: r.disp, admin: !!r.admin });
       edus = []; enterList();
       if (r.init) loadInit(r.init); else refreshInit();
     }).withFailureHandler(function (e) {
@@ -1325,8 +1324,6 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
   $('lgPin').value = savedPin();
   $('lgPin').addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); $('lgCode').focus(); } });
   $('lgCode').addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); lgSubmit(); } });
-  $('lgStaff').onclick = function () { lgMode(false); };
-  $('lgGuest').onclick = function () { lgMode(true); };
   $('meOut').onclick = function () { logout(); };
 
   /* ---------- 직원 등록: 미등록 안내 → 사내 메일 → 인증 코드 → 입력 → 다시 확인 → 직원DB에 기록 ---------- */
@@ -1504,7 +1501,7 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
         goSign(r, { name: n, guest: guest });
       }).withFailureHandler(function (e) {
         $('pok').disabled = false; bad(errText(e));
-      }).verifyPerson({ eduId: edu.id, code: code, guest: guest });
+      }).verifyPerson({ eduId: edu.id, code: code, token: staff && staff.token || '', guest: guest });
       return;
     }
   }
@@ -2151,6 +2148,7 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
     admData = d;
     var sel = $('nTpl'), prev = sel.value; sel.innerHTML = '';
     deptTeamSel($('nDept'), $('nTeam'), $('nDept').value, $('nTeam').value);
+    $('gstId').value = (d.guest && d.guest.id) || ''; $('gstCode').value = (d.guest && d.guest.code) || '';
     d.templates.forEach(function (t) { var o = document.createElement('option'); o.value = t; o.textContent = t; sel.appendChild(o); });
     if (prev && d.templates.indexOf(prev) > -1) sel.value = prev;
     var nTplUi = function () {
@@ -2443,6 +2441,13 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
   document.addEventListener('select', function (e) { var el = e.target; if (el && el.classList && el.classList.contains('secret')) { var n = el.value.length; el.setSelectionRange(n, n); } });
 
   /* ---------- 개인 코드 관리 ---------- */
+  $('gstHead').onclick = function () { $('gstCard').classList.toggle('open'); };
+  $('gstSave').onclick = function () {
+    $('gstSave').disabled = true;
+    admCall('adminSetGuest', [{ id: $('gstId').value.trim(), code: $('gstCode').value.trim() }], function (d) {
+      $('gstSave').disabled = false; renderAdmin(d); msg($('gstMsg'), d.note, '#12833b'); msg($('aMsg'), '');
+    }, $('gstMsg'), function () { $('gstSave').disabled = false; });
+  };
   $('pcHead').onclick = function () { $('pcCard').classList.toggle('open'); };
   var pcArm = null, pcStep = 0;
   function pcDisarm() { clearTimeout(pcArm); pcArm = null; pcStep = 0; $('pcReset').textContent = '초기화'; }
@@ -2496,9 +2501,11 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
     show('sa');
   } else {
     var DIRECT = typeof INIT !== 'undefined' && INIT && INIT.direct;     // 환불 등록 QR(주소?e=…)로 들어온 경우
+    var NOQR = typeof INIT !== 'undefined' && INIT && INIT.noQr;         // 환불 주소에 건 번호가 없는 경우
     var enterNew = DIRECT && INIT.enter || '', enterLeft = DIRECT && INIT.enterLeft || 0, initErr = DIRECT && INIT.error || '';
     if (typeof INIT !== 'undefined' && INIT) { loadInit(INIT); INIT = null; }
-    if (!DIRECT) restoreState();
+    if (NOQR) showNotice('QR을 찍어 들어오세요', '환불 등록은 현장에 있는 QR을 휴대폰 카메라로 찍어야 할 수 있습니다.');
+    else if (!DIRECT) restoreState();
     else {
       var kept = loadState();
       if (kept && kept.rf === DIRECT && (kept.s === 's3' || Number(kept.rz) > Date.now())) restoreState();   // 새로고침: 그 등록 화면(또는 완료 화면)을 그대로, 입력 시간은 이어서
@@ -2521,7 +2528,7 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
   try { localStorage.removeItem('bglSignInit'); } catch (x) {}          // 예전에 저장한 목록 지움
   var onRefund = /refund\.html$/.test(location.pathname);               // 환불 등록 QR은 refund.html, e-싸인은 sign.html
   if (e && !onRefund) { location.replace('refund.html' + location.search); return; }
-  if (!e && onRefund) { location.replace('sign.html'); return; }
+  if (!e && onRefund) { START({ noQr: true, educations: [] }); return; }
   if (!e) { START(base); return; }
   document.documentElement.classList.add('rfBoot');
   var go = function (d) {
