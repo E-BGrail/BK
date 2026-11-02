@@ -314,6 +314,65 @@
   .ibox .ibody { display:none; }
   .ibox.open .ibody { display:block; margin:8px -12px 0; padding:2px 12px 12px; background:#f3f6fd; border-top:1.5px solid var(--pri); border-bottom:1.5px solid var(--pri); }   /* 펼치면 카드 좌우 끝까지 연한 파랑, 위아래 줄 (입력칸 폭은 그대로) */
   .gnote { margin-top:10px; background:#fff1e6; border:1px solid #f9c79c; color:#9a3d06; border-radius:10px; padding:8px 12px; font-size:14px; }
+  /* 안전점검의 날: 서명지 목록 카드 (점검자 · 팀장 박스 좌우) */
+  .skItem { border:1.5px solid #9fb3ea; background:#f5f8ff; border-radius:12px; padding:12px; }
+  .skItem .skTop b { display:block; font-size:17px; margin-top:4px; }
+  .skItem .skTop .rank { color:var(--sub); font-size:14px; }
+  .skTag { display:inline-block; font-size:12px; font-weight:800; color:#fff; background:var(--pri); border-radius:6px; padding:2px 7px; }
+  .skBoxes { display:flex; gap:8px; margin-top:10px; }
+  .skB { flex:1; min-width:0; border:1.5px solid var(--line); background:#fff; border-radius:12px; padding:10px 6px; display:flex; flex-direction:column; align-items:center; gap:2px; color:var(--text); }
+  .skB em { font-style:normal; font-size:14px; font-weight:700; }
+  .skB strong { font-size:22px; color:var(--pri); }
+  .skB small { font-size:12px; color:var(--sub); }
+  .skB.done strong { color:var(--ok); }
+  .skItem.closed { border-color:var(--line); background:#f4f5f7; color:#98a2b3; }
+  .skItem.closed .skB { color:#98a2b3; } .skItem.closed .skB strong { color:#98a2b3; }
+  /* 점검자 화면 */
+  .skGrid { display:grid; grid-template-columns:repeat(3, 1fr); gap:6px; margin-top:10px; }
+  .skGrid button { border:1.5px solid var(--line); background:#fff; border-radius:10px; padding:10px 4px; font-size:15px; font-weight:700; color:var(--text); line-height:1.3; }
+  .skGrid button small { display:block; font-size:11px; font-weight:400; color:var(--sub); }
+  .skGrid button.done { border-color:#bfe3cb; background:#eef8f1; } .skGrid button.done small { color:var(--ok); }
+  .skGrp { margin-top:14px; font-size:13px; font-weight:800; color:var(--pri2); border-bottom:1px solid var(--line); padding-bottom:4px; }
+  .skIt { padding:10px 0; border-bottom:1px dashed var(--line); }
+  .skIt .t { font-size:15px; } .skIt .q { color:var(--sub); font-size:12px; margin-left:4px; white-space:pre-line; }
+  .skIt .rfSeg { margin-top:6px; } .skIt .rfSeg button { padding:9px 4px; }
+  .skIt .rfSeg button.x.on { background:#c0392b; }
+  .skIt.miss { background:#fff5f4; }
+  .skIt input { margin-top:6px; font-size:15px; padding:9px 10px; }
+  #sk textarea, #nSkAdd { width:100%; font-size:15px; padding:10px; border:1px solid var(--line); border-radius:10px; margin-top:6px; font-family:inherit; }
+  .skChecks { display:grid; grid-template-columns:repeat(3, 1fr); gap:4px 8px; margin-top:6px; }
+  .skChecks label { display:flex; align-items:center; gap:5px; font-size:14px; color:var(--text); }
+  .skChecks input { width:18px; height:18px; margin:0; accent-color:var(--pri); flex:none; }
+  #skPad { height:200px; }
+  /* 체크리스트 모양 (점검자 최종 확인 · 팀장 확인) */
+  .skPaper { background:#fff; border:1px solid #c9ced8; border-radius:6px; padding:10px; color:#111; font-size:12px; }
+  .skPaper .pT { text-align:center; font-size:17px; font-weight:800; margin:2px 0 8px; }
+  .skPaper table { width:100%; border-collapse:collapse; table-layout:fixed; }
+  .skPaper th, .skPaper td { border:1px solid #888; padding:4px 3px; vertical-align:middle; text-align:center; word-break:keep-all; overflow-wrap:anywhere; }
+  .skPaper th { background:#f1f1f1; font-weight:700; }
+  .skPaper .pHead td { font-weight:700; } .skPaper .pSign { height:46px; } .skPaper .pSign img { max-width:100%; max-height:44px; display:block; margin:0 auto; }
+  .skPaper .pNote { font-size:11px; margin:6px 0 4px; }
+  .skPaper .pi { text-align:left; } .skPaper .pr { font-weight:800; font-size:14px; } .skPaper .pr.x { color:#c0392b; }
+  .skPaper .pn { font-size:11px; } .skPaper .psp { text-align:left; min-height:40px; height:44px; white-space:pre-line; }
+  .skPaper tr.chg td { background:#fff3c4; }
+  .skPaper .was { display:block; font-size:10.5px; color:#b45309; font-weight:700; margin-top:2px; }
+  .skPaper .pChg { font-size:12px; font-weight:700; color:#b45309; margin-bottom:6px; } .skPaper .pChg.none { color:var(--sub); }
+  /* 팀장 확인: 전체 화면 (역마다 체크리스트 → 끝까지 올리면 서명) */
+  .skView { position:fixed; top:var(--vvt, 0px); left:0; right:0; height:var(--vvh, 100%); z-index:40; background:#e9edf4; display:flex; flex-direction:column; }
+  body.skLock { overflow:hidden; }
+  .lvTop { flex:none; display:flex; align-items:center; gap:8px; padding:8px 10px; background:#fff; border-bottom:2px solid var(--pri); }
+  .lvTop b { flex:1; min-width:0; font-size:15px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .lvTop span { font-size:13px; font-weight:700; color:var(--pri); white-space:nowrap; }
+  .lvPage { flex:1; overflow-y:auto; -webkit-overflow-scrolling:touch; overscroll-behavior:contain; padding:10px; }
+  .lvHint { text-align:center; font-size:12px; color:var(--sub); padding:8px 0; }
+  .lvUp { display:block; width:100%; margin:6px 0 30px; }
+  .lvSheet { position:absolute; left:0; right:0; bottom:0; background:#fff; border-radius:16px 16px 0 0; box-shadow:0 -6px 24px rgba(16,24,48,.25);
+    padding:12px 14px calc(12px + env(safe-area-inset-bottom)); transform:translateY(110%); transition:transform .25s ease-out; }
+  .lvSheet.up { transform:none; }
+  .lvSheet .lvSHead { font-size:15px; font-weight:700; margin-bottom:8px; }
+  .lvPadW { position:relative; } .lvPadW canvas { height:200px; }
+  .lvPadW img { position:absolute; left:50%; top:50%; transform:translate(-50%, -50%); max-width:80%; max-height:80%; pointer-events:none; opacity:.85; }
+  .lvSum .srow { padding:10px 8px; font-size:15px; cursor:pointer; } .lvSum .ok { color:var(--ok); font-weight:700; } .lvSum .no { width:auto; color:#b42318; font-weight:700; }
 </style>
 </head>
 <body>
@@ -555,7 +614,12 @@
       <div class="field hidden" id="nRosterBox"><textarea id="nRoster" rows="5" placeholder="이름을 한 번에 입력 (줄바꿈·쉼표·띄어쓰기로 구분)&#10;예) 홍길동, 김철수, 이영희&#10;동명이인은 서명지를 열 때 고릅니다"></textarea>
         <div class="pickBox hidden" id="nPick"></div>
         <div class="note">명단에 넣은 사람도 이 서명지를 볼 수 있습니다. 이름은 서명한 순서대로 서명지에 들어갑니다. 직원DB에 있는 직원만 넣을 수 있고, 서명지를 연 뒤에는 바꿀 수 없습니다.</div></div>
-      <div class="field" id="nTitleRow"><label>교육명</label><input type="text" id="nTitle" placeholder="예: 4분기 비상대응 훈련" autocomplete="off"></div>
+      <div class="field hidden" id="nSkBox"><label>점검할 역</label>
+        <label class="vchk" style="margin-top:6px"><input type="checkbox" id="nSkAll" checked> <b>전체 선택</b></label>
+        <div class="skChecks" id="nSkList"></div>
+        <input type="text" id="nSkAdd" placeholder="직접 입력 (쉼표로 여러 역)" autocomplete="off" maxlength="200">
+        <div class="note">안전점검: 접속 코드 없이 서명지 목록에 점검자·팀장 박스로 보입니다. 점검자는 역을 골라 입력하고 서명, 팀장(직책에 '팀장')은 역마다 확인하고 서명합니다. 역은 서명지를 연 뒤에는 바꿀 수 없습니다.</div></div>
+      <div class="field" id="nTitleRow"><label id="nTitleLabel">교육명</label><input type="text" id="nTitle" placeholder="예: 4분기 비상대응 훈련" autocomplete="off"></div>
       <div class="fRow"><div class="field" id="nDeptRow"><label>부서명</label><select id="nDept"></select></div>
       <div class="field" id="nTeamRow"><label>팀</label><select id="nTeam"></select></div></div>
       <div class="note" id="nDeptNote">부서명·팀을 고르면 해당하는 사람에게만 서명지가 보입니다. 명단도 지정하면 명단에 있는 사람까지 보입니다. 모두 [전체]이고 명단이 없으면 모든 직원에게 보입니다.</div>
@@ -644,7 +708,50 @@
       <div class="msg" id="rMsg"></div>
     </div>
   </section>
+  <!-- 안전점검의 날: 점검자 (역 선택 → 체크리스트 → 최종 확인 → 서명) -->
+  <section id="sk" class="hidden">
+    <div class="card">
+      <div class="rfHead"><span class="skTag">안전점검 · 점검자</span></div>
+      <div class="who" id="skTitle" style="margin-top:6px"></div>
+      <div class="edu" id="skDate"></div>
+      <div id="skPick">
+        <div class="hint">점검할 역을 고르세요. ✓ 표시는 점검자 서명이 끝난 역입니다 (다시 고르면 고쳐서 다시 서명).</div>
+        <div class="skGrid" id="skGrid"></div>
+        <div class="row"><button class="btn gray" id="skHome" type="button">서명지 목록</button></div>
+      </div>
+      <div id="skForm" class="hidden">
+        <div class="who" id="skStName" style="margin-top:10px;color:var(--pri)"></div>
+        <div class="hint" id="skDefNote"></div>
+        <div id="skItems"></div>
+        <div class="field"><label><b style="color:var(--text);font-size:15px">특이사항</b> <span class="hint">(선택)</span></label><textarea id="skSp" rows="3" maxlength="300"></textarea></div>
+        <div class="row"><button class="btn gray" id="skFormBack" type="button">역 목록</button><button class="btn pri" id="skDone" type="button">완료</button></div>
+      </div>
+      <div id="skRev" class="hidden">
+        <div class="hint" style="margin-bottom:8px">입력한 내용을 확인하세요. 맞으면 [최종 확인]을 누르고 서명합니다.</div>
+        <div id="skPaperBox"></div>
+        <div class="row"><button class="btn gray" id="skRevBack" type="button">수정</button><button class="btn pri" id="skRevOk" type="button">최종 확인</button></div>
+      </div>
+      <div id="skSig" class="hidden">
+        <div class="who" id="skSigName" style="margin-top:10px"></div>
+        <div class="hint">✍️ 아래 칸에 손가락으로 서명하세요.</div>
+        <div class="padarea"><canvas id="skPad"></canvas></div>
+        <div class="row"><button class="btn gray" id="skClear" type="button">지우기</button><button class="btn gray" id="skSigBack" type="button">뒤로</button><button class="btn pri" id="skSend" type="button">다음</button></div>
+      </div>
+      <div class="msg" id="skMsg"></div>
+    </div>
+  </section>
 </main>
+<!-- 안전점검의 날: 팀장 확인 (역마다 체크리스트 → 끝까지 올리면 서명 → 다음 역, 서명은 이 휴대폰에 모아 두었다가 [전체 확인]으로 한 번에 보냄) -->
+<div class="skView hidden" id="skView" role="dialog" aria-label="팀장 확인">
+  <div class="lvTop"><button class="btn gray sbtn" id="lvClose" type="button">닫기</button><b id="lvTitle"></b><span id="lvProg"></span></div>
+  <div class="lvPage" id="lvPage"></div>
+  <div class="lvSheet" id="lvSheet">
+    <div class="lvSHead" id="lvSHead"></div>
+    <div class="lvPadW"><canvas id="lvPad"></canvas><img id="lvOld" class="hidden" alt=""></div>
+    <div class="row"><button class="btn gray" id="lvClear" type="button">지우기</button><button class="btn gray" id="lvBack" type="button">뒤로</button><button class="btn pri" id="lvNext" type="button">다음</button></div>
+    <div class="msg" id="lvMsg"></div>
+  </div>
+</div>
 <!-- 접속 코드 (첫 화면에서 교육을 누르면 열림) -->
 <div class="qrOver hidden" id="codeOver" role="dialog" aria-label="접속 코드">
   <div class="qrBox admBox">
@@ -783,7 +890,7 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
   if (staff && !staff.token) staff = null;   // 예전 게스트 표시
 
   function show(id) {
-    ['sl', 's1', 'sp', 's2', 's3', 'sf', 'sx', 'sa', 'so', 'sr'].forEach(function (s) { $(s).classList.toggle('hidden', s !== id); });
+    ['sl', 's1', 'sp', 's2', 's3', 'sf', 'sx', 'sa', 'so', 'sr', 'sk'].forEach(function (s) { $(s).classList.toggle('hidden', s !== id); });
     var flow = ['s1', 's2', 's3'], at = id === 'sp' ? 1 : flow.indexOf(id), adminScr = ['sa', 'so', 'sr'].indexOf(id) > -1;
     document.body.setAttribute('data-s', id);
     $('hero').classList.toggle('hidden', id !== 's1' && id !== 'sl');
@@ -820,6 +927,8 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
       if (curScreen === 's2' && person) { st.person = JSON.parse(JSON.stringify(person));
         st.strokes = strokes; st.vw = vw; st.vh = vh; st.drawn = drawn; }
       if (curScreen === 's3') st.done = { who: $('doneWho').textContent, msg: $('doneMsg').textContent };
+      if (curScreen === 'sk' && sk) { st.sk = sk.id; st.skSt = skStep !== 'pick' && skSt ? skSt.st : ''; }
+      if (skL && !$('skView').classList.contains('hidden')) st.skL = skL.id;
       if (rfEdu && (curScreen === 'sf' || curScreen === 's3')) { st.rf = rfEdu.id; st.rfd = rfDirect; st.re = rfEnter; st.rz = rfEnd; }          // 환불 등록: 어느 등록인지만 (입력값·연락처는 저장 안 함)
       if (admTok && ['sa', 'so', 'sr'].indexOf(curScreen) > -1) {
         st.admTok = admTok; st.admOrder = admOrder; st.admOpen = admOpen; st.admInfo = admInfo; st.admTab = admTab; st.admMe = admMe;
@@ -862,6 +971,8 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
     }
     if (!staff) { show('sl'); return; }              // 로그인 전
     refreshInit();
+    if (st.skL) { enterList(); skLeadOpen(st.skL); return; }            // 팀장 확인 중이었으면 그 화면 (서명은 휴대폰에 남아 있음)
+    if (st.s === 'sk' && st.sk) { enterList(); skOpen(st.sk, false, st.skSt); return; }
     if (!st.edu || !st.code) { enterList(); return; }
     edu = st.edu; code = st.code; selId = edu.id; renderEdus();
     $('eduName').textContent = edu.title; $('eduDate').textContent = [edu.dept, edu.date].filter(Boolean).join(' · ');
@@ -923,6 +1034,7 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
     if (!list.length) { box.innerHTML = '<div class="hint" style="margin-top:8px">' + (isOpen ? '현재 진행 중인 서명지가 없습니다.' : '마감된 서명지가 없습니다.') + '</div>'; }
     list.forEach(function (e) {
       if (e.refund) { box.appendChild(rfItem(e)); return; }
+      if (e.safety) { box.appendChild(skItem(e)); return; }
       var closed = e.open === false;
       var b = document.createElement('button');
       b.className = 'person' + (closed ? ' closed' : '') + (e.id === selId ? ' sel' : '');
@@ -1087,14 +1199,14 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
    * → 뒤로가기를 누를 때마다 한 단계씩 앞 화면으로 (팝업은 닫힘). 버튼으로 앞 화면에 가면 쌓아 둔 칸을 그만큼 되돌림.
    * 기록 칸은 화면을 넘어갈 때(누른 순간) 넣어 둠: 뒤로가기 처리 중에 다시 넣으면 휴대폰 크롬이 다음 뒤로가기 때 건너뜀.
    * 환불 등록: 교육 목록에서 들어왔으면 뒤로가기 → 첫 화면, 고객용 QR로 바로 들어왔으면 기록을 넣지 않음 (브라우저 기본 동작) */
-  var POPS = ['qrOver', 'codeOver', 'admOver', 'regOver'];
+  var POPS = ['qrOver', 'codeOver', 'admOver', 'regOver', 'skView'];
   var NAV = { n: 0, skip: 0, t: null, q: false };   // n: 지금 쌓아 둔 칸 수, skip: 우리가 되돌려서 올 popstate 수
   function anyPop() { return POPS.some(function (id) { return !$(id).classList.contains('hidden'); }); }
   function navDepth() {                    // 지금 화면이 원하는 칸 수
     if (typeof DIALOG !== 'undefined' && DIALOG) return 0;   // 시트 메뉴 창
     var id = curScreen;
     if (rfEdu && rfDirect && (id === 'sf' || id === 's3')) return 0;   // 환불 등록 QR로 바로 들어온 승객은 제외
-    return ({ sp: 1, s2: edu && edu.guest ? 2 : 1, s3: 1, sf: 1, sa: 1, so: 2, sr: 2 })[id] || 0;
+    return ({ sp: 1, s2: edu && edu.guest ? 2 : 1, s3: 1, sf: 1, sa: 1, so: 2, sr: 2, sk: 1 })[id] || 0;
   }
   function navApply() {                    // 쌓아 둔 칸을 지금 화면에 맞춤 (같은 순간의 여러 변화는 한 번에)
     if (NAV.q) return;
@@ -1119,6 +1231,7 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
     else if (s === 'sa') $('aLogout').onclick();
     else if (s === 'so') $('oBack').onclick();
     else if (s === 'sr') $('rBack').onclick();
+    else if (s === 'sk') skBack();
   }
   function popPush() { navApply(); }       // 팝업을 열 때
   function popSync() { navApply(); }       // 팝업을 버튼·바깥 누르기 등으로 닫았을 때
@@ -1131,6 +1244,7 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
       if (!$('codeOver').classList.contains('hidden')) closeCode();
       if (!$('admOver').classList.contains('hidden')) closeAdmLogin();
       if (!$('regOver').classList.contains('hidden')) $('regOver').classList.add('hidden');
+      if (!$('skView').classList.contains('hidden')) lvClose();
     } else screenBack();                   // 뒤로가기 → 이전 화면
     navApply();
   }
@@ -1894,6 +2008,342 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
   $('rfBack').onclick = function () { resetAll(); };
   $('rfAgree').onchange = $('rfLocAgree').onchange = $('rfAccOn').onchange = function () { if (this.checked) msg($('rfMsg'), ''); rfConsentSync(); };
 
+  /* ---------- 안전점검의 날 체크리스트 (그룹 서명) ----------
+     서명지 목록 카드에 점검자 박스·팀장 박스 (서명한 역 수 / 전체)
+     점검자: 역 선택 → 항목 O/X·비고 (지난 점검 값이 기본, 특이사항은 빈칸) → 완료 → 최종 확인 → 서명 → 다음(제출)
+     팀장: 역마다 체크리스트를 보고 끝까지 올리면 서명 칸 → 서명·다음 → 다음 역. 맨 위에서 내리면 이전 역.
+           서명은 이 휴대폰(localStorage)에 모아 두었다가 [전체 확인]으로 한 번에 보냄 (창을 닫아도 남음) */
+  var sk = null, skSt = null, skStep = 'pick', skRes = {};   // sk: 점검자 화면 데이터, skSt: 고른 역
+  var SK_I = 'bglSafeI:', SK_L = 'bglSafeL:';
+  function lsGet(k) { try { return JSON.parse(localStorage.getItem(k) || 'null'); } catch (x) { return null; } }
+  function lsSet(k, v) { try { if (v === null) localStorage.removeItem(k); else localStorage.setItem(k, JSON.stringify(v)); return true; } catch (x) { return false; } }
+
+  function skItem(e) {
+    var closed = e.open === false, c = e.safety || { n: 0, ins: 0, lead: 0 };
+    var w = document.createElement('div'); w.className = 'skItem' + (closed ? ' closed' : '');
+    w.innerHTML = '<div class="skTop"><span class="skTag">안전점검의 날</span><b></b><span class="rank"></span></div>' +
+      '<div class="skBoxes"><button type="button" class="skB ins"><em>점검자 서명</em><strong></strong><small></small></button>' +
+      '<button type="button" class="skB lead"><em>팀장 확인</em><strong></strong><small></small></button></div>';
+    var q = function (x) { return w.querySelector(x); };
+    q('b').textContent = e.title; q('.rank').textContent = [e.dept, e.date].filter(Boolean).join(' · ');
+    q('.ins strong').textContent = c.ins + ' / ' + c.n; q('.lead strong').textContent = c.lead + ' / ' + c.n;
+    q('.ins').classList.toggle('done', c.n > 0 && c.ins >= c.n); q('.lead').classList.toggle('done', c.n > 0 && c.lead >= c.n);
+    q('.ins small').textContent = closed ? '접수 마감' : c.ins >= c.n ? '모든 역 완료' : '눌러서 역 선택';
+    q('.lead small').textContent = closed ? '접수 마감' : '팀장만';
+    if (closed) { q('.ins').disabled = true; q('.lead').disabled = true; }
+    else { q('.ins').onclick = function () { skOpen(e.id, false); }; q('.lead').onclick = function () { skLeadOpen(e.id); }; }
+    return w;
+  }
+
+  /* ---------- 점검자 ---------- */
+  function skOpen(id, again, stName) {
+    msg($('msg1'), '불러오는 중…', '#6b7686');
+    google.script.run.withSuccessHandler(function (d) {
+      msg($('msg1'), ''); sk = d;
+      $('skTitle').textContent = d.title; $('skDate').textContent = d.date || '';
+      var st = stName && d.stations.filter(function (x) { return x.st === stName; })[0];
+      if (st) skForm(st); else skStage('pick');
+      show('sk');
+    }).withFailureHandler(function (e) { msg($('msg1'), errText(e), '#c0392b'); }).safetyOpen(staff && staff.token || '', id);
+  }
+  function skStage(s) {
+    skStep = s;
+    ['pick', 'form', 'rev', 'sig'].forEach(function (k) { $('sk' + { pick: 'Pick', form: 'Form', rev: 'Rev', sig: 'Sig' }[k]).classList.toggle('hidden', k !== s); });
+    if (s === 'pick') skGrid();
+    if (s === 'sig') setTimeout(function () { skPad.setup(); }, 30);
+    window.scrollTo(0, 0); saveState();
+  }
+  function skGrid() {
+    var g = $('skGrid'); g.innerHTML = '';
+    sk.stations.forEach(function (x) {
+      var b = document.createElement('button'); b.type = 'button'; b.className = x.ins ? 'done' : '';
+      b.innerHTML = '<span></span><small></small>';
+      b.firstChild.textContent = x.st;
+      b.lastChild.textContent = x.ins ? '✓ ' + x.ins.name + (x.lead ? ' · 팀장 ✓' : '') : '미점검';
+      b.onclick = function () { msg($('skMsg'), ''); skForm(x); };
+      g.appendChild(b);
+    });
+  }
+  function skDraftKey() { return SK_I + sk.id + ':' + skSt.st; }
+  function skForm(x) {
+    skSt = x;
+    var dr = lsGet(skDraftKey());                     // 입력 중이던 값 (창을 닫았다 열어도)
+    skRes = JSON.parse(JSON.stringify((dr && dr.res) || x.def || {}));
+    $('skStName').textContent = x.st;
+    $('skDefNote').textContent = dr ? '입력하던 내용을 불러왔습니다.' : x.ins ? '이 서명지에 낸 값입니다. 고친 뒤 다시 서명하면 바뀝니다.' + (x.lead ? ' (팀장 확인은 다시 받아야 합니다)' : '') :
+      x.def ? '지난 점검 값이 기본으로 선택되어 있습니다. 바뀐 곳만 고치세요.' : '첫 점검입니다. 모든 항목을 고르세요.';
+    $('skSp').value = dr ? dr.sp || '' : '';           // 특이사항은 늘 빈칸에서 시작
+    var box = $('skItems'), lastF = ''; box.innerHTML = '';
+    x.items.forEach(function (it) {
+      if (it.f !== lastF) { var h = document.createElement('div'); h.className = 'skGrp'; h.textContent = it.f; box.appendChild(h); lastF = it.f; }
+      var v = skRes[it.i] || (skRes[it.i] = ['', '']);
+      var d = document.createElement('div'); d.className = 'skIt'; d.setAttribute('data-i', it.i);
+      d.innerHTML = '<div><span class="t"></span><span class="q"></span></div><div class="rfSeg"><button type="button">O 양호</button><button type="button" class="x">X 불량</button></div>' +
+        '<input type="text" maxlength="60" placeholder="비고(조치사항)" autocomplete="off">';
+      d.querySelector('.t').textContent = it.t; d.querySelector('.q').textContent = it.q === '-' ? '' : '(' + it.q.replace(/\n/g, ', ') + ')';
+      var bs = d.querySelectorAll('.rfSeg button'), inp = d.querySelector('input');
+      var paint = function () { bs[0].classList.toggle('on', v[0] === 'O'); bs[1].classList.toggle('on', v[0] === 'X'); };
+      bs[0].onclick = function () { v[0] = 'O'; d.classList.remove('miss'); paint(); skDraft(); };
+      bs[1].onclick = function () { v[0] = 'X'; d.classList.remove('miss'); paint(); skDraft(); };
+      inp.value = v[1] || ''; inp.oninput = function () { v[1] = inp.value; skDraft(); };
+      paint(); box.appendChild(d);
+    });
+    skStage('form');
+  }
+  function skDraft() { if (sk && skSt) lsSet(skDraftKey(), { res: skRes, sp: $('skSp').value }); }
+  $('skSp').oninput = skDraft;
+  $('skHome').onclick = function () { resetAll(); };
+  $('skFormBack').onclick = function () { skStage('pick'); };
+  $('skDone').onclick = function () {
+    var miss = skSt.items.filter(function (it) { var v = skRes[it.i]; return !v || (v[0] !== 'O' && v[0] !== 'X'); });
+    [].forEach.call($('skItems').querySelectorAll('.skIt'), function (d) { d.classList.toggle('miss', miss.some(function (it) { return String(it.i) === d.getAttribute('data-i'); })); });
+    if (miss.length) { msg($('skMsg'), '점검결과를 고르지 않은 항목 ' + miss.length + '개가 있습니다.', '#c0392b'); var f = $('skItems').querySelector('.miss'); if (f) f.scrollIntoView({ block: 'center' }); return; }
+    msg($('skMsg'), '');
+    $('skPaperBox').innerHTML = skPaper(skSt, skRes, $('skSp').value, null, '', '', sk.title, sk.date, true);
+    skStage('rev');
+  };
+  $('skRevBack').onclick = function () { skStage('form'); };
+  $('skRevOk').onclick = function () { $('skSigName').textContent = skSt.st + ' 점검자 서명'; skPad.clear(); skStage('sig'); };
+  $('skSigBack').onclick = function () { if (!skBusy) skStage('rev'); };
+  $('skClear').onclick = function () { if (!skBusy) skPad.clear(); };
+  var skBusy = false;
+  $('skSend').onclick = function () {
+    if (skBusy) return;
+    if (!skPad.strokes.length) { msg($('skMsg'), '서명해 주세요.', '#c0392b'); return; }
+    if (skPad.n < 6) { msg($('skMsg'), '서명이 너무 짧습니다. 조금 더 크게 서명해 주세요.', '#c0392b'); return; }
+    skBusy = true; $('skSend').disabled = true; msg($('skMsg'), '제출 중…', '#6b7686');
+    google.script.run.withSuccessHandler(function (r) {
+      skBusy = false; $('skSend').disabled = false; lsSet(skDraftKey(), null);
+      var done = r.st + ' 점검 서명을 ' + (r.resigned ? '다시 ' : '') + '제출했습니다.' + (r.reLead ? ' 팀장 확인은 다시 받아야 합니다.' : '');
+      google.script.run.withSuccessHandler(function (d) { sk = d; skStage('pick'); msg($('skMsg'), done, '#12833b'); })
+        .withFailureHandler(function () { skStage('pick'); msg($('skMsg'), done, '#12833b'); }).safetyOpen(staff && staff.token || '', sk.id);
+    }).withFailureHandler(function (e) {
+      skBusy = false; $('skSend').disabled = false; msg($('skMsg'), errText(e), '#c0392b');
+    }).safetySubmit({ token: staff && staff.token || '', eduId: sk.id, st: skSt.st, res: skRes, sp: $('skSp').value, dataUrl: skPad.png(), device: devInfo });
+  };
+  function skBack() {                                // 휴대폰 뒤로가기: 한 단계씩
+    if (skBusy) return;
+    if (skStep === 'sig') skStage('rev'); else if (skStep === 'rev') skStage('form'); else if (skStep === 'form') skStage('pick'); else resetAll();
+  }
+
+  /** 체크리스트 모양: base(지난 점검 값)가 있으면 바뀐 줄을 노랗게 + 이전 값 */
+  function skPaper(x, res, sp, base, insImg, leadImg, title, date, noCmp) {
+    var groups = [];
+    x.items.forEach(function (it) { var g = groups[groups.length - 1]; if (!g || g.f !== it.f) groups.push(g = { f: it.f, list: [] }); g.list.push(it); });
+    var nChg = 0, rows = '';
+    groups.forEach(function (g) {
+      g.list.forEach(function (it, k) {
+        var v = res[it.i] || ['', ''], b = base && base[it.i];
+        var ch = !!(b && (b[0] !== v[0] || (b[1] || '') !== (v[1] || '')));
+        if (ch) nChg++;
+        rows += '<tr class="' + (ch ? 'chg' : '') + '">' + (k ? '' : '<th rowspan="' + g.list.length + '">' + esc(g.f) + '</th>') +
+          '<td class="pi">○ ' + esc(it.t) + (ch ? '<span class="was">이전: ' + esc(b[0] || '-') + (b[1] ? ' · ' + esc(b[1]) : '') + '</span>' : '') + '</td>' +
+          '<td>' + esc(it.q).replace(/\n/g, '<br>') + '</td><td class="pr' + (v[0] === 'X' ? ' x' : '') + '">' + esc(v[0] || '') + '</td><td class="pn">' + esc(v[1] || '') + '</td></tr>';
+      });
+    });
+    var img = function (u) { return u && u.indexOf('data:image/') === 0 ? '<img src="' + esc(u) + '" alt="서명">' : ''; };
+    return '<div class="skPaper">' + (noCmp ? '' : '<div class="pChg' + (nChg ? '' : ' none') + '">' + (!base ? '첫 점검 (비교할 지난 점검 없음)' : nChg ? '지난 점검과 바뀐 곳 ' + nChg + '개 (노란 줄)' : '지난 점검과 같음') + '</div>') +
+      '<div class="pT">' + esc(title || '안전점검의 날 체크리스트') + '</div>' +
+      '<table class="pHead"><colgroup><col style="width:18%"><col><col style="width:9%"><col style="width:19%"><col style="width:19%"></colgroup>' +
+      '<tr><th>점검역사</th><td>' + esc(x.st) + '</td><th rowspan="2">결재</th><th>점검자</th><th>팀장</th></tr>' +
+      '<tr><th>점검일자</th><td>' + esc(date || '') + '</td><td class="pSign">' + img(insImg) + '</td><td class="pSign">' + img(leadImg) + '</td></tr></table>' +
+      '<div class="pNote">※ 점검결과 표기 : O = 양호, X = 불량</div>' +
+      '<table><colgroup><col style="width:15%"><col><col style="width:15%"><col style="width:10%"><col style="width:20%"></colgroup>' +
+      '<tr><th>점검<br>분야</th><th>점 검 항 목</th><th>점검<br>수량</th><th>결과</th><th>비고</th></tr>' + rows +
+      '<tr><th>특이<br>사항</th><td colspan="4" class="psp">' + esc(sp || '') + '</td></tr></table></div>';
+  }
+
+  /* ---------- 서명 칸 (점검자·팀장 공용): 획을 가상 좌표로 저장, 크기가 바뀌면 다시 그림 ---------- */
+  function makePad(cv, msgEl, onDraw) {
+    var c2 = cv.getContext('2d'), P = { strokes: [], n: 0 }, vw = 0, vh = 0, cur = null, down = false, lp = null;
+    var xf = function () { var w = cv.clientWidth, h = cv.clientHeight, sc = Math.min(w / vw, h / vh); return { s: sc, ox: (w - vw * sc) / 2, oy: (h - vh * sc) / 2 }; };
+    var toV = function (p) { var t = xf(); return { x: (p.x - t.ox) / t.s, y: (p.y - t.oy) / t.s }; };
+    var toC = function (p) { var t = xf(); return { x: p.x * t.s + t.ox, y: p.y * t.s + t.oy }; };
+    var at = function (e) { var b = cv.getBoundingClientRect(); return { x: e.clientX - b.left, y: e.clientY - b.top }; };
+    P.redraw = function () {
+      c2.clearRect(0, 0, cv.clientWidth, cv.clientHeight);
+      if (!vw) return;
+      P.strokes.forEach(function (st) {
+        var f = toC(st[0]);
+        if (st.length === 1) { c2.beginPath(); c2.arc(f.x, f.y, 1.2, 0, 6.283); c2.fill(); return; }
+        c2.beginPath(); c2.moveTo(f.x, f.y);
+        for (var i = 1; i < st.length; i++) { var q = toC(st[i]); c2.lineTo(q.x, q.y); }
+        c2.stroke();
+      });
+    };
+    P.setup = function () {
+      if (!cv.clientWidth) return;
+      var r = window.devicePixelRatio || 1; cv.width = cv.clientWidth * r; cv.height = cv.clientHeight * r;
+      c2.setTransform(r, 0, 0, r, 0, 0); c2.lineWidth = 3; c2.lineCap = 'round'; c2.lineJoin = 'round'; c2.strokeStyle = '#000'; c2.fillStyle = '#000';
+      P.redraw();
+    };
+    P.clear = function () { P.strokes = []; P.n = 0; vw = 0; vh = 0; c2.clearRect(0, 0, cv.clientWidth, cv.clientHeight); };
+    cv.addEventListener('pointerdown', function (e) {
+      e.preventDefault();
+      if (e.pointerType === 'mouse') { msg(msgEl, '서명은 휴대폰이나 태블릿 화면에 손가락(또는 펜)으로 해 주세요.', '#c0392b'); return; }
+      try { cv.setPointerCapture(e.pointerId); } catch (x) {}
+      if (!vw) { vw = cv.clientWidth; vh = cv.clientHeight; }
+      down = true; lp = at(e); cur = [toV(lp)]; P.strokes.push(cur); P.n++;
+      c2.beginPath(); c2.arc(lp.x, lp.y, 1.2, 0, 6.283); c2.fill(); msg(msgEl, '');
+      if (onDraw) onDraw();
+    });
+    cv.addEventListener('pointermove', function (e) {
+      if (!down) return; e.preventDefault();
+      var p = at(e);
+      c2.beginPath(); c2.moveTo(lp.x, lp.y); c2.lineTo(p.x, p.y); c2.stroke();
+      cur.push(toV(p)); P.n += Math.abs(p.x - lp.x) + Math.abs(p.y - lp.y) > 1 ? 1 : 0; lp = p;
+    });
+    ['pointerup', 'pointercancel', 'pointerleave'].forEach(function (ev) { cv.addEventListener(ev, function () { down = false; }); });
+    /** 서명 부분만 잘라 PNG (셀 한 칸 5만 자 안으로) */
+    P.png = function () {
+      var pad = 12, x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9;
+      P.strokes.forEach(function (st) { st.forEach(function (pt) { var c = toC(pt); x0 = Math.min(x0, c.x); x1 = Math.max(x1, c.x); y0 = Math.min(y0, c.y); y1 = Math.max(y1, c.y); }); });
+      x0 = Math.max(0, x0 - pad); y0 = Math.max(0, y0 - pad); x1 = Math.min(cv.clientWidth, x1 + pad); y1 = Math.min(cv.clientHeight, y1 + pad);
+      var r = cv.width / cv.clientWidth, sw = Math.max(1, (x1 - x0) * r), sh = Math.max(1, (y1 - y0) * r), url = '';
+      [[480, 192], [360, 144], [270, 108], [200, 80]].some(function (z) {
+        var t = document.createElement('canvas'); t.width = z[0]; t.height = z[1];
+        var sc = Math.min(t.width / sw, t.height / sh, 1.5);
+        t.getContext('2d').drawImage(cv, x0 * r, y0 * r, sw, sh, (t.width - sw * sc) / 2, (t.height - sh * sc) / 2, sw * sc, sh * sc);
+        url = t.toDataURL('image/png'); return url.length <= 48000;
+      });
+      return url;
+    };
+    window.addEventListener('resize', function () { setTimeout(P.setup, 150); });
+    return P;
+  }
+  var skPad = makePad($('skPad'), $('skMsg'));
+  var lvPadP = makePad($('lvPad'), $('lvMsg'), function () { $('lvOld').classList.add('hidden'); });
+
+  /* ---------- 팀장 확인 ---------- */
+  var skL = null;          // { id, key, data, signs: { 역: { u: 서명, at: 점검자 서명 시각 } }, idx, mode }
+  function skLeadOpen(id) {
+    var key = SK_L + id + ':' + (staff && staff.name || ''), c = lsGet(key);
+    if (c && c.data) { skL = { id: id, key: key, data: c.data, signs: c.signs || {}, idx: c.idx || 0, mode: 'img' }; lvOpen(); }
+    else msg($('msg1'), '불러오는 중…', '#6b7686');
+    google.script.run.withSuccessHandler(function (d) {
+      msg($('msg1'), '');
+      var old = skL && skL.id === id ? skL : { signs: (c && c.signs) || {}, idx: (c && c.idx) || 0 }, signs = {};
+      d.stations.forEach(function (x) {                // 점검자가 다시 낸 역은 모아 둔 서명을 버림 (바뀐 내용을 다시 보고 서명)
+        var s0 = old.signs[x.st]; if (s0 && s0.at === x.ins.at) signs[x.st] = s0;
+      });
+      skL = { id: id, key: key, data: d, signs: signs, idx: Math.min(old.idx || 0, d.stations.length), mode: 'img' };
+      lvSave(); lvOpen();
+    }).withFailureHandler(function (e) {
+      if (skL && skL.id === id && !$('skView').classList.contains('hidden')) msg($('lvMsg'), errText(e), '#c0392b');
+      else msg($('msg1'), errText(e), '#c0392b');
+    }).safetyLeaderData(staff && staff.token || '', id);
+  }
+  function lvSave() {
+    if (!skL) return;
+    var v = { data: skL.data, signs: skL.signs, idx: skL.idx };
+    if (!lsSet(skL.key, v)) {                         // 저장 공간이 모자라면 체크리스트는 빼고 서명만
+      v.data = null; lsSet(skL.key, v);
+    }
+  }
+  function lvOpen() {
+    var was = $('skView').classList.contains('hidden');
+    $('skView').classList.remove('hidden'); document.body.classList.add('skLock');
+    $('lvTitle').textContent = skL.data.title + (skL.data.date ? ' · ' + skL.data.date : '');
+    lvGo(skL.idx, true);
+    if (was) { popPush(); saveState(); }
+  }
+  function lvClose() {
+    $('skView').classList.add('hidden'); document.body.classList.remove('skLock'); lvPad(false);
+    popSync(); saveState(); refreshInit();
+  }
+  $('lvClose').onclick = lvClose;
+  function lvGo(i, keep) {
+    var D = skL.data, n = D.stations.length;
+    skL.idx = Math.max(0, Math.min(i, n)); lvPad(false); msg($('lvMsg'), '');
+    var pg = $('lvPage'), h = '';
+    if (!n) h = '<div class="card center"><div class="who">아직 점검자가 서명한 역이 없습니다.</div><div class="hint">점검자 서명이 끝난 역부터 확인할 수 있습니다.</div></div>';
+    else if (skL.idx < n) {
+      var x = D.stations[skL.idx], sg = skL.signs[x.st];
+      h = (skL.idx ? '<div class="lvHint">▼ 맨 위에서 내리면 이전 역</div>' : '') +
+        skPaper(x, x.res, x.sp, x.base, x.ins.img, sg ? sg.u : '', D.title, D.date) +
+        '<div class="hint" style="text-align:center">점검자 ' + esc((x.ins.disp ? x.ins.disp + ' ' : '') + x.ins.name) + ' · ' + esc(x.ins.at) + (x.lead && !sg ? ' · 팀장 확인 완료 (' + esc(x.lead.name) + ')' : '') + '</div>' +
+        '<div class="lvHint">▲ 끝까지 올리면 서명</div><button class="btn pri lvUp" id="lvUp" type="button">' + (sg || x.lead ? '서명 다시 보기 · 다음' : '서명하기') + '</button>';
+      $('lvProg').textContent = (skL.idx + 1) + ' / ' + n;
+    } else h = lvSumHtml();
+    if (skL.idx >= n) $('lvProg').textContent = '전체 확인';
+    pg.innerHTML = h; pg.scrollTop = 0;
+    if ($('lvUp')) $('lvUp').onclick = function () { lvPad(true); };
+    [].forEach.call(pg.querySelectorAll('[data-go]'), function (r) { r.onclick = function () { lvGo(Number(r.getAttribute('data-go'))); }; });
+    if ($('lvSend')) $('lvSend').onclick = lvSend;
+    if (!keep) lvSave();
+  }
+  function lvSumHtml() {
+    var D = skL.data, left = 0;
+    var rows = D.stations.map(function (x, i) {
+      var ok = skL.signs[x.st] ? '<span class="ok">✓ 서명</span>' : x.lead ? '<span class="ok">✓ 확인 완료</span>' : '<span class="no">서명 필요</span>';
+      if (!skL.signs[x.st] && !x.lead) left++;
+      return '<div class="srow" data-go="' + i + '"><span class="nm">' + esc(x.st) + '</span>' + ok + '</div>';
+    }).join('');
+    var news = Object.keys(skL.signs).length;
+    return '<div class="card lvSum"><div class="who">전체 확인</div>' +
+      '<div class="hint">' + (left ? '서명이 필요한 역 ' + left + '개가 있습니다. 눌러서 그 역으로 갑니다.' : news ? '모든 역을 확인했습니다. [전체 확인]을 누르면 서명이 한 번에 저장됩니다.' : '모든 역의 팀장 확인이 끝났습니다.') + '</div>' +
+      (D.missing && D.missing.length ? '<div class="warn">점검자 서명 전인 역 ' + D.missing.length + '개: ' + esc(D.missing.join(', ')) + '</div>' : '') +
+      '<div class="slist">' + rows + '</div>' +
+      '<div class="row"><button class="btn pri" id="lvSend" type="button"' + (left || !news ? ' disabled' : '') + '>전체 확인</button></div></div>' +
+      '<div class="lvHint">▼ 맨 위에서 내리면 이전 역</div>';
+  }
+  var lvBusy = false;
+  function lvSend() {
+    if (lvBusy) return;
+    var signs = {}; Object.keys(skL.signs).forEach(function (st) { signs[st] = skL.signs[st].u; });
+    lvBusy = true; $('lvSend').disabled = true; $('lvSend').textContent = '보내는 중…';
+    google.script.run.withSuccessHandler(function (r) {
+      lvBusy = false; lsSet(skL.key, null); skL = null; lvClose();
+      msg($('msg1'), r.title + ': 팀장 확인 서명 ' + r.n + '개 역을 저장했습니다.', '#12833b');
+    }).withFailureHandler(function (e) {
+      lvBusy = false; if ($('lvSend')) { $('lvSend').disabled = false; $('lvSend').textContent = '전체 확인'; }
+      var m = document.createElement('div'); m.className = 'msg'; m.textContent = errText(e); $('lvPage').querySelector('.lvSum').appendChild(m);
+    }).safetyLeaderSubmit({ token: staff && staff.token || '', eduId: skL.id, signs: signs, device: devInfo });
+  }
+  function lvPad(up) {
+    var sh = $('lvSheet');
+    if (!skL || !up) { sh.classList.remove('up'); if (skL) skL.mode = 'img'; return; }
+    var x = skL.data.stations[skL.idx]; if (!x) return;
+    skL.mode = 'pad'; lvPadP.clear(); msg($('lvMsg'), '');
+    $('lvSHead').textContent = x.st + ' 팀장 서명 (' + (skL.idx + 1) + ' / ' + skL.data.stations.length + ')';
+    var sg = skL.signs[x.st];
+    $('lvOld').classList.toggle('hidden', !sg); if (sg) $('lvOld').src = sg.u;
+    sh.classList.add('up'); setTimeout(lvPadP.setup, 30);
+  }
+  $('lvBack').onclick = function () { lvPad(false); };
+  $('lvClear').onclick = function () {
+    lvPadP.clear(); $('lvOld').classList.add('hidden');
+    var x = skL.data.stations[skL.idx]; if (x && skL.signs[x.st]) { delete skL.signs[x.st]; lvSave(); }
+  };
+  $('lvNext').onclick = function () {
+    var x = skL.data.stations[skL.idx]; if (!x) return;
+    if (lvPadP.strokes.length) {
+      if (lvPadP.n < 6) { msg($('lvMsg'), '서명이 너무 짧습니다. 조금 더 크게 서명해 주세요.', '#c0392b'); return; }
+      skL.signs[x.st] = { u: lvPadP.png(), at: x.ins.at };
+    } else if (!skL.signs[x.st] && !x.lead) { msg($('lvMsg'), '서명해 주세요.', '#c0392b'); return; }
+    lvSave(); lvGo(skL.idx + 1);
+  };
+  /* 체크리스트 넘기기: 끝까지 내려 본 뒤 더 올리면 서명 칸, 맨 위에서 더 내리면 이전 역 (손가락·마우스 휠) */
+  (function () {
+    var pg = $('lvPage'), y0 = null, top0 = false, bot0 = false, fired = false, wsum = 0, wt = null;
+    var atBot = function () { return pg.scrollTop + pg.clientHeight >= pg.scrollHeight - 2; };
+    pg.addEventListener('touchstart', function (e) { y0 = e.touches[0].clientY; top0 = pg.scrollTop <= 0; bot0 = atBot(); fired = false; }, { passive: true });
+    pg.addEventListener('touchmove', function (e) {
+      if (y0 === null || fired || !skL || skL.mode !== 'img') return;
+      var dy = e.touches[0].clientY - y0, n = skL.data.stations.length;
+      if (dy < -60 && bot0 && atBot() && skL.idx < n) { fired = true; lvPad(true); }
+      else if (dy > 80 && top0 && pg.scrollTop <= 0 && skL.idx > 0) { fired = true; lvGo(skL.idx - 1); }
+    }, { passive: true });
+    pg.addEventListener('touchend', function () { y0 = null; }, { passive: true });
+    pg.addEventListener('wheel', function (e) {
+      if (!skL || skL.mode !== 'img') return;
+      var n = skL.data.stations.length;
+      if (!(e.deltaY > 0 && atBot() && skL.idx < n) && !(e.deltaY < 0 && pg.scrollTop <= 0 && skL.idx > 0)) { wsum = 0; return; }
+      wsum += e.deltaY; clearTimeout(wt); wt = setTimeout(function () { wsum = 0; }, 400);
+      if (wsum > 240) { wsum = 0; lvPad(true); } else if (wsum < -240) { wsum = 0; lvGo(skL.idx - 1); }
+    }, { passive: true });
+  })();
+
   /* ---------- 관리자 ---------- */
   var admTab = 'open';                     // 서명지별 현황에서 보는 탭
   var admTok = null, admData = null, admExp = {}, admOpen = {}, admOrder = {}, admInfo = {};   // admInfo: 교육 정보를 펼친 교육
@@ -2117,6 +2567,23 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
   }
 
   /** 고른 양식의 서명지에 부서 칸이 없으면(예: 양식3·4) 부서 입력칸 숨김 */
+  function isSkTpl(name) { var t = admData && admData.tplPrev && admData.tplPrev[name]; return !!(t && t.safety); }
+  /** 안전점검 날짜 기본값: 2026.10.06(화요일) */
+  function skToday() {
+    var d = new Date(), p = function (n) { return (n < 10 ? '0' : '') + n; };
+    return d.getFullYear() + '.' + p(d.getMonth() + 1) + '.' + p(d.getDate()) + '(' + '일월화수목금토'.charAt(d.getDay()) + '요일)';
+  }
+  function skChecks(name) {
+    var box = $('nSkList'), t = admData.tplPrev[name] || {};
+    if (box.children.length) return;
+    (t.stations || []).forEach(function (st) {
+      var l = document.createElement('label'), c = document.createElement('input'), sp = document.createElement('span');
+      c.type = 'checkbox'; c.checked = true; c.value = /역$/.test(st) ? st : st + '역'; sp.textContent = c.value;
+      c.onchange = function () { $('nSkAll').checked = ![].some.call(box.querySelectorAll('input'), function (x) { return !x.checked; }); };
+      l.appendChild(c); l.appendChild(sp); box.appendChild(l);
+    });
+  }
+  $('nSkAll').onchange = function () { [].forEach.call($('nSkList').querySelectorAll('input'), function (x) { x.checked = $('nSkAll').checked; }); };
   function isRfTpl(name) { var t = admData && admData.tplPrev && admData.tplPrev[name]; return !!(t && t.refund); }
   function tplHasDept(name) { var t = admData && admData.tplPrev && admData.tplPrev[name]; return !t || t.hasDept !== false; }
   function deptRow(row, name, guest) { row.classList.toggle('hidden', !!guest && !tplHasDept(name)); }   // 본인 확인 없는 서명지의 부서명은 양식에 적는 용도
@@ -2154,7 +2621,12 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
     d.templates.forEach(function (t) { var o = document.createElement('option'); o.value = t; o.textContent = t; sel.appendChild(o); });
     if (prev && d.templates.indexOf(prev) > -1) sel.value = prev;
     var nTplUi = function () {
-      var rf = isRfTpl(sel.value);
+      var rf = isRfTpl(sel.value), skT = isSkTpl(sel.value);
+      $('nSkBox').classList.toggle('hidden', !skT);
+      $('nTitleLabel').textContent = skT ? '제목' : '교육명';
+      $('nTitle').placeholder = skT ? '안전점검의 날 체크리스트' : '예: 4분기 비상대응 훈련';
+      if (skT) { skChecks(sel.value); if (!$('nDate').value || $('nDate').value === today()) $('nDate').value = skToday(); }
+      else if ($('nDate').value === skToday()) $('nDate').value = today();
       var gNew = !$('nVerify').checked;
       tplPreview($('nTplPrev'), sel.value); deptRow($('nDeptRow'), sel.value, gNew);
       if (rf) $('nDeptRow').classList.add('hidden');
@@ -2164,6 +2636,11 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
       $('nCreate').textContent = rf ? '환불 등록 열기' : '서명지 열기';
       $('nRosterRow').classList.toggle('hidden', rf || !$('nVerify').checked);   // 명단 지정은 본인 확인 서명지만
       $('nRosterBox').classList.toggle('hidden', rf || !$('nVerify').checked || !$('nUseRoster').checked);
+      if (skT) {                                   // 안전점검: 본인 확인(직원 로그인)만, 명단·접속 코드 없음
+        $('nVerify').checked = true; $('nNoVerify').classList.add('hidden');
+        ['nKindRow', 'nCodeRow', 'nRosterBox'].forEach(function (id) { $(id).classList.add('hidden'); });
+        ['nDeptRow', 'nTeamRow', 'nDeptNote'].forEach(function (id) { $(id).classList.remove('hidden'); });
+      }
     };
     nTplUi(); sel.onchange = nTplUi; $('nUseRoster').onchange = nTplUi;
     $('nVerify').onchange = function () { $('nNoVerify').classList.toggle('hidden', $('nVerify').checked); nTplUi(); };
@@ -2218,12 +2695,26 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
 
   $('nCreate').onclick = function () {
     var rfNew = isRfTpl($('nTpl').value), dept = rfNew || $('nDeptRow').classList.contains('hidden') ? '' : $('nDept').value;   // 숨겨진 칸의 기본값은 보내지 않음
+    var skNew = isSkTpl($('nTpl').value);
     var need = [['nTitle', '교육명'], ['nDate', '날짜'], ['nCode', '접속 코드']].filter(function (f) {
+      if (skNew) return f[0] === 'nDate' && !$(f[0]).value.trim();   // 안전점검: 날짜만 (제목은 비우면 기본 제목)
       return !rfNew && !$(f[0]).value.trim();        // 비상: 제목·날짜·접속 코드 입력 없음
     });
     if (need.length) {                        // 빈 칸은 서버에 보내기 전에 바로 안내 (버튼은 잠그지 않음)
       msg($('nMsg'), '입력하지 않은 칸: ' + need.map(function (f) { return f[1]; }).join(', '), '#c0392b');
       $(need[0][0]).focus();
+      return;
+    }
+    if (skNew) {
+      var sts = [].filter.call($('nSkList').querySelectorAll('input'), function (x) { return x.checked; }).map(function (x) { return x.value; })
+        .concat($('nSkAdd').value.split(/[,，]/).map(function (x) { return x.trim(); }).filter(Boolean));
+      if (!sts.length) { msg($('nMsg'), '점검할 역을 하나 이상 고르세요.', '#c0392b'); return; }
+      $('nCreate').disabled = true;
+      admCall('adminCreateEdu', [{ tpl: $('nTpl').value, title: $('nTitle').value, dept: dept, team: dept ? $('nTeam').value : '', date: $('nDate').value, stations: sts }], function (d) {
+        $('nCreate').disabled = false; $('nTitle').value = ''; $('nSkAdd').value = ''; $('nDept').innerHTML = '';
+        $('newCard').classList.remove('open'); admTab = 'open'; renderAdmin(d);
+      }, $('nMsg'), function () { $('nCreate').disabled = false; });
+      setTimeout(function () { $('nCreate').disabled = false; }, 20000);
       return;
     }
     var rosterNew = !rfNew && $('nVerify').checked && $('nUseRoster').checked;
@@ -2288,6 +2779,7 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
       q('.rosterSec').classList.remove('hidden'); q('.rosterLeft').textContent = (e.rosterLeft || []).join(', ') || '없음 (전원 서명)'; }
     if (e.codeLocked) { var lchip = document.createElement('span'); lchip.className = 'chip off'; lchip.textContent = '코드 잠김'; q('.t').appendChild(lchip); }
     if (e.missingTabs) { var tchip = document.createElement('span'); tchip.className = 'chip off'; tchip.textContent = '탭 없음'; q('.t').appendChild(tchip); }
+    if (e.safety) { var kchip = document.createElement('span'); kchip.className = 'chip ext'; kchip.textContent = '안전점검'; q('.t').appendChild(kchip); }
     if (e.refund) { var rchip = document.createElement('span'); rchip.className = 'chip rf'; rchip.textContent = '환불 등록'; q('.t').appendChild(rchip);
       var rcnt = document.createElement('span'); rcnt.style.cssText = 'margin-left:6px;font-size:14px;font-weight:700;vertical-align:1px'; rcnt.textContent = e.signers.length + '명'; q('.t').appendChild(rcnt); }
     var tInfo = [e.dept, e.team, e.date].filter(Boolean).join(' · ');      // 부서명·팀·날짜는 제목 줄의 표시 옆에
@@ -2295,6 +2787,7 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
     q('.d').textContent = (e.tpl || '') + (e.pages > 1 ? ' · ' + e.pages + '페이지' : '');
     q('.cnt').textContent = '서명 ' + e.signers.length + (e.roster ? '/' + e.roster : '') + '명 · 접속 코드 ' + (e.code || '-');
     q('.d').classList.toggle('hidden', !!e.refund); q('.cnt').classList.toggle('hidden', !!e.refund);   // 환불 등록: 빨간 표시 옆 인원만
+    if (e.safety) { q('.d').textContent = '역 ' + e.safety.n + '개'; q('.cnt').textContent = '점검자 서명 ' + e.safety.ins + '/' + e.safety.n + ' · 팀장 서명 ' + e.safety.lead + '/' + e.safety.n; }
     if (e.refund && e.autoCloseLeft > 0) {          // 자동 마감까지 남은 시간 (1분마다 줄어듦)
       var left = document.createElement('span'); left.className = 'rfLeft';
       left.setAttribute('data-end', String(Date.now() + e.autoCloseLeft)); left.title = e.autoClose + ' 자동 마감';
@@ -2303,12 +2796,13 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
     if (e.error) { var m0 = q('.m'); msg(m0, e.error, '#c0392b'); }
 
     // 접수 열기/마감
-    q('.b-open').innerHTML = e.refund ? (e.open ? '등록 마감' : '등록 다시 열기') :
+    q('.b-open').innerHTML = e.refund ? (e.open ? '등록 마감' : '등록 다시 열기') : e.safety ? (e.open ? '서명지 마감' : '이 서명지 접수 다시 열기') :
       e.open ? '서명지 마감<small class="bsub">직책·직위 순으로 자동 정렬</small>' : '이 서명지 접수 다시 열기';
     q('.b-open').className = 'btn b-open ' + (e.open ? 'del' : 'pri');
     q('.b-open').onclick = function () {
       var closing = !!e.open; q('.b-open').disabled = true;
       admCall('adminSetOpen', [e.id, !closing], function (d) {
+        admTab = closing ? 'closed' : 'open';      // 옮겨 간 탭을 보여 줌
         renderAdmin(d); msg($('aMsg'), e.title + ': ' + (closing ? '접수를 마감했습니다.' + (d.sortNote || '') : '접수를 다시 열었습니다.'), '#12833b');
       }, q('.m'));
     };
@@ -2349,7 +2843,8 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
     q('.b-role').onclick = function () { openRoles(e.id); };
     q('.roleBox').classList.toggle('hidden', !e.hasRole || !!e.guest || !!e.refund);
     // 비상(환불 등록): 접속 코드·서명자 순서 없음
-    q('.codeSec').classList.toggle('hidden', !!e.refund); q('.ordSec').classList.toggle('hidden', !!e.refund);
+    q('.codeSec').classList.toggle('hidden', !!e.refund || !!e.safety); q('.ordSec').classList.toggle('hidden', !!e.refund || !!e.safety);   // 안전점검: 접속 코드·순서 없음 (역 순서)
+    if (e.safety) { q('.roleBox').classList.add('hidden'); q('.i-title').previousElementSibling.textContent = '제목'; }
     q('.b-pdf').classList.toggle('hidden', !!e.refund); q('.b-html').classList.toggle('hidden', !!e.refund);
     if (e.refund) q('.expTitle').textContent = '등록 명단 내보내기 (CSV)';
     if (e.refund) {
