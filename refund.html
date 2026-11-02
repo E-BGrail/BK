@@ -288,6 +288,10 @@
   .codeCells { position:relative; display:flex; gap:6px; margin-top:12px; } .codeCells i { flex:1; min-width:0; height:52px; line-height:50px; border:1.5px solid var(--line); border-radius:10px; background:#fff; color:var(--text); font-style:normal; font-size:24px; font-weight:700; text-align:center; transition:border-color .12s, box-shadow .12s; }
   .codeCells i.fill { border-color:#9db0e6; background:#f7f9fe; } .codeCells.focus i.cur { border-color:var(--pri); box-shadow:0 0 0 3px rgba(50,78,179,.16); }
   .codeCells input[type=tel] { position:absolute; inset:0; width:100%; height:100%; margin:0; padding:0; opacity:0; border:0; font-size:16px; }
+  .mailRow { display:flex; align-items:center; gap:6px; margin-top:8px; } .mailRow input[type=text] { flex:1; min-width:0; margin-top:0; } .mailRow span { flex:none; font-size:15px; font-weight:600; color:var(--text); }
+  #regOver.full { padding:0; align-items:stretch; background:var(--bg); }
+  #regOver.full .regBox { width:100%; max-width:430px; height:100%; max-height:none; border-radius:0; animation:none; }
+  #regOver.full .regHead { position:sticky; top:0; z-index:2; }
   .regInfo { white-space:pre-line; font-size:12px; line-height:1.6; color:var(--sub); background:#f6f7f9; border-radius:8px; padding:8px 10px; margin-top:10px; }
   .regChk { font-size:14px; line-height:1.8; background:#f3f6fd; border-radius:8px; padding:8px 10px; margin-top:8px; }
   input[readonly] { background:#eef1f5; color:var(--sub); }
@@ -677,7 +681,7 @@
       <div class="row"><button class="btn gray" id="regNo" type="button">취소</button><button class="btn pri" id="regGo" type="button">등록 시작</button></div>
     </div>
     <div id="regMailStep" class="hidden">
-      <div class="field" style="margin-top:0"><label>사내 메일</label><input type="email" id="regMail" autocomplete="off" inputmode="email" maxlength="80" enterkeyhint="send"></div>
+      <div class="field" style="margin-top:0"><label>사내 메일</label><div class="mailRow"><input type="text" id="regMail" placeholder="메일 아이디" autocomplete="off" autocapitalize="off" spellcheck="false" inputmode="email" maxlength="60" enterkeyhint="send"><span id="regMailDom"></span></div></div>
       <div class="note">입력한 메일로 인증 코드를 보냅니다. 메일은 직원DB에 기록됩니다.</div>
       <div class="msg" id="regMsgM"></div>
       <div class="row"><button class="btn gray" id="regMailNo" type="button">취소</button><button class="btn pri" id="regMailSend" type="button">인증 코드 받기</button></div>
@@ -1328,7 +1332,10 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
   /* ---------- 직원 등록: 미등록 안내 → 사내 메일 → 인증 코드 → 입력 → 다시 확인 → 직원DB에 기록 ---------- */
   var REG_UI = { regAsk: [0, '직원 등록', '등록되지 않은 사번입니다'], regMailStep: [1, '사내 메일 인증', '본인 메일로 인증 코드를 보내 드립니다'], regCodeStep: [2, '인증 코드 입력', '메일로 받은 숫자 6자리를 입력하세요'],
     regForm: [3, '직원 정보 입력', '서명지에 표시될 정보입니다'], regCheck: [3, '입력 내용 확인', '맞는지 다시 확인하세요'] };
+  var regCur = 'regAsk', regDomain = '', regTicketAt = 0;
   function regStage(id) {
+    regCur = id;
+    $('regOver').classList.toggle('full', id === 'regForm' || id === 'regCheck');   // 정보 입력은 칸이 많아 전체 화면으로
     ['regAsk', 'regMailStep', 'regCodeStep', 'regForm', 'regCheck'].forEach(function (s) { $(s).classList.toggle('hidden', s !== id); });
     var u = REG_UI[id]; $('regHeadT').textContent = u[1]; $('regHeadS').textContent = u[2];
     $('regSteps').classList.toggle('hidden', !u[0]);
@@ -1351,15 +1358,19 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
   var regTicket = '';
   function closeReg() { $('regOver').classList.add('hidden'); $('regC1').value = ''; $('regC2').value = ''; regCodeSet(''); regTicket = ''; popSync(); }
   function openReg(pin, domain) {
+    if (regTicket && $('regPin').value === pin && Date.now() - regTicketAt < 1740000) {   // 뒤로가기로 닫혔을 때: 입력 내용·메일 인증 유지 (서버 표시 30분 안)
+      $('regOver').classList.remove('hidden'); popPush(); regStage(regCur === 'regCheck' ? 'regCheck' : 'regForm'); return;
+    }
     ['regName', 'regDept', 'regTeam', 'regPost', 'regRank', 'regC1', 'regC2', 'regMail'].forEach(function (id) { $(id).value = ''; });
     regCodeSet(''); $('regPin').value = pin; $('regAskPin').textContent = pin; regTicket = ''; ['regMsg', 'regMsg2', 'regMsgM', 'regMsgC'].forEach(function (id) { msg($(id), ''); });
-    $('regMail').placeholder = domain ? '이름@' + domain : '사내 메일';
+    regDomain = domain || ''; $('regMailDom').textContent = regDomain ? '@' + regDomain : '';
     regStage('regAsk'); $('regOver').classList.remove('hidden'); popPush();
   }
   $('regMailNo').onclick = closeReg;
   $('regMailAgain').onclick = function () { regStage('regMailStep'); };
   $('regMailSend').onclick = function () {
-    if (!$('regMail').value.trim()) { msg($('regMsgM'), '사내 메일을 입력하세요.', '#c0392b'); $('regMail').focus(); return; }
+    var mailId = $('regMail').value.trim().split('@')[0];
+    if (!mailId) { msg($('regMsgM'), '메일 아이디를 입력하세요.', '#c0392b'); $('regMail').focus(); return; }
     $('regMailSend').disabled = true; msg($('regMsgM'), '보내는 중…', '#6b7686');
     google.script.run.withSuccessHandler(function (r) {
       $('regMailSend').disabled = false; msg($('regMsgM'), ''); msg($('regMsgC'), '');
@@ -1367,13 +1378,13 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
       regCodeSet(''); regStage('regCodeStep'); setTimeout(function () { $('regMailCode').focus(); }, 50);
     }).withFailureHandler(function (e) {
       $('regMailSend').disabled = false; msg($('regMsgM'), errText(e), '#c0392b');
-    }).empMailSend({ pin: $('regPin').value.trim(), mail: $('regMail').value.trim() });
+    }).empMailSend({ pin: $('regPin').value.trim(), mail: mailId + '@' + regDomain });
   };
   $('regCodeOk').onclick = function () {
     $('regCodeOk').disabled = true; msg($('regMsgC'), '확인 중…', '#6b7686');
     google.script.run.withSuccessHandler(function (r) {
       $('regCodeOk').disabled = false; msg($('regMsgC'), '');
-      regTicket = r.ticket; regStage('regForm'); setTimeout(function () { $('regName').focus(); }, 50);
+      regTicket = r.ticket; regTicketAt = Date.now(); regStage('regForm'); setTimeout(function () { $('regName').focus(); }, 50);
     }).withFailureHandler(function (e) {
       $('regCodeOk').disabled = false; regCodeSet(''); $('regMailCode').focus(); msg($('regMsgC'), errText(e), '#c0392b');
     }).empMailVerify({ pin: $('regPin').value.trim(), code: $('regMailCode').value.trim() });
