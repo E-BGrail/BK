@@ -822,7 +822,7 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
       if (curScreen === 's3') st.done = { who: $('doneWho').textContent, msg: $('doneMsg').textContent };
       if (rfEdu && (curScreen === 'sf' || curScreen === 's3')) { st.rf = rfEdu.id; st.rfd = rfDirect; st.re = rfEnter; st.rz = rfEnd; }          // 환불 등록: 어느 등록인지만 (입력값·연락처는 저장 안 함)
       if (admTok && ['sa', 'so', 'sr'].indexOf(curScreen) > -1) {
-        st.admTok = admTok; st.admOrder = admOrder; st.admOpen = admOpen; st.admInfo = admInfo; st.admTab = admTab;
+        st.admTok = admTok; st.admOrder = admOrder; st.admOpen = admOpen; st.admInfo = admInfo; st.admTab = admTab; st.admMe = admMe;
         if (curScreen === 'so') st.ordId = ordId;
         if (curScreen === 'sr' && rData) st.r = { id: rData.id, assign: rAssign, head: $('rHead').value };
       }
@@ -834,7 +834,7 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
     var st = loadState() || {};
     edTab = st.edTab === 'closed' ? 'closed' : 'open';
     if (st.admTok) {                 // 관리자 화면: 토큰이 살아 있으면 그대로 다시 열기 (2시간 지나면 처음 화면)
-      admTok = st.admTok; admOrder = st.admOrder || {}; admOpen = st.admOpen || {}; admInfo = st.admInfo || {}; admTab = st.admTab || 'open';
+      admTok = st.admTok; admOrder = st.admOrder || {}; admOpen = st.admOpen || {}; admInfo = st.admInfo || {}; admTab = st.admTab || 'open'; admMe = st.admMe || null;
       show('sa'); msg($('aMsg'), '불러오는 중…', '#6b7686');
       google.script.run.withFailureHandler(function () {
         admTok = null; resetAll();
@@ -1265,7 +1265,7 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
     $('admOk').disabled = true; msg($('admMsg'), '확인 중…', '#6b7686');
     google.script.run.withSuccessHandler(function (r) {
       $('admOk').disabled = false; closeAdmLogin();
-      admTok = r.token; admExp = {}; admOpen = {}; admTab = 'open'; renderAdmin(r.data); show('sa');
+      admTok = r.token; admMe = r.me || null; $('nDept').innerHTML = ''; admExp = {}; admOpen = {}; admTab = 'open'; renderAdmin(r.data); show('sa');
     }).withFailureHandler(function (e) {
       $('admOk').disabled = false;
       if (/로그인이 필요/.test(errText(e))) { closeAdmLogin(); logout(errText(e)); return; }
@@ -1897,6 +1897,7 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
   /* ---------- 관리자 ---------- */
   var admTab = 'open';                     // 서명지별 현황에서 보는 탭
   var admTok = null, admData = null, admExp = {}, admOpen = {}, admOrder = {}, admInfo = {};   // admInfo: 교육 정보를 펼친 교육
+  var admMe = null;                      // 로그인한 관리자의 { dept, team }: 새 서명지 부서명·팀 기본값 (시트 메뉴로 열면 없음)
 
   function admCall(fn, args, onOk, m, onFail) {
     m = m || $('aMsg');
@@ -2147,7 +2148,8 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
   function renderAdmin(d) {
     admData = d;
     var sel = $('nTpl'), prev = sel.value; sel.innerHTML = '';
-    deptTeamSel($('nDept'), $('nTeam'), $('nDept').value, $('nTeam').value);
+    var nFirst = !$('nDept').options.length;   // 처음 그릴 때·서명지를 연 뒤에는 관리자의 부서명·팀, 그 밖에는 고른 값 유지
+    deptTeamSel($('nDept'), $('nTeam'), nFirst ? (admMe && admMe.dept) || '' : $('nDept').value, nFirst ? (admMe && admMe.team) || '' : $('nTeam').value);
     $('gstId').value = (d.guest && d.guest.id) || ''; $('gstCode').value = (d.guest && d.guest.code) || '';
     d.templates.forEach(function (t) { var o = document.createElement('option'); o.value = t; o.textContent = t; sel.appendChild(o); });
     if (prev && d.templates.indexOf(prev) > -1) sel.value = prev;
@@ -2215,7 +2217,7 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
   $('nRoster').addEventListener('input', function () { $('nPick').classList.add('hidden'); $('nPick').innerHTML = ''; });
 
   $('nCreate').onclick = function () {
-    var rfNew = isRfTpl($('nTpl').value), dept = rfNew ? '' : $('nDept').value;
+    var rfNew = isRfTpl($('nTpl').value), dept = rfNew || $('nDeptRow').classList.contains('hidden') ? '' : $('nDept').value;   // 숨겨진 칸의 기본값은 보내지 않음
     var need = [['nTitle', '교육명'], ['nDate', '날짜'], ['nCode', '접속 코드']].filter(function (f) {
       return !rfNew && !$(f[0]).value.trim();        // 비상: 제목·날짜·접속 코드 입력 없음
     });
@@ -2234,7 +2236,7 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
       $('nCreate').disabled = false;
       if (d.rosterChoice) { drawRosterPick(d.rosterChoice); msg($('nMsg'), '같은 이름의 직원이 있습니다. 서명할 사람을 고른 뒤 다시 누르세요.', '#324eb3'); return; }
       $('nPick').classList.add('hidden'); $('nPick').innerHTML = '';
-      if (!rfNew) { $('nTitle').value = ''; $('nCode').value = ''; $('nRoster').value = ''; $('nUseRoster').checked = false; $('nDept').value = ''; $('nTeam').value = ''; }
+      if (!rfNew) { $('nTitle').value = ''; $('nCode').value = ''; $('nRoster').value = ''; $('nUseRoster').checked = false; $('nDept').innerHTML = ''; }
       $('newCard').classList.remove('open');   // 교육을 연 뒤에는 접음
       renderAdmin(d);
     }, $('nMsg'), function () { $('nCreate').disabled = false; });   // 실패하면 바로 다시 누를 수 있게
