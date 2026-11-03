@@ -314,23 +314,25 @@
   .ibox .ibody { display:none; }
   .ibox.open .ibody { display:block; margin:8px -12px 0; padding:2px 12px 12px; background:#f3f6fd; border-top:1.5px solid var(--pri); border-bottom:1.5px solid var(--pri); }   /* 펼치면 카드 좌우 끝까지 연한 파랑, 위아래 줄 (입력칸 폭은 그대로) */
   .gnote { margin-top:10px; background:#fff1e6; border:1px solid #f9c79c; color:#9a3d06; border-radius:10px; padding:8px 12px; font-size:14px; }
-  /* 안전점검의 날: 서명지 목록 카드 (점검자 · 팀장 박스 좌우) */
-  .skItem { border:1.5px solid #9fb3ea; background:#f5f8ff; border-radius:12px; padding:12px; }
+  /* 안전점검의 날: 서명지 목록 카드 (누르면 역 선택 화면) */
+  .skItem { border:1.5px solid #9fb3ea; background:#f5f8ff; border-radius:12px; padding:12px; cursor:pointer; }
   .skItem .skTop b { display:block; font-size:17px; margin-top:4px; }
   .skItem .skTop .rank { color:var(--sub); font-size:14px; }
   .skTag { display:inline-block; font-size:12px; font-weight:800; color:#fff; background:var(--pri); border-radius:6px; padding:2px 7px; }
-  .skBoxes { display:flex; gap:8px; margin-top:10px; }
-  .skB { flex:1; min-width:0; border:1.5px solid var(--line); background:#fff; border-radius:12px; padding:10px 6px; display:flex; flex-direction:column; align-items:center; gap:2px; color:var(--text); }
-  .skB em { font-style:normal; font-size:14px; font-weight:700; }
-  .skB strong { font-size:22px; color:var(--pri); }
-  .skB small { font-size:12px; color:var(--sub); }
-  .skB.done strong { color:var(--ok); }
+  .skCnt { margin-top:8px; font-size:14px; } .skCnt strong { color:var(--pri); } .skCnt strong.done { color:var(--ok); }
+  .skGo { font-size:12px; color:var(--sub); margin-top:2px; }
+  .skItem.busy { opacity:.6; pointer-events:none; }
   .skCell { display:flex; flex-direction:column; gap:4px; } .skCell > button:first-child { flex:1; }
   .skPdfS { border:1.5px solid var(--pri) !important; background:#fff !important; color:var(--pri); font-size:13px !important; font-weight:700; padding:7px 4px !important; border-radius:8px !important; }
   .skPdfB { width:100%; margin-top:8px; padding:10px; border:1.5px solid var(--line); border-radius:12px; background:#fff; font-size:14px; font-weight:700; color:var(--pri); }
   .skPdfB:disabled { color:#98a2b3; background:#f4f5f7; }
   .skItem.closed { border-color:var(--line); background:#f4f5f7; color:#98a2b3; }
-  .skItem.closed .skB { color:#98a2b3; } .skItem.closed .skB strong { color:#98a2b3; }
+  .skItem.closed .skCnt strong { color:#98a2b3; }
+  /* 역 선택 화면의 팀장 확인 (진행 상황 · 일괄 서명) */
+  .skLead { margin-top:12px; border:1.5px solid #9fb3ea; background:#f5f8ff; border-radius:12px; padding:10px 12px; }
+  .skLead .who { font-size:16px; color:var(--pri); }
+  #sk .padwrap { padding:0 24px; }                                     /* 서명 칸 좌우 여백: 화면 가장자리 뒤로가기 제스처와 안 겹치게 */
+  html.noPull, html.noPull body { overscroll-behavior-y:none; }        /* 안전점검 화면: 당겨서 새로고침 끔 */
   /* 점검자 화면 */
   .skGrid { display:grid; grid-template-columns:repeat(3, 1fr); gap:6px; margin-top:10px; }
   .skGrid button { border:1.5px solid var(--line); background:#fff; border-radius:10px; padding:10px 4px; font-size:15px; font-weight:700; color:var(--text); line-height:1.3; }
@@ -355,7 +357,6 @@
   .skChecks input { width:18px; height:18px; margin:0; accent-color:var(--pri); flex:none; }
   .skQ { display:flex; flex-direction:column; } .skQ .qi, .skQ .ni { width:100%; min-width:0; }   /* 수량 한 줄 · 비고 다음 줄 */
   .skQ input::placeholder { color:#98a2b3; }
-  @media (orientation: landscape) and (max-height: 600px) { .lvPadW canvas { height:min(200px, calc(100dvh - 190px)); min-height:90px; } }
   /* 체크리스트 모양 (점검자 최종 확인 · 팀장 확인) */
   .skPaper { background:#fff; border:1px solid #c9ced8; border-radius:6px; padding:10px; color:#111; font-size:12px; }
   .skPaper .pT { text-align:center; font-size:17px; font-weight:800; margin:2px 0 8px; }
@@ -369,7 +370,7 @@
   .skPaper tr.chg td { background:#fff3c4; }
   .skPaper .was { display:block; font-size:10.5px; color:#b45309; font-weight:700; margin-top:2px; }
   .skPaper .pChg { font-size:12px; font-weight:700; color:#b45309; margin-bottom:6px; } .skPaper .pChg.none { color:var(--sub); }
-  /* 팀장 확인: 전체 화면 (역마다 체크리스트 → 끝까지 올리면 서명) */
+  /* 팀장 내용 보기: 전체 화면 (역마다 체크리스트, 이전·다음 역) */
   .skView { position:fixed; top:var(--vvt, 0px); left:0; right:0; height:var(--vvh, 100%); z-index:40; background:#e9edf4; display:flex; flex-direction:column; }
   body.skLock { overflow:hidden; }
   .lvTop { flex:none; display:flex; align-items:center; gap:8px; padding:8px 10px; background:#fff; border-bottom:2px solid var(--pri); }
@@ -377,14 +378,7 @@
   .lvTop span { font-size:13px; font-weight:700; color:var(--pri); white-space:nowrap; }
   .lvPage { flex:1; overflow-y:auto; -webkit-overflow-scrolling:touch; overscroll-behavior:contain; padding:10px; }
   .lvHint { text-align:center; font-size:12px; color:var(--sub); padding:8px 0; }
-  .lvUp { display:block; width:100%; margin:6px 0 30px; }
-  .lvSheet { position:absolute; left:0; right:0; bottom:0; background:#fff; border-radius:16px 16px 0 0; box-shadow:0 -6px 24px rgba(16,24,48,.25);
-    padding:12px 14px calc(12px + env(safe-area-inset-bottom)); transform:translateY(110%); transition:transform .25s ease-out; }
-  .lvSheet.up { transform:none; }
-  .lvSheet .lvSHead { font-size:15px; font-weight:700; margin-bottom:8px; }
-  .lvPadW { position:relative; } .lvPadW canvas { height:200px; }
-  .lvPadW img { position:absolute; left:50%; top:50%; transform:translate(-50%, -50%); max-width:80%; max-height:80%; pointer-events:none; opacity:.85; }
-  .lvSum .srow { padding:10px 8px; font-size:15px; cursor:pointer; } .lvSum .ok { color:var(--ok); font-weight:700; } .lvSum .no { width:auto; color:#b42318; font-weight:700; }
+  .lvNav { margin:6px 0 30px; }
 </style>
 </head>
 <body>
@@ -719,15 +713,20 @@
       <div class="msg" id="rMsg"></div>
     </div>
   </section>
-  <!-- 안전점검의 날: 점검자 (역 선택 → 체크리스트 → 최종 확인 → 서명) -->
+  <!-- 안전점검의 날: 점검자 (역 선택 → 체크리스트 → 최종 확인 → 서명), 팀장 (역 선택 화면에서 진행 상황 → 일괄 서명) -->
   <section id="sk" class="hidden">
     <div class="card">
-      <div class="rfHead"><span class="skTag">안전점검 · 점검자</span></div>
+      <div class="rfHead"><span class="skTag">안전점검의 날</span></div>
       <div class="who" id="skTitle" style="margin-top:6px"></div>
       <div class="edu" id="skDate"></div>
       <div id="skPick">
         <div class="hint">점검할 역을 고르세요. ✓ 표시는 점검자 서명이 끝난 역이고, 다시 고르면 고쳐서 다시 서명합니다. 팀장 확인까지 끝난 역은 수정할 수 없고 PDF를 받아 출력·보관할 수 있습니다.</div>
         <div class="skGrid" id="skGrid"></div>
+        <div class="skLead hidden" id="skLead">
+          <div class="who">팀장 확인</div>
+          <div class="hint" id="skLeadSt"></div>
+          <div class="row"><button class="btn gray" id="skLeadView" type="button">역별 내용 보기</button><button class="btn pri" id="skLeadSign" type="button">일괄 서명</button></div>
+        </div>
         <div class="row"><button class="btn gray" id="skHome" type="button">서명지 목록</button><button class="btn pri hidden" id="skPdfAll" type="button">전체 PDF</button></div>
       </div>
       <div id="skForm" class="hidden">
@@ -756,16 +755,10 @@
     </div>
   </section>
 </main>
-<!-- 안전점검의 날: 팀장 확인 (역마다 체크리스트 → 끝까지 올리면 서명 → 다음 역, 서명은 이 휴대폰에 모아 두었다가 [전체 확인]으로 한 번에 보냄) -->
-<div class="skView hidden" id="skView" role="dialog" aria-label="팀장 확인">
+<!-- 안전점검의 날: 팀장 내용 보기 (역마다 체크리스트, 이전·다음 역. 서명은 역 선택 화면의 [일괄 서명]) -->
+<div class="skView hidden" id="skView" role="dialog" aria-label="팀장 내용 보기">
   <div class="lvTop"><button class="btn gray sbtn" id="lvClose" type="button">닫기</button><b id="lvTitle"></b><span id="lvProg"></span></div>
   <div class="lvPage" id="lvPage"></div>
-  <div class="lvSheet" id="lvSheet">
-    <div class="lvSHead" id="lvSHead"></div>
-    <div class="lvPadW"><canvas id="lvPad"></canvas><img id="lvOld" class="hidden" alt=""></div>
-    <div class="row"><button class="btn gray" id="lvClear" type="button">지우기</button><button class="btn gray" id="lvBack" type="button">뒤로</button><button class="btn pri" id="lvNext" type="button">다음</button></div>
-    <div class="msg" id="lvMsg"></div>
-  </div>
 </div>
 <!-- 접속 코드 (첫 화면에서 교육을 누르면 열림) -->
 <div class="qrOver hidden" id="codeOver" role="dialog" aria-label="접속 코드">
@@ -926,6 +919,7 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
     var swOn = !!(CAR_PAGE && (id === 's1' || id === 'sl') && !adminScr && !(typeof DIALOG !== 'undefined' && DIALOG));   // 로그인·서명지 목록에서 전환 버튼
     swAllowed = !!(swOn && id === 's1' && staff && staff.token && !staff.guest);
     $('appSw').classList.toggle('hidden', !swOn); document.querySelector('header h1').classList.toggle('hidden', swOn);
+    document.documentElement.classList.toggle('noPull', id === 'sk');
     window.scrollTo(0, 0);
     curScreen = id; saveState();
     navSync();
@@ -942,8 +936,8 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
       if (curScreen === 's2' && person) { st.person = JSON.parse(JSON.stringify(person));
         st.strokes = strokes; st.vw = vw; st.vh = vh; st.drawn = drawn; }
       if (curScreen === 's3') st.done = { who: $('doneWho').textContent, msg: $('doneMsg').textContent };
-      if (curScreen === 'sk' && sk) { st.sk = sk.id; st.skSt = skStep !== 'pick' && skSt ? skSt.st : ''; }
-      if (skL && !$('skView').classList.contains('hidden')) st.skL = skL.id;
+      if (curScreen === 'sk' && sk) { st.sk = sk.id; st.skSt = skStep !== 'pick' && skSigMode !== 'lead' && skSt ? skSt.st : ''; }
+      if (skL && !$('skView').classList.contains('hidden')) { st.skL = skL.id; st.skLi = skL.idx; }
       if (rfEdu && (curScreen === 'sf' || curScreen === 's3')) { st.rf = rfEdu.id; st.rfd = rfDirect; st.re = rfEnter; st.rz = rfEnd; }          // 환불 등록: 어느 등록인지만 (입력값·연락처는 저장 안 함)
       if (admTok && ['sa', 'so', 'sr'].indexOf(curScreen) > -1) {
         st.admTok = admTok; st.admOrder = admOrder; st.admOpen = admOpen; st.admInfo = admInfo; st.admTab = admTab; st.admMe = admMe;
@@ -986,7 +980,7 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
     }
     if (!staff) { show('sl'); return; }              // 로그인 전
     refreshInit();
-    if (st.skL) { enterList(); skLeadOpen(st.skL); return; }            // 팀장 확인 중이었으면 그 화면 (서명은 휴대폰에 남아 있음)
+    if (st.skL) { enterList(); skOpen(st.skL); skLeadOpen(st.skL, st.skLi); return; }   // 팀장 내용 보기 중이었으면 그 역
     if (st.s === 'sk' && st.sk) { enterList(); skOpen(st.sk, false, st.skSt); return; }
     if (!st.edu || !st.code) { enterList(); return; }
     edu = st.edu; code = st.code; selId = edu.id; renderEdus();
@@ -2024,47 +2018,47 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
   $('rfAgree').onchange = $('rfLocAgree').onchange = $('rfAccOn').onchange = function () { if (this.checked) msg($('rfMsg'), ''); rfConsentSync(); };
 
   /* ---------- 안전점검의 날 체크리스트 (그룹 서명) ----------
-     서명지 목록 카드에 점검자 박스·팀장 박스 (서명한 역 수 / 전체)
-     점검자: 역 선택 → 항목 O/X·비고 (지난 점검 값이 기본) → 완료 → 최종 확인 → 서명 → 다음(제출)
-     팀장: 역마다 체크리스트를 보고 끝까지 올리면 서명 칸 → 서명·다음 → 다음 역. 맨 위에서 내리면 이전 역.
-           서명은 이 휴대폰(localStorage)에 모아 두었다가 [전체 확인]으로 한 번에 보냄 (창을 닫아도 남음) */
+     서명지 목록에 카드 하나 (점검자·팀장 서명한 역 수 / 전체) → 누르면 역 선택 화면
+     점검자: 역 선택 → 항목 양호·불량·비고 (지난 점검 값이 기본) → 완료 → 최종 확인 → 서명 → 다음(제출)
+     팀장: 역 선택 화면에서 진행 상황 · [역별 내용 보기](이전·다음 역) · 모든 역 점검이 끝나면 [일괄 서명] → 서명 한 번이 모든 역에 */
   var sk = null, skSt = null, skStep = 'pick', skRes = {};   // sk: 점검자 화면 데이터, skSt: 고른 역
-  var SK_I = 'bglSafeI:', SK_L = 'bglSafeL:';
+  var skSigMode = '';      // 서명 칸: 'ins' 점검자 · 'lead' 팀장 일괄 서명
+  var SK_I = 'bglSafeI:';
   function lsGet(k) { try { return JSON.parse(localStorage.getItem(k) || 'null'); } catch (x) { return null; } }
   function lsSet(k, v) { try { if (v === null) localStorage.removeItem(k); else localStorage.setItem(k, JSON.stringify(v)); return true; } catch (x) { return false; } }
 
   function skItem(e) {
     var closed = e.open === false, c = e.safety || { n: 0, ins: 0, lead: 0 };
-    var w = document.createElement('div'); w.className = 'skItem' + (closed ? ' closed' : '');
+    var w = document.createElement('div'); w.className = 'skItem' + (closed ? ' closed' : ''); w.setAttribute('role', 'button'); w.tabIndex = 0;
     w.innerHTML = '<div class="skTop"><span class="skTag">안전점검의 날</span><b></b><span class="rank"></span></div>' +
-      '<div class="skBoxes"><button type="button" class="skB ins"><em>점검자 서명</em><strong></strong><small></small></button>' +
-      '<button type="button" class="skB lead"><em>팀장 확인</em><strong></strong><small></small></button></div>';
+      '<div class="skCnt">점검자 서명 <strong class="ins"></strong> · 팀장 서명 <strong class="lead"></strong></div><div class="skGo"></div>';
     var q = function (x) { return w.querySelector(x); };
     q('b').textContent = e.title; q('.rank').textContent = [e.dept, e.date].filter(Boolean).join(' · ');
-    q('.ins strong').textContent = c.ins + ' / ' + c.n; q('.lead strong').textContent = c.lead + ' / ' + c.n;
+    q('.ins').textContent = c.ins + '/' + c.n; q('.lead').textContent = c.lead + '/' + c.n;
     q('.ins').classList.toggle('done', c.n > 0 && c.ins >= c.n); q('.lead').classList.toggle('done', c.n > 0 && c.lead >= c.n);
-    q('.ins small').textContent = closed ? '접수 마감' : c.ins >= c.n ? '모든 역 완료' : '눌러서 역 선택';
-    q('.lead small').textContent = closed ? '접수 마감' : '팀장만';
-    if (closed) { q('.ins').disabled = true; q('.lead').disabled = true; }
-    else { q('.ins').onclick = function () { skOpen(e.id, false); }; q('.lead').onclick = function () { skLeadOpen(e.id); }; }
+    q('.skGo').textContent = closed ? '접수 마감 · 눌러서 보기·PDF' : '눌러서 역 선택';
+    w.onclick = function () { if (skOpening) return; w.classList.add('busy'); skOpen(e.id, false, '', function () { w.classList.remove('busy'); }); };
     return w;
   }
 
   /* ---------- 점검자 ---------- */
-  function skOpen(id, again, stName) {
-    msg($('msg1'), '불러오는 중…', '#6b7686');
+  var skOpening = false, skPickAt = 0;   // 카드를 연달아 눌러도 한 번만, 역 선택 화면이 뜬 직후의 탭은 무시
+  function skOpen(id, again, stName, done) {
+    if (skOpening) return;
+    skOpening = true; msg($('msg1'), '불러오는 중…', '#6b7686');
     google.script.run.withSuccessHandler(function (d) {
-      msg($('msg1'), ''); sk = d;
+      skOpening = false; if (done) done();
+      msg($('msg1'), ''); msg($('skMsg'), ''); sk = d;
       $('skTitle').textContent = d.title; $('skDate').textContent = d.date || '';
       var st = stName && d.stations.filter(function (x) { return x.st === stName; })[0];
       if (st) skForm(st); else skStage('pick');
       show('sk');
-    }).withFailureHandler(function (e) { msg($('msg1'), errText(e), '#c0392b'); }).safetyOpen(staff && staff.token || '', id);
+    }).withFailureHandler(function (e) { skOpening = false; if (done) done(); msg($('msg1'), errText(e), '#c0392b'); }).safetyOpen(staff && staff.token || '', id);
   }
   function skStage(s) {
     skStep = s;
     ['pick', 'form', 'rev', 'sig'].forEach(function (k) { $('sk' + { pick: 'Pick', form: 'Form', rev: 'Rev', sig: 'Sig' }[k]).classList.toggle('hidden', k !== s); });
-    if (s === 'pick') skGrid();
+    if (s === 'pick') { skGrid(); skPickAt = Date.now(); }
     if (s === 'sig') setTimeout(function () { skPad.setup(); }, 30);   // 서명 칸 높이는 skPad.fit이 맞춤
     window.scrollTo(0, 0); saveState();
   }
@@ -2092,7 +2086,9 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
       b.firstChild.textContent = x.st;
       b.lastChild.textContent = x.ins ? '✓ ' + x.ins.name + (x.lead ? ' · 팀장 ✓' : '') : '미점검';
       b.onclick = function () {
+        if (Date.now() - skPickAt < 500) return;      // 카드를 누른 손가락이 역 칸에 다시 눌린 것
         if (x.lead) { msg($('skMsg'), x.st + ': 팀장 확인이 끝나 점검 내용을 수정할 수 없습니다. PDF만 받을 수 있습니다.', '#c0392b'); return; }   // 팀장 서명 뒤에는 수정 불가
+        if (sk.open === false) { msg($('skMsg'), '접수가 마감되어 점검할 수 없습니다.', '#c0392b'); return; }
         msg($('skMsg'), ''); skForm(x);
       };
       cell.appendChild(b);
@@ -2104,7 +2100,25 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
       g.appendChild(cell);
     });
     $('skPdfAll').classList.toggle('hidden', !sk.stations.some(function (x) { return x.lead; }));
+    skLeadBox();
   }
+  /* 팀장: 진행 상황 · 일괄 서명 (모든 역 점검자 서명이 끝나야 켜짐, 팀장 확인 전인 역에만 들어감) */
+  function skLeadBox() {
+    $('skLead').classList.toggle('hidden', !sk.leader);
+    if (!sk.leader) return;
+    var n = sk.stations.length, miss = sk.stations.filter(function (x) { return !x.ins; }), left = sk.stations.filter(function (x) { return !x.lead; }).length;
+    $('skLeadSt').textContent = '점검자 서명 ' + (n - miss.length) + '/' + n + ' · 팀장 서명 ' + (n - left) + '/' + n + '. ' +
+      (sk.open === false ? '접수가 마감되었습니다.' : miss.length ? '점검자 서명 전인 역 ' + miss.length + '개 (' + miss.map(function (x) { return x.st; }).join(', ') + '). 모든 역 점검이 끝나야 일괄 서명할 수 있습니다.' :
+        left ? '모든 역 점검이 끝났습니다. [일괄 서명]을 누르고 서명 한 번이면 팀장 확인 전인 역 ' + left + '개에 모두 들어갑니다.' : '모든 역의 팀장 확인이 끝났습니다.');
+    $('skLeadSign').disabled = sk.open === false || !!miss.length || !left;
+    $('skLeadView').disabled = n === miss.length;
+  }
+  $('skLeadView').onclick = function () { skLeadOpen(sk.id); };
+  $('skLeadSign').onclick = function () {
+    var left = sk.stations.filter(function (x) { return !x.lead; }).length;
+    skSigMode = 'lead'; msg($('skMsg'), '');
+    $('skSigName').textContent = '팀장 일괄 서명 (' + left + '개 역)'; skPad.clear(); skStage('sig');
+  };
   /** 수량 정리 (서버와 같게): 비었거나 0이면 '-', 줄바꿈은 '/'로도 입력 */
   function skQNorm(v) {
     var lines = String(v == null ? '' : v).split(/[\n\/]/).map(function (x) { return x.replace(/\s+/g, ' ').trim().slice(0, 30); }).filter(Boolean);
@@ -2116,7 +2130,7 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
   var skQty = {};
   function skDraftKey() { return SK_I + sk.id + ':' + skSt.st; }
   function skForm(x) {
-    skSt = x;
+    skSt = x; skSigMode = '';
     var dr = lsGet(skDraftKey());                     // 입력 중이던 값 (창을 닫았다 열어도)
     skRes = JSON.parse(JSON.stringify((dr && dr.res) || x.def || {}));
     skQty = {}; x.items.forEach(function (it) { skQty[it.i] = dr && dr.qty && dr.qty[it.i] !== undefined ? dr.qty[it.i] : it.q === '-' ? '' : it.q.replace(/\n/g, ' / '); });
@@ -2162,8 +2176,8 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
     skStage('rev');
   };
   $('skRevBack').onclick = function () { skStage('form'); };
-  $('skRevOk').onclick = function () { $('skSigName').textContent = skSt.st + ' 점검자 서명'; skPad.clear(); skStage('sig'); };
-  $('skSigBack').onclick = function () { if (!skBusy) skStage('rev'); };
+  $('skRevOk').onclick = function () { skSigMode = 'ins'; $('skSigName').textContent = skSt.st + ' 점검자 서명'; skPad.clear(); skStage('sig'); };
+  $('skSigBack').onclick = function () { if (!skBusy) skStage(skSigMode === 'lead' ? 'pick' : 'rev'); };
   $('skClear').onclick = function () { if (!skBusy) skPad.clear(); };
   var skBusy = false;
   $('skSend').onclick = function () {
@@ -2172,18 +2186,26 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
     if (skPad.n < 6) { msg($('skMsg'), '서명이 너무 짧습니다. 조금 더 크게 서명해 주세요.', '#c0392b'); return; }
     skBusy = true; skPad.locked = true; $('skPad').classList.add('locked'); $('skSend').disabled = true; $('skClear').disabled = true; $('skSigBack').disabled = true; msg($('skMsg'), '제출 중…', '#6b7686');
     var unlock = function () { skBusy = false; skPad.locked = false; $('skPad').classList.remove('locked'); $('skSend').disabled = false; $('skClear').disabled = false; $('skSigBack').disabled = false; };
+    var reload = function (done) {                   // 제출 뒤 역 목록을 다시 받아 역 선택 화면 (화면이 바뀐 뒤에 서명 칸 잠금을 풂)
+      google.script.run.withSuccessHandler(function (d) { sk = d; skStage('pick'); unlock(); msg($('skMsg'), done, '#12833b'); })
+        .withFailureHandler(function () { skStage('pick'); unlock(); msg($('skMsg'), done, '#12833b'); }).safetyOpen(staff && staff.token || '', sk.id);
+    };
+    if (skSigMode === 'lead') {
+      google.script.run.withSuccessHandler(function (r) { skSigMode = ''; reload('팀장 서명을 ' + r.n + '개 역에 저장했습니다.'); })
+        .withFailureHandler(function (e) { unlock(); msg($('skMsg'), errText(e), '#c0392b'); })
+        .safetyLeaderSubmit({ token: staff && staff.token || '', eduId: sk.id, sign: skPad.png(), device: devInfo });
+      return;
+    }
     google.script.run.withSuccessHandler(function (r) {
-      unlock(); lsSet(skDraftKey(), null);
-      var done = r.st + ' 점검 서명을 ' + (r.resigned ? '다시 ' : '') + '제출했습니다.';
-      google.script.run.withSuccessHandler(function (d) { sk = d; skStage('pick'); msg($('skMsg'), done, '#12833b'); })
-        .withFailureHandler(function () { skStage('pick'); msg($('skMsg'), done, '#12833b'); }).safetyOpen(staff && staff.token || '', sk.id);
+      lsSet(skDraftKey(), null);
+      reload(r.st + ' 점검 서명을 ' + (r.resigned ? '다시 ' : '') + '제출했습니다.');
     }).withFailureHandler(function (e) {
       unlock(); msg($('skMsg'), errText(e), '#c0392b');
     }).safetySubmit({ token: staff && staff.token || '', eduId: sk.id, st: skSt.st, res: skRes, qty: skQtyOut(), dataUrl: skPad.png(), device: devInfo });
   };
   function skBack() {                                // 휴대폰 뒤로가기: 한 단계씩
     if (skBusy || skPdfBusy) return;
-    if (skStep === 'sig') skStage('rev'); else if (skStep === 'rev') skStage('form'); else if (skStep === 'form') skStage('pick'); else resetAll();
+    if (skStep === 'sig') skStage(skSigMode === 'lead' ? 'pick' : 'rev'); else if (skStep === 'rev') skStage('form'); else if (skStep === 'form') skStage('pick'); else resetAll();
   }
 
   /** 체크리스트 모양: base(지난 점검 값)가 있으면 바뀐 줄을 노랗게 + 이전 값 */
@@ -2283,137 +2305,76 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
     var h = Math.round(window.innerHeight - top - ((acts ? acts.offsetHeight : 110) + 12 + 14));
     cv.style.height = Math.max(160, Math.min(280, h)) + 'px';
   };
-  var lvPadP = makePad($('lvPad'), $('lvMsg'), function () { $('lvOld').classList.add('hidden'); });
 
-  /* ---------- 팀장 확인 ---------- */
-  var skL = null;          // { id, key, data, signs: { 역: { u: 서명, at: 점검자 서명 시각 } }, idx, mode }
-  function skLeadOpen(id) {
-    var key = SK_L + id + ':' + (staff && staff.name || ''), c = lsGet(key);
-    if (c && c.data) { skL = { id: id, key: key, data: c.data, signs: c.signs || {}, idx: c.idx || 0, mode: 'img' }; lvOpen(); }
-    else msg($('msg1'), '불러오는 중…', '#6b7686');
+  /* ---------- 팀장 내용 보기 (서명은 역 선택 화면의 [일괄 서명]) ---------- */
+  var skL = null, skLBusy = false;   // skL: { id, data, idx }
+  function skLeadOpen(id, idx) {
+    if (skLBusy) return;
+    skLBusy = true; $('skLeadView').disabled = true; msg($('skMsg'), '불러오는 중…', '#6b7686');
+    var end = function () { skLBusy = false; $('skLeadView').disabled = false; };
     google.script.run.withSuccessHandler(function (d) {
-      msg($('msg1'), '');
-      var old = skL && skL.id === id ? skL : { signs: (c && c.signs) || {}, idx: (c && c.idx) || 0 }, signs = {};
-      d.stations.forEach(function (x) {                // 점검자가 다시 낸 역은 모아 둔 서명을 버림 (바뀐 내용을 다시 보고 서명)
-        var s0 = old.signs[x.st]; if (s0 && s0.at === x.ins.at) signs[x.st] = s0;
-      });
-      skL = { id: id, key: key, data: d, signs: signs, idx: Math.min(old.idx || 0, d.stations.length), mode: 'img' };
-      lvSave(); lvOpen();
-    }).withFailureHandler(function (e) {
-      if (skL && skL.id === id && !$('skView').classList.contains('hidden')) msg($('lvMsg'), errText(e), '#c0392b');
-      else msg($('msg1'), errText(e), '#c0392b');
-    }).safetyLeaderData(staff && staff.token || '', id);
-  }
-  function lvSave() {
-    if (!skL) return;
-    var v = { data: skL.data, signs: skL.signs, idx: skL.idx };
-    if (!lsSet(skL.key, v)) {                         // 저장 공간이 모자라면 체크리스트는 빼고 서명만
-      v.data = null; lsSet(skL.key, v);
-    }
+      end(); msg($('skMsg'), '');
+      skL = { id: id, data: d, idx: Math.max(0, Math.min(Number(idx) || 0, d.stations.length - 1)) };
+      lvOpen();
+    }).withFailureHandler(function (e) { end(); msg($('skMsg'), errText(e), '#c0392b'); }).safetyLeaderData(staff && staff.token || '', id);
   }
   function lvOpen() {
     var was = $('skView').classList.contains('hidden');
     $('skView').classList.remove('hidden'); document.body.classList.add('skLock');
     $('lvTitle').textContent = skL.data.title + (skL.data.date ? ' · ' + skL.data.date : '');
-    lvGo(skL.idx, true);
+    lvGo(skL.idx);
     if (was) { popPush(); saveState(); }
   }
   function lvClose() {
-    $('skView').classList.add('hidden'); document.body.classList.remove('skLock'); lvPad(false);
-    popSync(); saveState(); refreshInit();
+    $('skView').classList.add('hidden'); document.body.classList.remove('skLock');
+    popSync(); saveState();
   }
   $('lvClose').onclick = lvClose;
-  function lvGo(i, keep) {
-    var D = skL.data, n = D.stations.length;
-    skL.idx = Math.max(0, Math.min(i, n)); lvPad(false); msg($('lvMsg'), '');
-    var pg = $('lvPage'), h = '';
-    if (!n) h = '<div class="card center"><div class="who">아직 점검자가 서명한 역이 없습니다.</div><div class="hint">점검자 서명이 끝난 역부터 확인할 수 있습니다.</div></div>';
-    else if (skL.idx < n) {
-      var x = D.stations[skL.idx], sg = skL.signs[x.st];
-      h = (skL.idx ? '<div class="lvHint">▼ 맨 위에서 내리면 이전 역</div>' : '') +
-        skPaper(x, x.res, x.base, x.ins.img, sg ? sg.u : '', D.title, D.date) +
-        '<div class="hint" style="text-align:center">점검자 ' + esc((x.ins.disp ? x.ins.disp + ' ' : '') + x.ins.name) + ' · ' + esc(x.ins.at) + (x.lead && !sg ? ' · 팀장 확인 완료 (' + esc(x.lead.name) + ')' : '') + '</div>' +
-        '<div class="lvHint">▲ 끝까지 올리면 서명</div><button class="btn pri lvUp" id="lvUp" type="button">' + (sg || x.lead ? '서명 다시 보기 · 다음' : '서명하기') + '</button>';
+  function lvGo(i) {
+    var D = skL.data, n = D.stations.length, pg = $('lvPage'), h = '';
+    skL.idx = Math.max(0, Math.min(i, n - 1));
+    var miss = D.missing && D.missing.length ? '<div class="warn">점검자 서명 전인 역 ' + D.missing.length + '개: ' + esc(D.missing.join(', ')) + '</div>' : '';
+    if (!n) { h = '<div class="card center"><div class="who">아직 점검자가 서명한 역이 없습니다.</div><div class="hint">점검자 서명이 끝난 역부터 볼 수 있습니다.</div></div>'; $('lvProg').textContent = ''; }
+    else {
+      var x = D.stations[skL.idx];
+      h = miss + (skL.idx ? '<div class="lvHint">▼ 맨 위에서 내리면 이전 역</div>' : '') +
+        skPaper(x, x.res, x.base, x.ins.img, x.lead ? x.lead.img : '', D.title, D.date) +
+        '<div class="hint" style="text-align:center">점검자 ' + esc((x.ins.disp ? x.ins.disp + ' ' : '') + x.ins.name) + ' · ' + esc(x.ins.at) + (x.lead ? ' · 팀장 확인 완료 (' + esc(x.lead.name) + ')' : ' · 팀장 확인 전') + '</div>' +
+        (skL.idx < n - 1 ? '<div class="lvHint">▲ 끝까지 올리면 다음 역</div>' : '') +
+        '<div class="row lvNav"><button class="btn gray" id="lvPrev" type="button"' + (skL.idx ? '' : ' disabled') + '>◀ 이전 역</button>' +
+        '<button class="btn pri" id="lvNextSt" type="button"' + (skL.idx < n - 1 ? '' : ' disabled') + '>다음 역 ▶</button></div>';
       $('lvProg').textContent = (skL.idx + 1) + ' / ' + n;
-    } else h = lvSumHtml();
-    if (skL.idx >= n) $('lvProg').textContent = '전체 확인';
+    }
     pg.innerHTML = h; pg.scrollTop = 0;
-    if ($('lvUp')) $('lvUp').onclick = function () { lvPad(true); };
-    [].forEach.call(pg.querySelectorAll('[data-go]'), function (r) { r.onclick = function () { lvGo(Number(r.getAttribute('data-go'))); }; });
-    if ($('lvSend')) $('lvSend').onclick = lvSend;
-    if (!keep) lvSave();
+    if ($('lvPrev')) $('lvPrev').onclick = function () { lvGo(skL.idx - 1); };
+    if ($('lvNextSt')) $('lvNextSt').onclick = function () { lvGo(skL.idx + 1); };
+    saveState();
   }
-  function lvSumHtml() {
-    var D = skL.data, left = 0;
-    var rows = D.stations.map(function (x, i) {
-      var ok = skL.signs[x.st] ? '<span class="ok">✓ 서명</span>' : x.lead ? '<span class="ok">✓ 확인 완료</span>' : '<span class="no">서명 필요</span>';
-      if (!skL.signs[x.st] && !x.lead) left++;
-      return '<div class="srow" data-go="' + i + '"><span class="nm">' + esc(x.st) + '</span>' + ok + '</div>';
-    }).join('');
-    var news = Object.keys(skL.signs).length;
-    return '<div class="card lvSum"><div class="who">전체 확인</div>' +
-      '<div class="hint">' + (left ? '서명이 필요한 역 ' + left + '개가 있습니다. 눌러서 그 역으로 갑니다.' : news ? '모든 역을 확인했습니다. [전체 확인]을 누르면 서명이 한 번에 저장됩니다.' : '모든 역의 팀장 확인이 끝났습니다.') + '</div>' +
-      (D.missing && D.missing.length ? '<div class="warn">점검자 서명 전인 역 ' + D.missing.length + '개: ' + esc(D.missing.join(', ')) + '</div>' : '') +
-      '<div class="slist">' + rows + '</div>' +
-      '<div class="row"><button class="btn pri" id="lvSend" type="button"' + (left || !news ? ' disabled' : '') + '>전체 확인</button></div></div>' +
-      '<div class="lvHint">▼ 맨 위에서 내리면 이전 역</div>';
-  }
-  var lvBusy = false;
-  function lvSend() {
-    if (lvBusy) return;
-    var signs = {}; Object.keys(skL.signs).forEach(function (st) { signs[st] = skL.signs[st].u; });
-    lvBusy = true; $('lvSend').disabled = true; $('lvSend').textContent = '보내는 중…';
-    google.script.run.withSuccessHandler(function (r) {
-      lvBusy = false; lsSet(skL.key, null); skL = null; lvClose();
-      msg($('msg1'), r.title + ': 팀장 확인 서명 ' + r.n + '개 역을 저장했습니다.', '#12833b');
-    }).withFailureHandler(function (e) {
-      lvBusy = false; if ($('lvSend')) { $('lvSend').disabled = false; $('lvSend').textContent = '전체 확인'; }
-      var m = document.createElement('div'); m.className = 'msg'; m.textContent = errText(e); $('lvPage').querySelector('.lvSum').appendChild(m);
-    }).safetyLeaderSubmit({ token: staff && staff.token || '', eduId: skL.id, signs: signs, device: devInfo });
-  }
-  function lvPad(up) {
-    var sh = $('lvSheet');
-    if (!skL || !up) { sh.classList.remove('up'); if (skL) skL.mode = 'img'; return; }
-    var x = skL.data.stations[skL.idx]; if (!x) return;
-    skL.mode = 'pad'; lvPadP.clear(); msg($('lvMsg'), '');
-    $('lvSHead').textContent = x.st + ' 팀장 서명 (' + (skL.idx + 1) + ' / ' + skL.data.stations.length + ')';
-    var sg = skL.signs[x.st];
-    $('lvOld').classList.toggle('hidden', !sg); if (sg) $('lvOld').src = sg.u;
-    sh.classList.add('up'); setTimeout(lvPadP.setup, 30);
-  }
-  $('lvBack').onclick = function () { lvPad(false); };
-  $('lvClear').onclick = function () {
-    lvPadP.clear(); $('lvOld').classList.add('hidden');
-    var x = skL.data.stations[skL.idx]; if (x && skL.signs[x.st]) { delete skL.signs[x.st]; lvSave(); }
-  };
-  $('lvNext').onclick = function () {
-    var x = skL.data.stations[skL.idx]; if (!x) return;
-    if (lvPadP.strokes.length) {
-      if (lvPadP.n < 6) { msg($('lvMsg'), '서명이 너무 짧습니다. 조금 더 크게 서명해 주세요.', '#c0392b'); return; }
-      skL.signs[x.st] = { u: lvPadP.png(), at: x.ins.at };
-    } else if (!skL.signs[x.st] && !x.lead) { msg($('lvMsg'), '서명해 주세요.', '#c0392b'); return; }
-    lvSave(); lvGo(skL.idx + 1);
-  };
-  /* 체크리스트 넘기기: 끝까지 내려 본 뒤 더 올리면 서명 칸, 맨 위에서 더 내리면 이전 역 (손가락·마우스 휠) */
+  /* 체크리스트 넘기기: 끝까지 내려 본 뒤 더 올리면 다음 역, 맨 위에서 더 내리면 이전 역 (손가락·마우스 휠) */
   (function () {
     var pg = $('lvPage'), y0 = null, top0 = false, bot0 = false, fired = false, wsum = 0, wt = null;
     var atBot = function () { return pg.scrollTop + pg.clientHeight >= pg.scrollHeight - 2; };
+    var canNext = function () { return skL && skL.idx < skL.data.stations.length - 1; }, canPrev = function () { return skL && skL.idx > 0; };
     pg.addEventListener('touchstart', function (e) { y0 = e.touches[0].clientY; top0 = pg.scrollTop <= 0; bot0 = atBot(); fired = false; }, { passive: true });
     pg.addEventListener('touchmove', function (e) {
-      if (y0 === null || fired || !skL || skL.mode !== 'img') return;
-      var dy = e.touches[0].clientY - y0, n = skL.data.stations.length;
-      if (dy < -60 && bot0 && atBot() && skL.idx < n) { fired = true; lvPad(true); }
-      else if (dy > 80 && top0 && pg.scrollTop <= 0 && skL.idx > 0) { fired = true; lvGo(skL.idx - 1); }
+      if (y0 === null || fired || !skL) return;
+      var dy = e.touches[0].clientY - y0;
+      if (dy < -60 && bot0 && atBot() && canNext()) { fired = true; lvGo(skL.idx + 1); }
+      else if (dy > 80 && top0 && pg.scrollTop <= 0 && canPrev()) { fired = true; lvGo(skL.idx - 1); }
     }, { passive: true });
     pg.addEventListener('touchend', function () { y0 = null; }, { passive: true });
     pg.addEventListener('wheel', function (e) {
-      if (!skL || skL.mode !== 'img') return;
-      var n = skL.data.stations.length;
-      if (!(e.deltaY > 0 && atBot() && skL.idx < n) && !(e.deltaY < 0 && pg.scrollTop <= 0 && skL.idx > 0)) { wsum = 0; return; }
+      if (!skL) return;
+      if (!(e.deltaY > 0 && atBot() && canNext()) && !(e.deltaY < 0 && pg.scrollTop <= 0 && canPrev())) { wsum = 0; return; }
       wsum += e.deltaY; clearTimeout(wt); wt = setTimeout(function () { wsum = 0; }, 400);
-      if (wsum > 240) { wsum = 0; lvPad(true); } else if (wsum < -240) { wsum = 0; lvGo(skL.idx - 1); }
+      if (wsum > 240) { wsum = 0; lvGo(skL.idx + 1); } else if (wsum < -240) { wsum = 0; lvGo(skL.idx - 1); }
     }, { passive: true });
   })();
+  /* 안전점검 화면에서 페이지를 나가려 하면 확인 (휴대폰 뒤로가기 제스처로 창이 닫히는 것 막기) */
+  window.addEventListener('beforeunload', function (e) {
+    if (curScreen !== 'sk' && $('skView').classList.contains('hidden')) return;
+    e.preventDefault(); e.returnValue = '';
+  });
 
   /* ---------- 관리자 ---------- */
   var admTab = 'open';                     // 서명지별 현황에서 보는 탭
