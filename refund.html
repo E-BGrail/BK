@@ -348,10 +348,12 @@
   .skIt { padding:10px 0; border-bottom:1px dashed var(--line); }
   .skH { display:flex; align-items:center; gap:8px; }
   .skH .t { flex:1; min-width:0; font-size:15px; }
-  .skCks { flex:none; display:flex; gap:12px; }                                 /* 줄 끝에 박스 없이 체크칸 2개 (둘 중 하나만 체크) */
-  .skCks label { display:flex; align-items:center; gap:4px; font-size:15px; font-weight:700; color:var(--text); cursor:pointer; white-space:nowrap; }
-  .skCks input { width:24px; height:24px; margin:0; accent-color:var(--pri); flex:none; }
-  .skCks label.on { color:var(--pri); } .skCks label.x.on { color:#b42318; } .skCks label.x input { accent-color:#c0392b; }
+  .skL { display:flex; align-items:center; gap:14px; margin-top:6px; }          /* 수량 칸 옆에 양호, 비고 칸 옆에 불량 (둘 중 하나만 체크) */
+  .skL .qi, .skL .ni { flex:1; width:auto !important; margin-top:0 !important; }
+  .skCks { flex:none; display:flex; gap:12px; }
+  .skCks label, .skL label { flex:none; width:68px; display:flex; align-items:center; gap:4px; font-size:15px; font-weight:700; color:var(--text); cursor:pointer; white-space:nowrap; }
+  .skCks input, .skIt .skL label input { padding:0; width:24px; height:24px; margin:0; accent-color:var(--pri); flex:none; }
+  .skCks label.on, .skL label.on { color:var(--pri); } .skCks label.x.on, .skL label.x.on { color:#b42318; } .skCks label.x input, .skL label.x input { accent-color:#c0392b; }
   .skQ textarea.ni { width:100%; margin-top:6px; font-size:15px; padding:9px 10px; border:1px solid var(--line); border-radius:10px; font-family:inherit; line-height:1.4; resize:none; overflow:hidden; display:block; }
   .skQ textarea.ni.fold { height:42px; white-space:pre; }                       /* 접힘: 한 줄만 보임 */
   .skQ .nTog { align-self:flex-end; border:0; background:none; color:var(--pri); font-size:13px; font-weight:700; padding:4px 2px; }
@@ -2153,10 +2155,11 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
       if (it.f !== lastF) { var h = document.createElement('div'); h.className = 'skGrp'; h.textContent = it.f; box.appendChild(h); lastF = it.f; }
       var v = skRes[it.i] || (skRes[it.i] = ['', '']);
       var d = document.createElement('div'); d.className = 'skIt'; d.setAttribute('data-i', it.i);
-      d.innerHTML = '<div class="skH"><span class="t"></span><span class="skCks"><label class="o"><input type="checkbox"> 양호</label><label class="x"><input type="checkbox"> 불량</label></span></div>' +
-        '<div class="skQ"><input type="text" class="qi" maxlength="30" placeholder="수량 (없으면 -)" autocomplete="off"><textarea class="ni fold" rows="1" maxlength="200" placeholder="비고(조치사항)" wrap="off"></textarea><button type="button" class="nTog hidden">▾ 펼치기</button></div>';
+      d.innerHTML = '<div class="skH"><span class="t"></span></div>' +
+        '<div class="skQ"><div class="skL"><input type="text" class="qi" maxlength="30" placeholder="수량 (없으면 -)" autocomplete="off"><label class="o"><input type="checkbox"> 양호</label></div>' +
+        '<div class="skL"><textarea class="ni fold" rows="1" maxlength="200" placeholder="비고(조치사항)" wrap="off"></textarea><label class="x"><input type="checkbox"> 불량</label></div><button type="button" class="nTog hidden">▾ 펼치기</button></div>';
       d.querySelector('.t').textContent = it.t;
-      var cks = d.querySelectorAll('.skCks input'), lbs = d.querySelectorAll('.skCks label'), inp = d.querySelector('.ni'), qin = d.querySelector('.qi'), tog = d.querySelector('.nTog');
+      var cks = d.querySelectorAll('.skL label input'), lbs = d.querySelectorAll('.skL label'), inp = d.querySelector('.ni'), qin = d.querySelector('.qi'), tog = d.querySelector('.nTog');
       qin.value = skQty[it.i]; qin.oninput = function () { skQty[it.i] = qin.value; skDraft(); };
       var paint = function () { cks[0].checked = v[0] === 'O'; cks[1].checked = v[0] === 'X'; lbs[0].classList.toggle('on', v[0] === 'O'); lbs[1].classList.toggle('on', v[0] === 'X'); };
       cks[0].onchange = function () { v[0] = cks[0].checked ? 'O' : ''; d.classList.remove('miss'); paint(); skDraft(); };   // 양호·불량 중 하나만 (다시 누르면 해제)
