@@ -116,15 +116,19 @@
     body[data-s="s2"] main { padding-top:8px; }
     #s2 .card { padding:12px 14px; }
     #s2 .who { font-size:18px; }
-    #s2 .rot { font-size:12px; padding:5px 10px; margin-top:6px; border-radius:8px; }
+    #s2 .rot, #skSig .rot { font-size:12px; padding:5px 10px; margin-top:6px; border-radius:8px; }
     #s2 .warn { padding:6px 10px; font-size:13px; margin-top:6px; }
-    #s2 .padarea { margin-top:8px; }
-    #s2 .actions { display:flex; flex-wrap:wrap; gap:8px; margin-top:8px; }
-    #s2 .actions .row { display:contents; }
-    #s2 .actions .btn { padding:13px 6px; font-size:16px; }
-    #s2 .actions #clear, #s2 .actions #back { flex:1; }
-    #s2 .actions #submit { flex:1.8; }
-    #s2 .actions .msg { flex-basis:100%; margin-top:0; min-height:0; }
+    #s2 .padarea, #skSig .padarea { margin-top:8px; }
+    #s2 .actions, #skSig .actions { display:flex; flex-wrap:wrap; gap:8px; margin-top:8px; }
+    #s2 .actions .row, #skSig .actions .row { display:contents; }
+    #s2 .actions .btn, #skSig .actions .btn { padding:13px 6px; font-size:16px; }
+    #s2 .actions #clear, #s2 .actions #back, #skSig .actions #skClear, #skSig .actions #skSigBack { flex:1; }
+    #s2 .actions #submit, #skSig .actions #skSend { flex:1.8; }
+    #s2 .actions .msg, #skSig .actions .msg { flex-basis:100%; margin-top:0; min-height:0; }
+    /* 안전점검 서명 칸(점검자·팀장 일괄 서명)도 교육 서명과 같게 */
+    body.skSig main { padding-top:8px; }
+    body.skSig #sk .card { padding:12px 14px; }
+    body.skSig #skSigName { font-size:18px; }
   }
   .edu { color:var(--sub); font-size:14px; margin-top:2px; }
   /* 관리자 화면 */
@@ -191,8 +195,9 @@
     .padwrap { flex:1; min-width:0; }
     /* 가로 모드 서명 칸: 예전보다 약 1.2배 (아래로 늘림). 위쪽 로고 줄은 서명 화면에서만 숨기고 이름·교육명은 한 줄로 */
     canvas { height:min(calc((100vh - 140px) * 1.2), calc(100vh - 92px)); height:min(calc((100dvh - 140px) * 1.2), calc(100dvh - 92px)); min-height:120px; }
-    body[data-s="s2"] header { display:none; }
-    #s2 .who { display:inline; } #s2 .edu { display:inline; margin-left:8px; }
+    body[data-s="s2"] header, body.skSig header { display:none; }
+    #s2 .who, #skSig .who { display:inline; } #s2 .edu, #skSig .edu { display:inline; margin-left:8px; }
+    #skSig .who { font-size:16px; } #skSig .edu { font-size:12px; margin-top:0; }
     .actions { width:150px; display:flex; flex-direction:column; gap:8px; }
     .actions .row { flex-direction:column; margin-top:0; }
     .actions .sub { order:-1; }
@@ -331,11 +336,9 @@
   /* 역 선택 화면의 팀장 확인 (진행 상황 · 일괄 서명) */
   .skLead { margin-top:12px; border:1.5px solid #9fb3ea; background:#f5f8ff; border-radius:12px; padding:10px 12px; }
   .skLead .who { font-size:16px; color:var(--pri); }
-  #sk .padwrap { padding:0 24px; }                                     /* 가로 화면: 서명 칸 좌우 여백 (가장자리 뒤로가기 제스처와 안 겹치게) */
-  @media (orientation: portrait) and (max-width: 599px) {               /* 휴대폰 세로: 카드 여백을 넘어 화면 끝에서 8px까지 */
-    #sk .padwrap { padding:0; width:calc(100vw - 16px); margin-left:calc(50% - 50vw + 8px); }
-  }
   html.noPull, html.noPull body { overscroll-behavior-y:none; }        /* 안전점검 화면: 당겨서 새로고침 끔 */
+  body.skSig #sk .rfHead, body.skSig #skTitle, body.skSig #skDate { display:none; }   /* 서명 단계: 교육 서명처럼 이름 줄 + 제목 한 줄만 */
+  .skGrid button.chk { border-color:#f0d58a; background:#fff3c4; } .skGrid button small.ck { color:#b45309; font-weight:700; }   /* 확인 필요한 역 */
   /* 점검자 화면 */
   .skGrid { display:grid; grid-template-columns:repeat(3, 1fr); gap:6px; margin-top:10px; }
   .skGrid button { border:1.5px solid var(--line); background:#fff; border-radius:10px; padding:10px 4px; font-size:15px; font-weight:700; color:var(--text); line-height:1.3; }
@@ -744,13 +747,14 @@
         <div class="row"><button class="btn gray" id="skRevBack" type="button">수정</button><button class="btn pri" id="skRevOk" type="button">최종 확인</button></div>
       </div>
       <div id="skSig" class="hidden">
-        <div class="who" id="skSigName" style="margin-top:10px"></div>
+        <div class="who" id="skSigName"></div>
+        <div class="edu" id="skSigEdu"></div>
         <div class="rot">✍️ 아래 칸에 손가락으로 서명 · 📱 <b>가로로 돌리면</b> 칸이 커집니다</div>
         <div class="padarea">
           <div class="padwrap"><canvas id="skPad"></canvas></div>
           <div class="actions">
             <div class="row"><button class="btn gray" id="skClear" type="button">지우기</button><button class="btn gray" id="skSigBack" type="button">뒤로</button></div>
-            <div class="row sub"><button class="btn pri" id="skSend" type="button">다음</button></div>
+            <div class="row sub"><button class="btn pri" id="skSend" type="button" disabled>다음</button></div>
           </div>
         </div>
       </div>
@@ -923,6 +927,7 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
     swAllowed = !!(swOn && id === 's1' && staff && staff.token && !staff.guest);
     $('appSw').classList.toggle('hidden', !swOn); document.querySelector('header h1').classList.toggle('hidden', swOn);
     document.documentElement.classList.toggle('noPull', id === 'sk');
+    if (id !== 'sk') document.body.classList.remove('skSig');
     window.scrollTo(0, 0);
     curScreen = id; saveState();
     navSync();
@@ -993,7 +998,7 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
       person = st.person; fillSign(person.r || {});
       show('s2'); setupCanvas();
       strokes = st.strokes || []; vw = st.vw || 0; vh = st.vh || 0; drawn = st.drawn || 0;
-      redraw(); $('submit').disabled = !strokes.length;
+      redraw(); $('submit').disabled = drawn < 6;
       return;
     }
     if (st.s === 's3' && st.done) { $('doneWho').textContent = st.done.who; $('doneMsg').textContent = st.done.msg; show('s3'); return; }
@@ -1716,7 +1721,7 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
     drawing = true; last = pos(e);
     cur = [toV(last)]; strokes.push(cur);
     ctx.beginPath(); ctx.arc(last.x, last.y, 1.2, 0, 6.283); ctx.fill(); drawn += 1;
-    $('submit').disabled = false; $('msg2').textContent = '';    // 한 획이라도 그으면 바로 제출 버튼 켜짐
+    $('submit').disabled = drawn < 6; $('msg2').textContent = '';   // 충분히 서명해야 제출 버튼 켜짐 ('서명이 너무 짧습니다' 기준)
   });
   cv.addEventListener('pointermove', function (e) {
     if (!drawing || submitting) return; e.preventDefault();
@@ -1724,6 +1729,7 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
     ctx.beginPath(); ctx.moveTo(last.x, last.y); ctx.lineTo(p.x, p.y); ctx.stroke();
     cur.push(toV(p));
     drawn += Math.abs(p.x - last.x) + Math.abs(p.y - last.y) > 1 ? 1 : 0;
+    if (drawn >= 6) $('submit').disabled = false;
     last = p;
   });
   ['pointerup','pointercancel','pointerleave'].forEach(function (ev) {
@@ -2062,7 +2068,8 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
     skStep = s;
     ['pick', 'form', 'rev', 'sig'].forEach(function (k) { $('sk' + { pick: 'Pick', form: 'Form', rev: 'Rev', sig: 'Sig' }[k]).classList.toggle('hidden', k !== s); });
     if (s === 'pick') { skGrid(); skPickAt = Date.now(); }
-    if (s === 'sig') setTimeout(function () { skPad.setup(); }, 30);   // 서명 칸 높이는 skPad.fit이 맞춤
+    document.body.classList.toggle('skSig', s === 'sig');
+    if (s === 'sig') { $('skSigEdu').textContent = [sk.title, sk.date].filter(Boolean).join(' · '); setTimeout(function () { skPad.setup(); }, 30); }   // 서명 칸 높이는 skPad.fit이 맞춤
     window.scrollTo(0, 0); saveState();
   }
   /* ---------- PDF 출력: 팀장 확인이 끝난 역 (마감된 서명지도 받을 수 있음) ---------- */
@@ -2086,8 +2093,9 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
       var cell = document.createElement('div'); cell.className = 'skCell';
       var b = document.createElement('button'); b.type = 'button'; b.className = x.ins ? 'done' : '';
       b.innerHTML = '<span></span><small></small>';
+      if (x.ins && x.chk) { b.className = 'chk'; b.insertAdjacentHTML('beforeend', '<small class="ck">확인 필요</small>'); }   // 지난 기록보다 수량이 바뀌었거나 비고·불량이 있는 역
       b.firstChild.textContent = x.st;
-      b.lastChild.textContent = x.ins ? '✓ ' + x.ins.name + (x.lead ? ' · 팀장 ✓' : '') : '미점검';
+      b.children[1].textContent = x.ins ? '✓ ' + x.ins.name + (x.lead ? ' · 팀장 ✓' : '') : '미점검';
       b.onclick = function () {
         if (Date.now() - skPickAt < 500) return;      // 카드를 누른 손가락이 역 칸에 다시 눌린 것
         if (x.lead) { msg($('skMsg'), x.st + ': 팀장 확인이 끝나 점검 내용을 수정할 수 없습니다. PDF만 받을 수 있습니다.', '#c0392b'); return; }   // 팀장 서명 뒤에는 수정 불가
@@ -2183,12 +2191,14 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
   $('skSigBack').onclick = function () { if (!skBusy) skStage(skSigMode === 'lead' ? 'pick' : 'rev'); };
   $('skClear').onclick = function () { if (!skBusy) skPad.clear(); };
   var skBusy = false;
-  $('skSend').onclick = function () {
-    if (skBusy) return;
+  $('skSend').addEventListener('pointerup', function (e) { if (e.pointerType !== 'mouse') { e.preventDefault(); skSubmit(); } });
+  $('skSend').onclick = function () { skSubmit(); };
+  function skSubmit() {
+    if (skBusy || $('skSend').disabled) return;
     if (!skPad.strokes.length) { msg($('skMsg'), '서명해 주세요.', '#c0392b'); return; }
     if (skPad.n < 6) { msg($('skMsg'), '서명이 너무 짧습니다. 조금 더 크게 서명해 주세요.', '#c0392b'); return; }
     skBusy = true; skPad.locked = true; $('skPad').classList.add('locked'); $('skSend').disabled = true; $('skClear').disabled = true; $('skSigBack').disabled = true; msg($('skMsg'), '제출 중…', '#6b7686');
-    var unlock = function () { skBusy = false; skPad.locked = false; $('skPad').classList.remove('locked'); $('skSend').disabled = false; $('skClear').disabled = false; $('skSigBack').disabled = false; };
+    var unlock = function () { skBusy = false; skPad.locked = false; $('skPad').classList.remove('locked'); $('skSend').disabled = skPad.n < 6; $('skClear').disabled = false; $('skSigBack').disabled = false; };
     var reload = function (done) {                   // 제출 뒤 역 목록을 다시 받아 역 선택 화면 (화면이 바뀐 뒤에 서명 칸 잠금을 풂)
       google.script.run.withSuccessHandler(function (d) { sk = d; skStage('pick'); unlock(); msg($('skMsg'), done, '#12833b'); })
         .withFailureHandler(function () { skStage('pick'); unlock(); msg($('skMsg'), done, '#12833b'); }).safetyOpen(staff && staff.token || '', sk.id);
@@ -2205,7 +2215,7 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
     }).withFailureHandler(function (e) {
       unlock(); msg($('skMsg'), errText(e), '#c0392b');
     }).safetySubmit({ token: staff && staff.token || '', eduId: sk.id, st: skSt.st, res: skRes, qty: skQtyOut(), dataUrl: skPad.png(), device: devInfo });
-  };
+  }
   function skBack() {                                // 휴대폰 뒤로가기: 한 단계씩
     if (skBusy || skPdfBusy) return;
     if (skStep === 'sig') skStage(skSigMode === 'lead' ? 'pick' : 'rev'); else if (skStep === 'rev') skStage('form'); else if (skStep === 'form') skStage('pick'); else resetAll();
@@ -2264,7 +2274,7 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
       c2.setTransform(r, 0, 0, r, 0, 0); c2.lineWidth = 3; c2.lineCap = 'round'; c2.lineJoin = 'round'; c2.strokeStyle = '#000'; c2.fillStyle = '#000';
       P.redraw();
     };
-    P.clear = function () { P.strokes = []; P.n = 0; vw = 0; vh = 0; c2.clearRect(0, 0, cv.clientWidth, cv.clientHeight); };
+    P.clear = function () { P.strokes = []; P.n = 0; vw = 0; vh = 0; c2.clearRect(0, 0, cv.clientWidth, cv.clientHeight); if (P.onN) P.onN(0); };
     cv.addEventListener('pointerdown', function (e) {
       e.preventDefault();
       if (P.locked) return;
@@ -2274,12 +2284,14 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
       down = true; lp = at(e); cur = [toV(lp)]; P.strokes.push(cur); P.n++;
       c2.beginPath(); c2.arc(lp.x, lp.y, 1.2, 0, 6.283); c2.fill(); msg(msgEl, '');
       if (onDraw) onDraw();
+      if (P.onN) P.onN(P.n);
     });
     cv.addEventListener('pointermove', function (e) {
       if (!down) return; e.preventDefault();
       var p = at(e);
       c2.beginPath(); c2.moveTo(lp.x, lp.y); c2.lineTo(p.x, p.y); c2.stroke();
       cur.push(toV(p)); P.n += Math.abs(p.x - lp.x) + Math.abs(p.y - lp.y) > 1 ? 1 : 0; lp = p;
+      if (P.onN) P.onN(P.n);
     });
     ['pointerup', 'pointercancel', 'pointerleave'].forEach(function (ev) { cv.addEventListener(ev, function () { down = false; }); });
     /** 서명 부분만 잘라 PNG (셀 한 칸 5만 자 안으로) */
@@ -2300,6 +2312,7 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
     return P;
   }
   var skPad = makePad($('skPad'), $('skMsg'));
+  skPad.onN = function (n) { if (!skBusy) $('skSend').disabled = n < 6; };   // 충분히 서명해야 [다음] 켜짐 (교육 서명과 같게)
   /* 세로 화면: 서명 칸 높이를 남은 화면에 맞춤 (160~280px) → 아래 버튼까지 한 화면에 보이게 (가로는 CSS) */
   skPad.fit = function () {
     var cv = $('skPad');
