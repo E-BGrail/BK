@@ -331,7 +331,10 @@
   /* 역 선택 화면의 팀장 확인 (진행 상황 · 일괄 서명) */
   .skLead { margin-top:12px; border:1.5px solid #9fb3ea; background:#f5f8ff; border-radius:12px; padding:10px 12px; }
   .skLead .who { font-size:16px; color:var(--pri); }
-  #sk .padwrap { padding:0 24px; }                                     /* 서명 칸 좌우 여백: 화면 가장자리 뒤로가기 제스처와 안 겹치게 */
+  #sk .padwrap { padding:0 24px; }                                     /* 가로 화면: 서명 칸 좌우 여백 (가장자리 뒤로가기 제스처와 안 겹치게) */
+  @media (orientation: portrait) and (max-width: 599px) {               /* 휴대폰 세로: 카드 여백을 넘어 화면 끝에서 8px까지 */
+    #sk .padwrap { padding:0; width:calc(100vw - 16px); margin-left:calc(50% - 50vw + 8px); }
+  }
   html.noPull, html.noPull body { overscroll-behavior-y:none; }        /* 안전점검 화면: 당겨서 새로고침 끔 */
   /* 점검자 화면 */
   .skGrid { display:grid; grid-template-columns:repeat(3, 1fr); gap:6px; margin-top:10px; }
