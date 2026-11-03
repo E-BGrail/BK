@@ -106,8 +106,10 @@
   .hint { color:var(--sub); font-size:13px; margin-top:6px; }
   .warn { background:#fff7e0; border:1px solid #f0d58a; color:#7a5a00; border-radius:10px; padding:10px 12px; font-size:14px; margin-top:10px; }
   .rot { display:none; background:#e8f0fe; border:1px solid #b8cdfa; color:#1a3d8f; border-radius:10px; padding:10px 12px; font-size:14px; margin-top:10px; }
+  .lsBtn { display:none !important; width:100%; margin-top:6px; padding:9px !important; font-size:14px !important; color:var(--pri) !important; border:1.5px solid var(--pri) !important; background:#fff !important; }
   @media (orientation: portrait) {
     .rot { display:block; }
+    .lsBtn.ok { display:block !important; }      /* 세로 화면 + 화면 방향을 바꿀 수 있는 휴대폰(안드로이드)만 */
     /* 세로 서명 화면: 한 화면에 서명 칸과 '서명 제출'이 다 보이게 */
     body[data-s="s2"] .steps { padding-top:8px; }
     body[data-s="s2"] .steps::before { top:18px; }
@@ -544,6 +546,7 @@
       <div class="roleT hidden" id="roleT"></div>
       <div class="warn hidden" id="warn">이미 서명한 기록이 있습니다. 새로 제출하면 이전 서명이 교체됩니다.</div>
       <div class="rot">✍️ 아래 칸에 손가락으로 서명 · 📱 <b>가로로 돌리면</b> 칸이 커집니다</div>
+      <button class="btn lsBtn" type="button">📱 가로로 크게 서명</button>
       <div class="padarea">
         <div class="padwrap"><canvas id="pad"></canvas></div>
         <div class="actions">
@@ -752,6 +755,7 @@
         <div class="who" id="skSigName"></div>
         <div class="edu" id="skSigEdu"></div>
         <div class="rot">✍️ 아래 칸에 손가락으로 서명 · 📱 <b>가로로 돌리면</b> 칸이 커집니다</div>
+        <button class="btn lsBtn" type="button">📱 가로로 크게 서명</button>
         <div class="padarea">
           <div class="padwrap"><canvas id="skPad"></canvas></div>
           <div class="actions">
@@ -930,6 +934,7 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
     $('appSw').classList.toggle('hidden', !swOn); document.querySelector('header h1').classList.toggle('hidden', swOn);
     document.documentElement.classList.toggle('noPull', id === 'sk');
     if (id !== 'sk') document.body.classList.remove('skSig');
+    if (id !== 's2' && id !== 'sk') landOff();
     window.scrollTo(0, 0);
     curScreen = id; saveState();
     navSync();
@@ -1670,6 +1675,25 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
     enterList(); refreshInit();
   }
 
+  /* ---------- 가로로 크게 서명: 버튼을 누르면 전체 화면 + 가로 고정 (안드로이드 크롬). 서명 화면을 떠나면 풀림 ----------
+     아이폰 등 화면 방향을 바꿀 수 없는 곳은 버튼을 숨기고 '가로로 돌리면' 안내만. 구글 웹 앱 화면 안에서는 막힐 수 있음 */
+  var LAND_OK = !!(document.documentElement.requestFullscreen && window.screen && screen.orientation && screen.orientation.lock) && !/iPhone|iPad|iPod/.test(navigator.userAgent);
+  function landOn(m) {
+    var fail = function () { landOff(); msg(m, '이 휴대폰은 자동으로 돌릴 수 없습니다. 휴대폰을 직접 가로로 돌려 주세요.', '#c0392b'); };
+    try {
+      document.documentElement.requestFullscreen({ navigationUI: 'hide' })
+        .then(function () { return screen.orientation.lock('landscape'); }).catch(fail);
+    } catch (x) { fail(); }
+  }
+  function landOff() {
+    try { if (screen.orientation && screen.orientation.unlock) screen.orientation.unlock(); } catch (x) {}
+    try { if (document.fullscreenElement) document.exitFullscreen().catch(function () {}); } catch (x) {}
+  }
+  [].forEach.call(document.querySelectorAll('.lsBtn'), function (b) {
+    b.classList.toggle('ok', LAND_OK);
+    b.onclick = function () { landOn(b.closest('#s2') ? $('msg2') : $('skMsg')); };
+  });
+
   /* ---------- 서명 패드 ---------- */
   // 획(stroke)을 '가상 좌표'로 저장해 두었다가, 화면 크기가 바뀌면(가로/세로 전환 등) 비율을 유지한 채 다시 그린다.
   var cv = $('pad'), ctx = cv.getContext('2d');
@@ -2071,7 +2095,8 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
     ['pick', 'form', 'rev', 'sig'].forEach(function (k) { $('sk' + { pick: 'Pick', form: 'Form', rev: 'Rev', sig: 'Sig' }[k]).classList.toggle('hidden', k !== s); });
     if (s === 'pick') { skGrid(); skPickAt = Date.now(); }
     document.body.classList.toggle('skSig', s === 'sig');
-    if (s === 'sig') { $('skSigEdu').textContent = [sk.title, sk.date].filter(Boolean).join(' · '); setTimeout(function () { skPad.setup(); }, 30); }   // 서명 칸 높이는 skPad.fit이 맞춤
+    if (s !== 'sig') landOff();
+    if (s === 'sig') { msg($('skMsg'), ''); $('skSigEdu').textContent = [sk.title, sk.date].filter(Boolean).join(' · '); setTimeout(function () { skPad.setup(); }, 30); }   // 서명 칸 높이는 skPad.fit이 맞춤
     window.scrollTo(0, 0); saveState();
   }
   /* ---------- PDF 출력: 팀장 확인이 끝난 역 (마감된 서명지도 받을 수 있음) ---------- */
