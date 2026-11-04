@@ -256,6 +256,8 @@
   .vRow { display:flex; gap:8px; } .vRow .vchk { flex:1; min-width:0; }   /* 본인 확인·명단 지정 한 줄 */
   .lockRow { display:flex; align-items:center; justify-content:space-between; gap:8px; margin-top:8px; padding:8px 10px; border-radius:10px; background:#fdecea; color:#b42318; font-size:13px; font-weight:700; }
   .rfLeft.soon, .rfLeft.over { color:#c0392b; font-weight:700; }
+  .rfMins { display:flex; gap:6px; } .rfMins button { flex:1; height:42px; border:1px solid var(--line); border-radius:10px; background:#fff; color:var(--text); font-size:15px; font-weight:700; font-family:inherit; }
+  .rfMins button.on { background:var(--pri); color:#fff; border-color:var(--pri); } .rfMins input { flex:1.3; min-width:0; height:42px; font-size:15px; text-align:center; }
   .lockRow .btn { background:#b42318; color:#fff; }
   .roleT { display:inline-block; margin-top:8px; background:#eef3ff; color:var(--pri); border:1px solid #c9d8fb; border-radius:20px; padding:4px 12px; font-size:14px; font-weight:700; }
   textarea { width:100%; font-size:15px; padding:10px; border:1px solid var(--line); border-radius:10px; margin-top:6px; font-family:inherit; resize:vertical; }
@@ -511,7 +513,7 @@
     <div class="card" id="chgCard">
       <div class="nhead" id="chgHead"><b>개인정보 변경</b></div>
       <div class="ebody">
-        <div class="note">직원DB에 있는 본인 메일로 인증 코드를 보냅니다. 코드를 입력하면 지금 정보가 나오고, 고치면 바로 반영됩니다. 사번은 바꿀 수 없고, 개인 코드는 관리자만 초기화할 수 있습니다.</div>
+        <div class="note">개인정보 등록 시 사용한 본인 메일로 인증 코드를 보냅니다. 코드를 확인 후 입력하면 개인정보 변경이 가능합니다. 사번과 개인 코드, 메일은 바꿀 수 없습니다. 개인 코드 분실 시 관리자에게 문의 바랍니다.</div>
         <div class="row"><button class="btn gray" id="chgMailSend" type="button">메일로 인증 코드 받기</button></div>
         <div class="codeRow hidden" id="chgCodeRow">
           <div style="flex:1"><input type="tel" id="chgMailCode" placeholder="인증 코드 6자리" autocomplete="one-time-code" inputmode="numeric" pattern="[0-9]*" maxlength="6"></div>
@@ -652,6 +654,9 @@
       <div class="note" id="nDeptNote">부서명·팀을 고르면 해당하는 사람에게만 서명지가 보입니다. 명단도 지정하면 명단에 있는 사람까지 보입니다. 모두 [전체]이고 명단이 없으면 모든 직원에게 보입니다.</div>
       <div class="field" id="nDateRow"><label>날짜</label><input type="text" id="nDate" autocomplete="off"></div>
       <div class="field" id="nCodeRow"><label>접속 코드 (숫자 4자리, 서명지마다 다르게)</label><input type="text" id="nCode" placeholder="예: 1024" autocomplete="off" inputmode="numeric" maxlength="4" pattern="[0-9]*"></div>
+      <div class="field hidden" id="nRfMinRow"><label>고객용 QR 접수 시간</label>
+        <div class="rfMins" id="nRfMins"><button type="button" data-m="10" class="on">10분</button><button type="button" data-m="20">20분</button><button type="button" data-m="30">30분</button><input type="tel" id="nRfMin" placeholder="직접(분)" inputmode="numeric" maxlength="3" autocomplete="off"></div>
+        <div class="note">이 시간이 지나면 고객용 QR로는 등록할 수 없고, 직원 등록은 마감할 때까지 됩니다. 다시 열면 이 시간만큼 다시 받습니다.</div></div>
       <div class="note hidden" id="nRfNote">환불 등록: 접속 코드 없이 첫 화면 맨 위에 보이고, QR로 바로 들어옵니다. 제목은 "년.월.일.(요일) 운행 장애 환불 신청"으로 자동으로 정해집니다.</div>
       <div class="row"><button class="btn pri" id="nCreate">서명지 열기</button></div>
       <div class="msg" id="nMsg"></div>
@@ -908,7 +913,9 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
   var edus = [], selId = '', code = '', edu = null, person = null;
   var staff = null;                      // 로그인: { token, name, disp, admin } 또는 배포용 아이디 { token, guest: true } (이 탭에서만 기억, 개인 코드는 저장 안 함)
   try { staff = JSON.parse(sessionStorage.getItem('bglStaff') || 'null'); } catch (x) {}
-  if (staff && (!staff.token || !staff.exp || Date.now() > staff.exp)) staff = null;   // 예전 표시·2시간 지난 로그인
+  var ACT_KEY = 'bglAct', lastAct = 0, lastPing = 0, lastSave = 0;   // 마지막 동작 시각 (이 탭에서만), 서버에 '사용 중' 알린 시각
+  try { lastAct = Number(sessionStorage.getItem(ACT_KEY)) || 0; } catch (x) {}
+  if (staff && (!staff.token || !staff.ttl || Date.now() - lastAct > staff.ttl * 1000)) staff = null;   // 예전 표시·마지막 동작 후 20분 지난 로그인
 
   function show(id) {
     ['sl', 's1', 'sp', 's2', 's3', 'sf', 'sx', 'sa', 'so', 'sr', 'sk'].forEach(function (s) { $(s).classList.toggle('hidden', s !== id); });
@@ -1030,9 +1037,9 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
     else tb.textContent = e.title;
     w.querySelector('.rank').textContent = [e.date, '등록 ' + (e.count || 0) + '명'].filter(Boolean).join(' · ');
     if (closed) w.querySelector('.rfGo').textContent = '등록 마감'; else w.querySelector('.rfGo').remove();
-    if (!closed && e.autoCloseLeft > 0) {           // 자동 마감까지 남은 시간
+    if (!closed) {                                   // 고객용 QR 접수 남은 시간 (지나도 직원 등록은 가능)
       var left = document.createElement('span'); left.className = 'rfLeft'; left.style.cssText = 'display:block;margin-top:2px;font-size:13px';
-      left.setAttribute('data-end', String(Date.now() + e.autoCloseLeft)); setRfLeft(left);
+      left.setAttribute('data-end', String(Date.now() + (Number(e.qrLeft) || 0))); setRfLeft(left);
       w.querySelector('.rfMain').appendChild(left);
     }
     if (closed) w.querySelector('.rfMain').disabled = true;
@@ -1527,14 +1534,28 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
   function savedPin() { try { return localStorage.getItem('bglPin') || ''; } catch (x) { return ''; } }
   /** 로그인 2시간이 지나면 첫 화면(사번·개인 코드)으로. 서명 칸 화면·제출 중이면 제출이 끝날 때까지 기다림 */
   function signingNow() { return curScreen === 's2' || submitting || (curScreen === 'sk' && (skStep === 'sig' || skBusy)); }
+  /** 자동 로그아웃: 마지막 동작(터치·입력·스크롤) 후 20분. 서명 칸 화면·제출 중이면 제출이 끝날 때까지 기다림 */
+  function idleOver() { return !!(staff && staff.ttl && Date.now() - lastAct > staff.ttl * 1000); }
   function staffExpire() {
-    if (!staff || !staff.exp || Date.now() < staff.exp || signingNow()) return;
+    if (!idleOver() || signingNow()) return;
     if (typeof DIALOG !== 'undefined' && DIALOG) return;   // 시트 메뉴 창은 관리자 표시로만
+    var mins = Math.round(staff.ttl / 60);
     landOff();
     if (!$('skView').classList.contains('hidden')) { $('skView').classList.add('hidden'); document.body.classList.remove('skLock'); }
     ['qrOver', 'regOver'].forEach(function (id) { $(id).classList.add('hidden'); });
-    logout('로그인 2시간이 지나 자동으로 로그아웃되었습니다. 사번과 개인 코드를 다시 입력하세요.');
+    logout(mins + '분 동안 사용하지 않아 자동으로 로그아웃되었습니다. 사번과 개인 코드를 다시 입력하세요.');
   }
+  /** 동작이 있으면 마지막 동작 시각을 새로. 화면에서만 움직이는 동안에도 서버 로그인이 끊기지 않게 5분마다 알림 */
+  function markAct() {
+    if (idleOver() && !signingNow()) { staffExpire(); return; }   // 이미 시간이 지났으면 이 동작으로 되살리지 않음
+    var now = Date.now(); lastAct = now;
+    if (now - lastSave > 15000) { lastSave = now; try { sessionStorage.setItem(ACT_KEY, String(now)); } catch (x) {} }
+    if (staff && staff.token && now - lastPing > 300000) {
+      lastPing = now;
+      google.script.run.withFailureHandler(function (e) { if (/로그인이 필요/.test(errText(e)) && !signingNow()) logout(errText(e)); }).staffPing(staff.token);
+    }
+  }
+  ['pointerdown', 'keydown', 'input', 'scroll'].forEach(function (t) { document.addEventListener(t, markAct, { capture: true, passive: true }); });
   setInterval(staffExpire, 10000);
   document.addEventListener('visibilitychange', function () { if (!document.hidden) staffExpire(); });
   /** 서명지 목록으로 */
@@ -1565,9 +1586,10 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
       if (r.needCode) { msg($('lgMsg'), '코드를 입력해 주세요', '#c0392b'); $('lgCode').focus(); return; }
       if (!r.guest) { try { localStorage.setItem('bglPin', pin); } catch (x) {} }   // 함께 쓰는 아이디는 기억하지 않음
       $('lgCode').value = '';
-      var exp = Date.now() + (Number(r.ttl) || 7200) * 1000;   // 로그인 유지 2시간 (서버와 같게)
-      if (r.guest) { $('lgPin').value = ''; setStaff({ token: r.token, guest: true, exp: exp }); }
-      else setStaff({ token: r.token, name: r.name, disp: r.disp, admin: !!r.admin, exp: exp });
+      var ttl = Number(r.ttl) || 1200;                    // 마지막 동작 후 이 시간(초)이면 자동 로그아웃 (서버와 같게)
+      lastAct = lastPing = lastSave = Date.now(); try { sessionStorage.setItem(ACT_KEY, String(lastAct)); } catch (x) {}
+      if (r.guest) { $('lgPin').value = ''; setStaff({ token: r.token, guest: true, ttl: ttl }); }
+      else setStaff({ token: r.token, name: r.name, disp: r.disp, admin: !!r.admin, ttl: ttl });
       edus = []; enterList();
       if (r.init) loadInit(r.init); else refreshInit();
     }).withFailureHandler(function (e) {
@@ -2838,16 +2860,16 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
     deptEl.onchange = function () { orgOptions(teamEl, teams(), ''); teamEl.disabled = !deptEl.value; };
   }
 
-  /** 비상 등록 자동 마감까지 남은 시간 표시 (서명지 목록·관리자 화면, 30초마다) */
+  /** 환불 등록 고객용 QR 접수 남은 시간 표시 (서명지 목록·관리자 화면, 15초마다). 끝나도 직원 등록은 가능 */
   function tickRfLeft() { [].forEach.call(document.querySelectorAll('.rfLeft'), setRfLeft); }
   function setRfLeft(el) {
     var ms = Number(el.getAttribute('data-end')) - Date.now();
-    if (ms <= 0) { el.textContent = '자동 마감됨 (새로고침하면 반영)'; el.classList.add('over'); return; }
+    if (ms <= 0) { el.textContent = 'QR 접수 마감 · 직원 등록 가능'; el.classList.remove('soon'); el.classList.add('over'); return; }
     var m = Math.ceil(ms / 60000), h = Math.floor(m / 60); m = m % 60;
-    el.textContent = '자동 마감까지 ' + (h ? h + '시간 ' : '') + m + '분 남음';
-    el.classList.toggle('soon', ms < 3600000);              // 1시간 안 남으면 빨갛게
+    el.textContent = 'QR 접수 남은 시간 ' + (h ? h + '시간 ' : '') + m + '분';
+    el.classList.toggle('soon', ms < 180000);               // 3분 안 남으면 빨갛게
   }
-  setInterval(tickRfLeft, 30000);
+  setInterval(tickRfLeft, 15000);
   function renderAdmin(d) {
     if (d && d.patch) {                  // 관리자 작업 응답: 바뀐 카드만 옴 → 가지고 있던 전체 값에 합쳐 다시 그림
       if (!admData) { admCall('adminRefresh', [], renderAdmin); return; }
@@ -2874,7 +2896,7 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
       tplPreview($('nTplPrev'), sel.value); deptRow($('nDeptRow'), sel.value, gNew);
       if (rf) $('nDeptRow').classList.add('hidden');
       $('nTeamRow').classList.toggle('hidden', rf || gNew); $('nDeptNote').classList.toggle('hidden', rf || gNew);
-      $('nKindRow').classList.toggle('hidden', rf); $('nCodeRow').classList.toggle('hidden', rf); $('nRfNote').classList.toggle('hidden', !rf);
+      $('nKindRow').classList.toggle('hidden', rf); $('nCodeRow').classList.toggle('hidden', rf); $('nRfNote').classList.toggle('hidden', !rf); $('nRfMinRow').classList.toggle('hidden', !rf);
       $('nTitleRow').classList.toggle('hidden', rf); $('nDateRow').classList.toggle('hidden', rf);   // 비상: 제목·날짜 자동
       $('nCreate').textContent = rf ? '환불 등록 열기' : '서명지 열기';
       $('nRosterRow').classList.toggle('hidden', rf || !$('nVerify').checked);   // 명단 지정은 본인 확인 서명지만
@@ -2959,13 +2981,15 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
       setTimeout(function () { $('nCreate').disabled = false; }, 20000);
       return;
     }
+    var qrMin = rfNew ? rfMinVal() : '';
+    if (rfNew && !(qrMin >= 1 && qrMin <= 600)) { msg($('nMsg'), 'QR 접수 시간은 1~600분으로 정해 주세요.', '#c0392b'); $('nRfMin').focus(); return; }
     var rosterNew = !rfNew && $('nVerify').checked && $('nUseRoster').checked;
     if (rosterNew && !$('nRoster').value.trim()) { msg($('nMsg'), '명단에 이름을 입력하세요.', '#c0392b'); $('nRoster').focus(); return; }
     var pick = rosterPick();
     if (pick === false) { msg($('nMsg'), '동명이인을 한 명 이상 고르세요.', '#c0392b'); return; }
     $('nCreate').disabled = true;
     var guestNew = !rfNew && !$('nVerify').checked;   // 본인 확인을 끄면 서명자가 칸을 직접 입력
-    admCall('adminCreateEdu', [{ tpl: $('nTpl').value, title: rfNew ? '' : $('nTitle').value, dept: dept, team: dept ? $('nTeam').value : '', date: rfNew ? '' : $('nDate').value, code: rfNew ? '' : $('nCode').value, guest: guestNew, useRoster: rosterNew, roster: rosterNew ? $('nRoster').value : '', rosterPick: rosterNew ? pick : null }], function (d) {
+    admCall('adminCreateEdu', [{ tpl: $('nTpl').value, title: rfNew ? '' : $('nTitle').value, dept: dept, team: dept ? $('nTeam').value : '', date: rfNew ? '' : $('nDate').value, code: rfNew ? '' : $('nCode').value, qrMin: qrMin, guest: guestNew, useRoster: rosterNew, roster: rosterNew ? $('nRoster').value : '', rosterPick: rosterNew ? pick : null }], function (d) {
       $('nCreate').disabled = false;
       if (d.rosterChoice) { drawRosterPick(d.rosterChoice); msg($('nMsg'), '같은 이름의 직원이 있습니다. 서명할 사람을 고른 뒤 다시 누르세요.', '#324eb3'); return; }
       $('nPick').classList.add('hidden'); $('nPick').innerHTML = '';
@@ -2976,6 +3000,18 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
     setTimeout(function () { $('nCreate').disabled = false; }, 20000);
   };
 
+  /* 새 환불 등록: 고객용 QR 접수 시간 [10분][20분][30분] 또는 직접 입력 */
+  [].forEach.call($('nRfMins').querySelectorAll('button'), function (b) {
+    b.onclick = function () { [].forEach.call($('nRfMins').querySelectorAll('button'), function (x) { x.classList.toggle('on', x === b); }); $('nRfMin').value = ''; };
+  });
+  $('nRfMin').oninput = function () {
+    this.value = this.value.replace(/[^0-9]/g, '').slice(0, 3);
+    [].forEach.call($('nRfMins').querySelectorAll('button'), function (x) { x.classList.toggle('on', !$('nRfMin').value && x.getAttribute('data-m') === '10'); });
+  };
+  function rfMinVal() {
+    var v = $('nRfMin').value.trim(), on = $('nRfMins').querySelector('button.on');
+    return v ? Number(v) : on ? Number(on.getAttribute('data-m')) : 10;
+  }
   function eduCard(e) {
     var c = document.createElement('div'); c.className = 'ecard';
     if (!e.open) c.style.borderColor = '#f5c2bd';
@@ -3027,9 +3063,9 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
     q('.cnt').textContent = '서명 ' + e.signers.length + (e.roster ? '/' + e.roster : '') + '명 · 접속 코드 ' + (e.code || '-');
     q('.d').classList.toggle('hidden', !!e.refund); q('.cnt').classList.toggle('hidden', !!e.refund);   // 환불 등록: 빨간 표시 옆 인원만
     if (e.safety) { q('.d').textContent = '역 ' + e.safety.n + '개'; q('.cnt').textContent = '점검자 서명 ' + e.safety.ins + '/' + e.safety.n + ' · 팀장 서명 ' + e.safety.lead + '/' + e.safety.n; }
-    if (e.refund && e.autoCloseLeft > 0) {          // 자동 마감까지 남은 시간 (1분마다 줄어듦)
+    if (e.refund && e.open) {                        // 고객용 QR 접수 남은 시간 (줄어들며 표시, 끝나면 'QR 접수 마감 · 직원 등록 가능')
       var left = document.createElement('span'); left.className = 'rfLeft';
-      left.setAttribute('data-end', String(Date.now() + e.autoCloseLeft)); left.title = e.autoClose + ' 자동 마감';
+      left.setAttribute('data-end', String(Date.now() + (Number(e.autoCloseLeft) || 0))); left.title = (e.autoClose ? e.autoClose + ' QR 접수 마감 · ' : '') + 'QR 접수 ' + (e.qrMin || '') + '분';
       q('.cnt').appendChild(document.createElement('br')); q('.cnt').appendChild(left); setRfLeft(left);
     }
     if (e.error) { var m0 = q('.m'); msg(m0, e.error, '#c0392b'); }
