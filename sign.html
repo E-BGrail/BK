@@ -3215,6 +3215,14 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
   try { localStorage.removeItem('bglSignInit'); } catch (x) {}          // 예전에 저장한 목록 지움
   var onRefund = /refund\.html$/.test(location.pathname);               // 환불 등록 QR은 refund.html, e-싸인은 sign.html
   if (e && !onRefund) { location.replace('refund.html' + location.search); return; }
+  if (onRefund) {
+    // 주소창에서 환불 건 번호를 지움: 주소를 복사해 보내도 QR 없이는 못 들어옴. 이 탭에서 새로고침하면 입력 시간 안(또는 완료 화면)일 때만 이어서
+    if (e) { try { history.replaceState(null, '', location.pathname); } catch (x) {} }
+    else {
+      var kept = null; try { kept = JSON.parse(sessionStorage.getItem('bglSign.v2') || 'null'); } catch (x) {}
+      if (kept && kept.rf && kept.rfd && (kept.s === 's3' || Number(kept.rz) > Date.now())) e = String(kept.rf).replace(/[^\w]/g, '').slice(0, 20);
+    }
+  }
   if (!e && onRefund) { START({ noQr: true, educations: [] }); return; }
   if (!e) { START(base); return; }
   document.documentElement.classList.add('rfBoot');
