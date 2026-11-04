@@ -191,7 +191,7 @@
   .ecard .d { color:var(--sub); font-size:13px; margin-top:2px; }
   .cnt { font-size:14px; }
   .ecard .row button { font-size:14px; padding:10px; }
-  .del { background:#fdecea; color:#b42318; } .del.sure { background:#b42318; color:#fff; }
+  .del { background:#fdecea; color:#b42318; }
   .padarea { margin-top:10px; }
   canvas.locked { opacity:.55; }
   @media (orientation: landscape) and (max-height: 600px) {   /* 휴대폰을 가로로 돌렸을 때만 (컴퓨터 화면은 아래 '휴대폰 비율' 적용) */
@@ -257,7 +257,6 @@
   .lockRow { display:flex; align-items:center; justify-content:space-between; gap:8px; margin-top:8px; padding:8px 10px; border-radius:10px; background:#fdecea; color:#b42318; font-size:13px; font-weight:700; }
   .rfLeft.soon, .rfLeft.over { color:#c0392b; font-weight:700; }
   .lockRow .btn { background:#b42318; color:#fff; }
-  .bsub { display:block; font-size:11px; font-weight:400; opacity:.85; margin-top:2px; }
   .roleT { display:inline-block; margin-top:8px; background:#eef3ff; color:var(--pri); border:1px solid #c9d8fb; border-radius:20px; padding:4px 12px; font-size:14px; font-weight:700; }
   textarea { width:100%; font-size:15px; padding:10px; border:1px solid var(--line); border-radius:10px; margin-top:6px; font-family:inherit; resize:vertical; }
   .srow .x { border:0; background:none; color:#b42318; font-size:16px; width:28px; }
@@ -314,8 +313,6 @@
   .regInfo { white-space:pre-line; font-size:12px; line-height:1.6; color:var(--sub); background:#f6f7f9; border-radius:8px; padding:8px 10px; margin-top:10px; }
   .regChk { font-size:14px; line-height:1.8; background:#f3f6fd; border-radius:8px; padding:8px 10px; margin-top:8px; }
   input[readonly] { background:#eef1f5; color:var(--sub); }
-  .apRow { border-top:1px solid var(--line); padding:10px 0; display:flex; align-items:center; gap:8px; font-size:14px; } .apRow > div { flex:1; min-width:0; } .apRow small { display:block; color:var(--sub); font-size:12px; }
-  .apRow .btn { flex:none; width:auto; margin:0; }
   .eTabs { display:flex; margin-top:10px; border-bottom:1px solid var(--line); } .eTabs button { flex:1; height:42px; border:1px solid var(--line); border-bottom:0; border-radius:10px 10px 0 0; background:#eef1f5; color:var(--sub); font-size:15px; font-weight:700; }
   .eTabs button.on { background:#fff; color:var(--pri); box-shadow:0 1px 0 #fff; }
   .pickBox { background:#fff7e6; border:1px solid #f5d0a6; border-radius:10px; padding:8px 10px; margin-top:8px; font-size:14px; } .pickBox label { display:flex; align-items:center; gap:8px; padding:5px 0; color:var(--text) !important; } .pickBox input { width:20px; height:20px; margin:0; flex:none; accent-color:var(--pri); }
@@ -367,10 +364,9 @@
   .skH .t { flex:1; min-width:0; font-size:15px; }
   .skL { display:flex; align-items:center; gap:14px; margin-top:6px; }          /* 수량 칸 옆에 양호, 비고 칸 옆에 불량 (둘 중 하나만 체크) */
   .skL .qi, .skL .ni { flex:1; width:auto !important; margin-top:0 !important; }
-  .skCks { flex:none; display:flex; gap:12px; }
-  .skCks label, .skL label { flex:none; width:68px; display:flex; align-items:center; gap:4px; font-size:15px; font-weight:700; color:var(--text); cursor:pointer; white-space:nowrap; }
-  .skCks input, .skIt .skL label input { padding:0; width:24px; height:24px; margin:0; accent-color:var(--pri); flex:none; }
-  .skCks label.on, .skL label.on { color:var(--pri); } .skCks label.x.on, .skL label.x.on { color:#b42318; } .skCks label.x input, .skL label.x input { accent-color:#c0392b; }
+  .skL label { flex:none; width:68px; display:flex; align-items:center; gap:4px; font-size:15px; font-weight:700; color:var(--text); cursor:pointer; white-space:nowrap; }
+  .skIt .skL label input { padding:0; width:24px; height:24px; margin:0; accent-color:var(--pri); flex:none; }
+  .skL label.on { color:var(--pri); } .skL label.x.on { color:#b42318; } .skL label.x input { accent-color:#c0392b; }
   .skQ textarea.ni { width:100%; margin-top:6px; font-size:15px; padding:9px 10px; border:1px solid var(--line); border-radius:10px; font-family:inherit; line-height:1.4; resize:none; overflow:hidden; display:block; }
   .skQ textarea.ni.fold { height:42px; white-space:pre; }                       /* 접힘: 한 줄만 보임 */
   .skQ .nTog { align-self:flex-end; border:0; background:none; color:var(--pri); font-size:13px; font-weight:700; padding:4px 2px; }
@@ -2765,7 +2761,8 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
       var its = t.items || [];
       box.innerHTML = '<div class="cap"><b>' + esc(name) + '</b> · 안전점검의 날 · 항목 ' + its.length + '개 · 수량은 역마다 다름</div><div class="wrap"><table class="skPrev"><colgroup><col style="width:22%"><col><col style="width:18%"></colgroup>' +
         '<tr><th>점검분야</th><th>점검항목</th><th>기본 수량</th></tr>' +
-        its.map(function (it) { return '<tr><td>' + esc(it.f) + '</td><td class="l">' + esc(it.t) + '</td><td>' + esc(it.q || '-') + '</td></tr>'; }).join('') + '</table></div>';
+        its.slice(0, 3).map(function (it) { return '<tr><td>' + esc(it.f) + '</td><td class="l">' + esc(it.t) + '</td><td>' + esc(it.q || '-') + '</td></tr>'; }).join('') +   // 윗줄 3개만
+        (its.length > 3 ? '<tr><td class="more" colspan="3">⋮ 외 ' + (its.length - 3) + '개 항목</td></tr>' : '') + '</table></div>';
       return;
     }
     if (!t.cap) { box.innerHTML = '<div class="cap">서명 칸을 찾지 못한 양식입니다.</div>'; return; }
@@ -2840,6 +2837,15 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
   }
   setInterval(tickRfLeft, 30000);
   function renderAdmin(d) {
+    if (d && d.patch) {                  // 관리자 작업 응답: 바뀐 카드만 옴 → 가지고 있던 전체 값에 합쳐 다시 그림
+      if (!admData) { admCall('adminRefresh', [], renderAdmin); return; }
+      d.patch.forEach(function (x) {
+        var i = -1; admData.educations.forEach(function (e, k) { if (e.id === x.id) i = k; });
+        if (i > -1) admData.educations[i] = x; else admData.educations.push(x);
+      });
+      if (d.guest) admData.guest = d.guest;
+      admData.note = d.note || ''; d = admData;
+    }
     admData = d;
     var sel = $('nTpl'), prev = sel.value; sel.innerHTML = '';
     var nFirst = !$('nDept').options.length;   // 처음 그릴 때·서명지를 연 뒤에는 관리자의 부서명·팀, 그 밖에는 고른 값 유지
@@ -2873,6 +2879,7 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
     if (!d.educations.length || !d.templates.length) $('newCard').classList.add('open');   // 열린 교육이 없으면 펼쳐 둠
     drawEdus();
     if (d.note) msg($('aMsg'), d.note, '#12833b');
+    d.note = '';                         // 안내는 한 번만
   }
 
   /* ---------- 서명지별 현황: 접수 중 · 마감 탭 ---------- */
@@ -3212,7 +3219,6 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
 (function () {
   var q = new URLSearchParams(location.search), e = String(q.get('e') || '').replace(/[^\w]/g, '').slice(0, 20);
   var base = { url: SIGN_HOME, carPage: SIGN_HOME.replace(/[^\/]*$/, '') + 'car.html', educations: [] };   // QR은 이 화면 주소로, 업무차량관리는 같은 저장소의 car.html
-  try { localStorage.removeItem('bglSignInit'); } catch (x) {}          // 예전에 저장한 목록 지움
   var onRefund = /refund\.html$/.test(location.pathname);               // 환불 등록 QR은 refund.html, e-싸인은 sign.html
   if (e && !onRefund) { location.replace('refund.html' + location.search); return; }
   if (onRefund) {

@@ -417,7 +417,6 @@ var API = 'https://script.google.com/macros/s/AKfycbwjudREVuPqSxXknvG5XClW_tQKbD
 var INIT = {};
 var S = { mode: 'start', km: '', kmImg: '', receipt: '', reason: '', route: '', busy: false };
 var ME_KEY = 'bglPin';     // 이 휴대폰에서 마지막으로 쓴 사번 (e-싸인 로그인과 같은 칸)
-try { localStorage.removeItem('bglCarMe'); localStorage.removeItem('bglCarCode'); } catch (e) {}   // 예전에 개인 코드까지 저장한 값 지움
 var $ = function (id) { return document.getElementById(id); };
 function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
 function fmt(n) { return (n === '' || n == null || isNaN(n)) ? '' : Number(n).toLocaleString('ko-KR'); }
