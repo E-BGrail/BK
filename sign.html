@@ -82,6 +82,17 @@
   input[type=text], input[type=tel], input[type=email], input[type=password] {
     width:100%; font-size:17px; padding:12px; border:1px solid var(--line); border-radius:10px; margin-top:8px; }
   .list { display:flex; flex-direction:column; gap:8px; margin-top:10px; }
+  /* 관리자: 서명지 카드를 왼쪽으로 밀면 뒤에 있던 [마감] 또는 [다시 열기][삭제] */
+  .esw { position:relative; border-radius:12px; overflow:hidden; }
+  .esw > .eswAct { position:absolute; top:0; right:0; bottom:0; display:flex; visibility:hidden; }
+  .esw.open > .eswAct, .esw.drag > .eswAct { visibility:visible; }
+  .eswAct button { width:88px; border:0; color:#fff; font-size:15px; font-weight:800; font-family:inherit; line-height:1.3; padding:0 6px; }
+  .eswAct .close, .eswAct .del { background:#b42318; } .eswAct .reopen { background:var(--pri); }
+  .eswAct button.armed { background:#7a1610; font-size:13px; }
+  .esw > .eswFront { position:relative; transition:transform .2s ease-out; touch-action:pan-y; background:#fff; border-radius:12px; }
+  .esw.open > .eswFront { transform:translateX(var(--sw, -88px)); }
+  .esw > .eswFront > * { margin:0; }
+  .eswHint { font-size:12.5px; color:var(--sub); margin-top:6px; }
   .person { display:flex; align-items:center; justify-content:space-between; padding:14px; border:1px solid var(--line);
             border-radius:12px; background:#fff; font-size:17px; width:100%; text-align:left; }
   .person .rank { color:var(--sub); font-size:14px; margin-right:8px; }
@@ -1065,9 +1076,12 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
     $('edTabOpen').classList.toggle('on', isOpen); $('edTabClosed').classList.toggle('on', !isOpen);
     var list = isOpen ? opens : closes;
     if (!list.length) { box.innerHTML = '<div class="hint" style="margin-top:8px">' + (isOpen ? '현재 진행 중인 서명지가 없습니다.' : '마감된 서명지가 없습니다.') + '</div>'; }
+    var adm = !!(staff && staff.admin && !staff.guest);
+    if (adm && list.length) { var hn = document.createElement('div'); hn.className = 'eswHint'; hn.textContent = isOpen ? '관리자: 카드를 왼쪽으로 밀면 [마감]' : '관리자: 카드를 왼쪽으로 밀면 [다시 열기] [삭제]'; box.appendChild(hn); }
+    var put = function (e, el) { box.appendChild(adm ? eswWrap(e, el) : el); };
     list.forEach(function (e) {
-      if (e.refund) { box.appendChild(rfItem(e)); return; }
-      if (e.safety) { box.appendChild(skItem(e)); return; }
+      if (e.refund) { put(e, rfItem(e)); return; }
+      if (e.safety) { put(e, skItem(e)); return; }
       var closed = e.open === false;
       var b = document.createElement('button');
       b.className = 'person' + (closed ? ' closed' : '') + (e.id === selId ? ' sel' : '');
@@ -1080,9 +1094,78 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
       if (pdfOk) b.onclick = function () { eduPdfGet(e); };
       else if (closed) b.disabled = true;
       else b.onclick = function () { openCode(e); };   // 누르면 접속 코드 창
-      box.appendChild(b);
+      put(e, b);
     });
   }
+  /* ---------- 관리자: 카드 밀기 → 마감 / 다시 열기·삭제 (마감·삭제는 두 번 눌러 실행) ---------- */
+  function eswWrap(e, el) {
+    var w = document.createElement('div'); w.className = 'esw';
+    var act = document.createElement('div'); act.className = 'eswAct';
+    var closed = e.open === false;
+    w.style.setProperty('--sw', closed ? '-176px' : '-88px');
+    act.innerHTML = closed ? '<button type="button" class="reopen">다시 열기</button><button type="button" class="del">삭제</button>' : '<button type="button" class="close">마감</button>';
+    var f = document.createElement('div'); f.className = 'eswFront'; f.appendChild(el);
+    w.appendChild(act); w.appendChild(f);
+    [].forEach.call(act.querySelectorAll('button'), function (b) {
+      b.onclick = function () { eswDo(e, b); };
+    });
+    return w;
+  }
+  var eswT = null, eswBusy = false;
+  function eswArm(b, on, text) {
+    clearTimeout(eswT);
+    [].forEach.call(document.querySelectorAll('.eswAct button.armed'), function (x) { x.classList.remove('armed'); x.textContent = x.getAttribute('data-t'); });
+    if (!on) return;
+    b.setAttribute('data-t', b.textContent); b.classList.add('armed'); b.textContent = text;
+    eswT = setTimeout(function () { eswArm(null, false); }, 4000);
+  }
+  function eswDo(e, b) {
+    if (eswBusy) return;
+    var k = b.classList.contains('del') ? 'del' : b.classList.contains('close') ? 'close' : 'reopen';
+    if (k !== 'reopen' && !b.classList.contains('armed')) { eswArm(b, true, k === 'del' ? '한 번 더 누르면 삭제' : '한 번 더 누르면 마감'); return; }
+    eswArm(null, false); eswBusy = true;
+    msg($('msg1'), e.title + (k === 'del' ? ' 삭제 중…' : k === 'close' ? ' 마감 중…' : ' 다시 여는 중…'), '#6b7686');
+    var ok = function (r) { eswBusy = false; if (k === 'reopen') edTab = 'open'; loadInit(r); saveState(); msg($('msg1'), r.note || '', '#12833b'); };
+    var fail = function (x) { eswBusy = false; if (/로그인이 필요/.test(errText(x))) { logout(errText(x)); return; } eswClose(); msg($('msg1'), errText(x), '#c0392b'); };
+    if (k === 'del') google.script.run.withSuccessHandler(ok).withFailureHandler(fail).staffDeleteEdu(staff && staff.token || '', e.id);
+    else google.script.run.withSuccessHandler(ok).withFailureHandler(fail).staffSetOpen(staff && staff.token || '', e.id, k === 'reopen');
+  }
+  function eswClose(except) { [].forEach.call(document.querySelectorAll('#edus .esw.open'), function (x) { if (x !== except) x.classList.remove('open'); }); }
+  (function () {                                     // 밀기: 손가락·마우스 모두. 민 직후의 누르기와 열린 카드 누르기는 닫기만
+    var box = $('edus'), S = null, at = 0;
+    var width = function (w) { return w.querySelectorAll('.eswAct button').length * 88; };
+    box.addEventListener('pointerdown', function (ev) {
+      var w = ev.target.closest('.esw');
+      if (!w || ev.target.closest('.eswAct')) return;
+      S = { w: w, f: w.querySelector('.eswFront'), x: ev.clientX, y: ev.clientY, on: false, open: w.classList.contains('open'), dx: 0, wd: width(w) };
+    });
+    box.addEventListener('pointermove', function (ev) {
+      if (!S) return;
+      var dx = ev.clientX - S.x, dy = ev.clientY - S.y;
+      if (!S.on) { if (Math.abs(dy) > 12 && Math.abs(dy) > Math.abs(dx)) { S = null; return; } if (Math.abs(dx) < 10) return; S.on = true; eswClose(S.w); S.w.classList.add('drag'); }
+      S.dx = dx; S.f.style.transition = 'none';
+      S.f.style.transform = 'translateX(' + Math.max(-S.wd, Math.min(0, (S.open ? -S.wd : 0) + dx)) + 'px)';
+    });
+    var end = function () {
+      if (!S) return;
+      var s = S; S = null;
+      if (!s.on) return;
+      s.f.style.transition = ''; s.f.style.transform = '';
+      var open = s.open ? s.dx < 30 : s.dx < -40;
+      s.w.classList.toggle('open', open);
+      setTimeout(function () { s.w.classList.remove('drag'); }, 250);
+      if (!open) eswArm(null, false);
+      at = Date.now();
+    };
+    box.addEventListener('pointerup', end);
+    box.addEventListener('pointercancel', end);
+    box.addEventListener('click', function (ev) {
+      var w = ev.target.closest('.esw');
+      if (!w || ev.target.closest('.eswAct')) return;
+      if (Date.now() - at < 350) { ev.preventDefault(); ev.stopPropagation(); return; }
+      if (w.classList.contains('open')) { ev.preventDefault(); ev.stopPropagation(); w.classList.remove('open'); eswArm(null, false); }
+    }, true);
+  })();
   $('edTabOpen').onclick = function () { edTab = 'open'; renderEdus(); saveState(); };
   $('edTabClosed').onclick = function () { edTab = 'closed'; renderEdus(); saveState(); };
   /* ---------- 첫 화면 QR (이 웹 앱 주소, 접속 코드는 넣지 않음) ---------- */
@@ -2864,7 +2947,6 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
     c.innerHTML = '<div class="head"><div class="t"></div><div class="d"></div><div class="cnt"></div>' +
       '<div class="tap">눌러서 펼치기</div></div>' +
       '<div class="body">' +
-      '<div class="row"><button class="btn b-open"></button></div>' +
       '<div class="ibox"><div class="ihead"><b>서명지 정보 수정</b></div>' +
       '<div class="ibody">' +
       '<div class="field"><label>교육명</label><input type="text" class="i-title" autocomplete="off"></div>' +
@@ -2885,8 +2967,6 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
       '<div class="row"><button class="btn pri b-exp">내보내기 준비</button></div>' +
       '<div class="exp hidden"><div class="row"><button class="btn gray b-pdf">PDF 저장</button><button class="btn gray b-csv">CSV 저장</button><button class="btn gray b-html">HTML 저장</button></div>' +
       '</div>' +
-      '<div style="margin-top:12px"><b>서명지 삭제</b></div>' +
-      '<div class="row"><button class="btn del b-del">서명지 삭제</button></div>' +
       '<div class="msg m"></div></div>';
     var q = function (s) { return c.querySelector(s); };
     if (admOpen[e.id]) c.classList.add('open');
@@ -2919,17 +2999,7 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
     }
     if (e.error) { var m0 = q('.m'); msg(m0, e.error, '#c0392b'); }
 
-    // 접수 열기/마감
-    q('.b-open').innerHTML = e.refund ? (e.open ? '등록 마감' : '등록 다시 열기') : e.safety ? (e.open ? '서명지 마감' : '이 서명지 접수 다시 열기') :
-      e.open ? '서명지 마감<small class="bsub">직책·직위 순으로 자동 정렬</small>' : '이 서명지 접수 다시 열기';
-    q('.b-open').className = 'btn b-open ' + (e.open ? 'del' : 'pri');
-    q('.b-open').onclick = function () {
-      var closing = !!e.open; q('.b-open').disabled = true;
-      admCall('adminSetOpen', [e.id, !closing], function (d) {
-        admTab = closing ? 'closed' : 'open';      // 옮겨 간 탭을 보여 줌
-        renderAdmin(d); msg($('aMsg'), e.title + ': ' + (closing ? '접수를 마감했습니다.' + (d.sortNote || '') : '접수를 다시 열었습니다.'), '#12833b');
-      }, q('.m'));
-    };
+    // 접수 마감·다시 열기·삭제는 서명지 선택 화면에서 (관리자가 카드를 왼쪽으로 밀기)
     // 교육 정보 (기본은 접힘, 눌러서 펼치기)
     if (admInfo[e.id]) q('.ibox').classList.add('open');
     q('.ihead').onclick = function () { admInfo[e.id] = !admInfo[e.id]; q('.ibox').classList.toggle('open', admInfo[e.id]); saveState(); };
@@ -2978,7 +3048,7 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
     }   // 임무·역할 칸이 있는 양식만. 본인 확인 없는 교육은 서명자가 직접 입력
 
     // 내보내기 (선택) · 삭제 (마감 후 두 번 누르기)
-    var saved = {}, sure = false, sureTimer = null;
+    var saved = {};
     var noPdf = function () { var P = (admExp[e.id] || {}).pdf; return !!(P && P.missing); };   // 서명지 탭이 지워져 PDF를 만들 수 없음
     var allSaved = function () { return e.refund ? !!saved.csv : (saved.pdf || noPdf()) && saved.csv && saved.html; };   // 비상 등록은 CSV 하나만
     function mark(k) {
@@ -3022,26 +3092,6 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
     };
     q('.b-csv').onclick = function () { var r = (admExp[e.id] || {}).log; if (!r) return; saveFile(r.base + (e.refund ? '_환불등록.csv' : '_서명로그.csv'), new Blob([r.csv], { type: 'text/csv;charset=utf-8' })); mark('csv'); };
     q('.b-html').onclick = function () { var r = (admExp[e.id] || {}).log; if (!r) return; saveFile(r.base + '_서명로그.html', new Blob([r.html], { type: 'text/html;charset=utf-8' })); mark('html'); };
-    var delLock = !!e.open && e.signers.length > 0;    // 서명(등록)이 없으면 접수 중이어도 바로 삭제 가능
-    q('.b-del').disabled = delLock;
-    if (delLock) q('.b-del').textContent = '서명지 삭제 (접수 마감 후 가능)';
-    q('.b-del').onclick = function () {
-      if (!sure) {
-        sure = true; q('.b-del').classList.add('sure'); q('.b-del').textContent = '정말 삭제할까요? 한 번 더 누르세요';
-        msg(q('.m'), (e.refund ? '목록에서 지웁니다. 등록 탭은 환불 파일에 남고, 로그는 보관 파일로 옮겨집니다.' : '목록에서 지웁니다. 서명지 탭과 로그는 보관 파일로 옮겨지고, 이전 기록은 구글 시트에서 관리합니다.') +
-          (allSaved() ? '' : e.refund ? ' (CSV 파일을 아직 저장하지 않았습니다)' : ' (PDF·로그 파일을 아직 저장하지 않았습니다)'), '#c0392b');
-        clearTimeout(sureTimer);
-        sureTimer = setTimeout(function () {      // 8초 안에 다시 누르지 않으면 처음 상태로
-          sure = false; q('.b-del').classList.remove('sure'); q('.b-del').textContent = '서명지 삭제'; msg(q('.m'), '');
-        }, 8000);
-        return;
-      }
-      clearTimeout(sureTimer);
-      q('.b-del').disabled = true;
-      admCall('adminDeleteEdu', [e.id, admExp[e.id] && admExp[e.id].log ? admExp[e.id].log.count : null], function (d) {
-        delete admExp[e.id]; delete admOpen[e.id]; renderAdmin(d);
-      }, q('.m'), function () { sure = false; q('.b-del').disabled = false; q('.b-del').classList.remove('sure'); q('.b-del').textContent = '서명지 삭제'; });
-    };
     return c;
   }
 
