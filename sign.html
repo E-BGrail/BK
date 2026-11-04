@@ -116,11 +116,13 @@
   .who { font-size:19px; font-weight:700; }
   .hint { color:var(--sub); font-size:13px; margin-top:6px; }
   .warn { background:#fff7e0; border:1px solid #f0d58a; color:#7a5a00; border-radius:10px; padding:10px 12px; font-size:14px; margin-top:10px; }
-  .rot { display:none; background:#e8f0fe; border:1px solid #b8cdfa; color:#1a3d8f; border-radius:10px; padding:10px 12px; font-size:14px; margin-top:10px; }
-  .lsBtn { display:none !important; width:100%; margin-top:6px; padding:9px !important; font-size:14px !important; color:var(--pri) !important; border:1.5px solid var(--pri) !important; background:#fff !important; }
+  /* 서명 칸 첫 줄 오른쪽: 안드로이드는 [가로 서명] 버튼, 그 밖은 "가로 화면으로 서명 가능" (세로 화면에서만) */
+  .whoRow { display:flex; align-items:center; gap:8px; } .whoRow .who { flex:1; min-width:0; }
+  .lsTag { display:none; flex:none; font-size:12.5px; font-weight:700; color:var(--pri); }
+  .lsTag button { display:flex; align-items:center; gap:3px; height:26px; padding:0 8px; border:0; border-radius:7px; background:#324eb3; color:#fff; font-size:12px; font-weight:700; font-family:inherit; }
+  .lsTag button svg { width:14px; height:14px; flex:none; }
   @media (orientation: portrait) {
-    .rot { display:block; }
-    .lsBtn.ok { display:block !important; }      /* 세로 화면 + 화면 방향을 바꿀 수 있는 휴대폰(안드로이드)만 */
+    .lsTag { display:block; }
     /* 세로 서명 화면: 한 화면에 서명 칸과 '서명 제출'이 다 보이게 */
     body[data-s="s2"] .steps { padding-top:8px; }
     body[data-s="s2"] .steps::before { top:18px; }
@@ -129,7 +131,6 @@
     body[data-s="s2"] main { padding-top:8px; }
     #s2 .card { padding:12px 14px; }
     #s2 .who { font-size:18px; }
-    #s2 .rot, #skSig .rot { font-size:12px; padding:5px 10px; margin-top:6px; border-radius:8px; }
     #s2 .warn { padding:6px 10px; font-size:13px; margin-top:6px; }
     #s2 .padarea, #skSig .padarea { margin-top:8px; }
     #s2 .actions, #skSig .actions { display:flex; flex-wrap:wrap; gap:8px; margin-top:8px; }
@@ -209,6 +210,7 @@
     /* 가로 모드 서명 칸: 예전보다 약 1.2배 (아래로 늘림). 위쪽 로고 줄은 서명 화면에서만 숨기고 이름·교육명은 한 줄로 */
     canvas { height:min(calc((100vh - 140px) * 1.2), calc(100vh - 92px)); height:min(calc((100dvh - 140px) * 1.2), calc(100dvh - 92px)); min-height:120px; }
     body[data-s="s2"] header, body.skSig header { display:none; }
+    #s2 .whoRow, #skSig .whoRow { display:inline; }
     #s2 .who, #skSig .who { display:inline; } #s2 .edu, #skSig .edu { display:inline; margin-left:8px; }
     #skSig .who { font-size:16px; } #skSig .edu { font-size:12px; margin-top:0; }
     .actions { width:150px; display:flex; flex-direction:column; gap:8px; }
@@ -556,12 +558,10 @@
   <!-- 3단계: 서명 -->
   <section id="s2" class="hidden">
     <div class="card">
-      <div class="who" id="who"></div>
+      <div class="whoRow"><div class="who" id="who"></div><span class="lsTag"></span></div>
       <div class="edu" id="eduT"></div>
       <div class="roleT hidden" id="roleT"></div>
       <div class="warn hidden" id="warn">이미 서명한 기록이 있습니다. 새로 제출하면 이전 서명이 교체됩니다.</div>
-      <div class="rot">✍️ 아래 칸에 손가락으로 서명 · 📱 <b>가로로 돌리면</b> 칸이 커집니다</div>
-      <button class="btn lsBtn" type="button">📱 가로로 크게 서명</button>
       <div class="padarea">
         <div class="padwrap"><canvas id="pad"></canvas></div>
         <div class="actions">
@@ -767,10 +767,8 @@
         <div class="row"><button class="btn gray" id="skRevBack" type="button">수정</button><button class="btn pri" id="skRevOk" type="button">최종 확인</button></div>
       </div>
       <div id="skSig" class="hidden">
-        <div class="who" id="skSigName"></div>
+        <div class="whoRow"><div class="who" id="skSigName"></div><span class="lsTag"></span></div>
         <div class="edu" id="skSigEdu"></div>
-        <div class="rot">✍️ 아래 칸에 손가락으로 서명 · 📱 <b>가로로 돌리면</b> 칸이 커집니다</div>
-        <button class="btn lsBtn" type="button">📱 가로로 크게 서명</button>
         <div class="padarea">
           <div class="padwrap"><canvas id="skPad"></canvas></div>
           <div class="actions">
@@ -1798,9 +1796,12 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
     try { if (screen.orientation && screen.orientation.unlock) screen.orientation.unlock(); } catch (x) {}
     try { if (document.fullscreenElement) document.exitFullscreen().catch(function () {}); } catch (x) {}
   }
-  [].forEach.call(document.querySelectorAll('.lsBtn'), function (b) {
-    b.classList.toggle('ok', LAND_OK);
-    b.onclick = function () { landOn(b.closest('#s2') ? $('msg2') : $('skMsg')); };
+  [].forEach.call(document.querySelectorAll('.lsTag'), function (t) {
+    if (!LAND_OK) { t.textContent = '가로 화면으로 서명 가능'; return; }   // 아이폰 등: 휴대폰을 직접 돌리면 됨
+    var b = document.createElement('button'); b.type = 'button';   // 누르면 화면이 가로로 돌아감 (회전 화살표 + 글자)
+    b.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 11a8 8 0 1 0-2.3 5.7"/><path d="M20 4v7h-7"/></svg>가로로 돌리기';
+    b.onclick = function () { landOn(t.closest('#s2') ? $('msg2') : $('skMsg')); };
+    t.appendChild(b);
   });
 
   /* ---------- 서명 패드 ---------- */
