@@ -91,6 +91,10 @@
   .eswAct button.armed { background:#7a1610; font-size:13px; }
   .esw > .eswFront { position:relative; transition:transform .2s ease-out; touch-action:pan-y; background:#fff; border-radius:12px; }
   .esw.open > .eswFront { transform:translateX(var(--sw, -88px)); }
+  .esw > .eswActL { left:0; right:auto; } .esw > .eswActL { visibility:hidden; } .esw.openR > .eswActL, .esw.drag > .eswActL { visibility:visible; }   /* 환불 카드 오른쪽으로 밀기 → 왼쪽 [5분 연장] */
+  .esw.open > .eswActL { visibility:hidden; } .esw.openR > .eswAct:not(.eswActL) { visibility:hidden; }
+  .eswAct .ext { background:#12833b; }
+  .esw.openR > .eswFront { transform:translateX(88px); }
   .esw > .eswFront > * { margin:0; }
   .eswHint { font-size:12.5px; color:var(--sub); margin-top:6px; }
   .person { display:flex; align-items:center; justify-content:space-between; padding:14px; border:1px solid var(--line);
@@ -171,6 +175,7 @@
   .rfItem.closed .rfMain { border-color:var(--line); background:#f4f5f7; color:#98a2b3; }
   .doneClose { margin-top:16px; font-size:17px; font-weight:700; color:var(--pri); background:#f3f6fd; border-radius:12px; padding:14px; }
   .rfHead { display:flex; align-items:center; gap:8px; }
+  .rfHead .rfQrMini { margin-left:auto; height:28px; padding:0 10px; border:1.5px solid #f0a7a0; border-radius:8px; background:#fff; color:#b42318; font-size:12px; font-weight:800; font-family:inherit; }   /* 직원 대리 등록 중 고객용 QR 잠깐 보기 */
   .rfHead .rfTag { font-size:12px; font-weight:800; color:#fff; background:#c0392b; border-radius:6px; padding:2px 7px; }
   .consent { display:flex; gap:8px; align-items:flex-start; justify-content:space-between; margin-top:14px; font-size:15px; font-weight:700; }
   .consent input { width:20px; height:20px; margin:1px 0 0; flex:none; accent-color:var(--pri); }
@@ -343,6 +348,8 @@
   .skGo { font-size:12px; color:var(--sub); margin-top:2px; }
   .skItem.busy { opacity:.6; pointer-events:none; }
   .skCell { display:flex; flex-direction:column; gap:4px; } .skCell > button:first-child { flex:1; }
+  .pdfDl { font-size:11.5px; font-weight:600; color:#12833b; }   /* PDF 받음 표시 (누가·언제) */
+  .skPdfS.got { border-color:#12833b !important; color:#12833b; }
   .skPdfS { border:1.5px solid var(--pri) !important; background:#fff !important; color:var(--pri); font-size:13px !important; font-weight:700; padding:7px 4px !important; border-radius:8px !important; }
   .skPdfB { width:100%; margin-top:8px; padding:10px; border:1.5px solid var(--line); border-radius:12px; background:#fff; font-size:14px; font-weight:700; color:var(--pri); }
   .skPdfB:disabled { color:#98a2b3; background:#f4f5f7; }
@@ -599,7 +606,7 @@
   <!-- 비상: 운행 장애 환불 승객 등록 (접속 코드 없음) -->
   <section id="sf" class="hidden">
     <div class="card">
-      <div class="rfHead"><span class="rfTag">운행 장애 · 환불 등록</span></div>
+      <div class="rfHead"><span class="rfTag">운행 장애 · 환불 등록</span><button type="button" class="rfQrMini hidden" id="rfQrBtn">고객용 QR<span class="hidden"></span></button></div>
       <div class="who" id="rfTitle" style="margin-top:6px"></div>
       <div class="edu" id="rfDate"></div>
       <div class="rfTime hidden" id="rfTime"></div>
@@ -755,6 +762,7 @@
           <div class="row hidden" id="skLeadCRow"><button class="btn del" id="skLeadCancel" type="button">일괄 서명 취소</button></div>
         </div>
         <div class="row"><button class="btn gray" id="skHome" type="button">서명지 목록</button><button class="btn pri hidden" id="skPdfAll" type="button">전체 PDF</button></div>
+        <div class="pdfDl hidden" id="skPdfAllDl" style="text-align:right;margin-top:4px"></div>
       </div>
       <div id="skForm" class="hidden">
         <div class="who" id="skStName" style="margin-top:10px;color:var(--pri)"></div>
@@ -1052,8 +1060,13 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
     var ms = Date.now();
     RQ.items = RQ.items.filter(function (it) {
       if (!document.body.contains(it.el)) return false;          // 목록을 다시 그리면 예전 카드는 빠짐
-      if (ms < it.end) return true;
+      if (curScreen !== 'sf' && it.el.closest('.rfQrMini')) return false;   // 대리 등록 화면을 나감
+      var end = it.e.qrEnd || it.end;                             // 연장되면 rfLeftApply가 e.qrEnd를 늘림
+      if (ms < end) { it.asked = 0; return true; }
+      if (!it.asked) { it.asked = ms; rfLeftAsk(); return true; } // 끝나는 순간: 숨기기 전에 서버에 다시 확인 (그사이 연장됐을 수 있음)
+      if (ms - it.asked < 8000) return true;                      // 답을 기다림 (최대 8초)
       var b = it.el.closest('.rfQr'); if (b) b.remove();          // QR 접수 시간이 끝남 → QR 숨김 (직원 등록은 그대로)
+      var mb = it.el.closest('.rfQrMini'); if (mb) mb.classList.add('hidden');   // 직원 대리 등록 화면의 [고객용 QR]
       if (RQ.big && RQ.big.e.id === it.e.id) closeQr();
       return false;
     });
@@ -1078,6 +1091,44 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
   }
   document.addEventListener('visibilitychange', function () { if (!document.hidden && RQ.t) rqTick(); });   // 화면을 다시 켜면 바로 새 QR
 
+  /* ---------- QR 접수 남은 시간 다시 받기: 다른 관리자가 [5분 연장]한 것도 반영 ----------
+   * 목록·직원 대리 등록 화면에 진행 중 환불 건이 있으면 1분마다, QR 시간이 끝나는 순간에도 한 번 */
+  var RFL = { busy: false, at: 0 };
+  function rfLeftAsk() {
+    if (RFL.busy || !staff || !staff.token || staff.guest || (typeof DIALOG !== 'undefined' && DIALOG)) return;
+    RFL.busy = true; RFL.at = Date.now();
+    google.script.run.withSuccessHandler(function (r) { RFL.busy = false; rfLeftApply(r); })
+      .withFailureHandler(function (x) { RFL.busy = false; if (/로그인이 필요/.test(errText(x)) && !signingNow()) logout(errText(x)); })
+      .staffRfLeft(staff.token);
+  }
+  function rfLeftApply(r) {
+    if (!r || !r.rf) return;
+    if (r.now) RQ.off = Number(r.now) - Date.now();
+    var now = Date.now(), redraw = false;
+    edus.forEach(function (e) {
+      if (!e.refund || e.open === false || !r.rf[e.id]) return;
+      var o = r.rf[e.id], end = now + (Number(o.left) || 0);
+      var wasOn = !!e.qrKey && (e.qrEnd || 0) > now, on = !!(o.qrKey || e.qrKey) && end > now;
+      if (o.qrKey) e.qrKey = o.qrKey;
+      e.qrLeft = Number(o.left) || 0; e.qrEnd = end;
+      if (on !== wasOn) redraw = true;                 // QR이 새로 생기거나 없어짐 → 다시 그림
+      [].forEach.call(document.querySelectorAll('.rfLeft'), function (el) { if (el.getAttribute('data-rf') === e.id) { el.setAttribute('data-end', String(end)); setRfLeft(el); } });
+    });
+    if (!redraw) return;
+    if (curScreen === 's1') renderEdus();
+    if (curScreen === 'sf' && rfEdu && !rfDirect) rfMiniSetup(rfEdu);
+  }
+  setInterval(function () {
+    if (document.hidden || !staff || staff.guest || Date.now() - RFL.at < 55000) return;
+    if (!(curScreen === 's1' || (curScreen === 'sf' && !rfDirect))) return;
+    if (!edus.some(function (e) { return e.refund && e.open !== false; })) return;
+    rfLeftAsk();
+  }, 5000);
+  document.addEventListener('visibilitychange', function () {   // 화면을 다시 켜면 (10초 넘게 지났으면) 바로 확인
+    if (document.hidden || !staff || staff.guest || Date.now() - RFL.at < 10000) return;
+    if ((curScreen === 's1' || (curScreen === 'sf' && !rfDirect)) && edus.some(function (e) { return e.refund && e.open !== false; })) rfLeftAsk();
+  });
+
   function rfItem(e) {
     var closed = e.open === false;
     var w = document.createElement('div'); w.className = 'rfItem' + (closed ? ' closed' : '');
@@ -1090,18 +1141,19 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
     if (closed) w.querySelector('.rfGo').textContent = '등록 마감'; else w.querySelector('.rfGo').remove();
     if (!closed) {                                   // 고객용 QR 접수 남은 시간 (지나도 직원 등록은 가능)
       var left = document.createElement('span'); left.className = 'rfLeft'; left.style.cssText = 'display:block;margin-top:2px;font-size:13px';
-      left.setAttribute('data-end', String(Date.now() + (Number(e.qrLeft) || 0))); setRfLeft(left);
+      e.qrEnd = e.qrEnd || Date.now() + (Number(e.qrLeft) || 0);   // QR 접수 끝 시각 (직원 대리 등록 화면의 [고객용 QR]도 같음, 연장되면 늘어남)
+      left.setAttribute('data-end', String(e.qrEnd)); left.setAttribute('data-rf', e.id); setRfLeft(left);
       w.querySelector('.rfMain').appendChild(left);
     }
     if (closed) w.querySelector('.rfMain').disabled = true;
     else {
       w.querySelector('.rfMain').onclick = function () { openRefund(e); };
-      if (e.qrKey && rfUrl(e.id) && RQ.ok) {         // 고객용 QR: 20초마다 바뀜 (화면이 직접 만듦)
+      if (e.qrKey && rfUrl(e.id) && RQ.ok && e.qrEnd > Date.now()) {   // 고객용 QR: 20초마다 바뀜 (화면이 직접 만듦)
         var qb = document.createElement('button'); qb.className = 'rfQr'; qb.type = 'button'; qb.setAttribute('aria-label', 'QR 크게 보기');
         qb.innerHTML = '<em>고객용</em><span></span><small>QR 크게</small>';
         qb.onclick = function () { rqOpen(e); };
         w.appendChild(qb);
-        rqAdd(e, qb.querySelector('span'), Date.now() + (Number(e.qrLeft) || 0));
+        rqAdd(e, qb.querySelector('span'), e.qrEnd);
       }
     }
     return w;
@@ -1115,6 +1167,7 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
       edPdfBusy = false;
       if (r.pdf) saveFile(r.base + '.pdf', b64Blob(r.pdf, 'application/pdf'));
       else (r.pdfs || []).forEach(function (b64, i) { setTimeout(function () { saveFile(r.base + '_' + (i + 1) + '.pdf', b64Blob(b64, 'application/pdf')); }, i * 700); });
+      if (r.dl) { e.pdfDl = r.dl; renderEdus(); }    // PDF 받음 ✓ (서버에 남음)
       msg($('msg1'), 'PDF를 저장했습니다. 컴퓨터·휴대폰 다운로드 폴더를 확인하세요.', '#12833b');
     }).withFailureHandler(function (x) {
       edPdfBusy = false;
@@ -1130,7 +1183,7 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
     var list = isOpen ? opens : closes;
     if (!list.length) { box.innerHTML = '<div class="hint" style="margin-top:8px">' + (isOpen ? '현재 진행 중인 서명지가 없습니다.' : '마감된 서명지가 없습니다.') + '</div>'; }
     var adm = !!(staff && staff.admin && !staff.guest);
-    if (adm && list.length) { var hn = document.createElement('div'); hn.className = 'eswHint'; hn.textContent = isOpen ? '관리자: 카드를 왼쪽으로 밀면 [마감]' : '관리자: 카드를 왼쪽으로 밀면 [다시 열기] [삭제]'; box.appendChild(hn); }
+    if (adm && list.length) { var hn = document.createElement('div'); hn.className = 'eswHint'; hn.textContent = isOpen ? '관리자: 카드를 왼쪽으로 밀면 [마감]' + (list.some(function (e) { return e.refund; }) ? ', 환불 카드를 오른쪽으로 밀면 [5분 연장]' : '') : '관리자: 카드를 왼쪽으로 밀면 [다시 열기], 오른쪽으로 밀면 [삭제]'; box.appendChild(hn); }
     var put = function (e, el) { box.appendChild(adm ? eswWrap(e, el) : el); };
     list.forEach(function (e) {
       if (e.refund) { put(e, rfItem(e)); return; }
@@ -1143,15 +1196,17 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
       b.querySelector('.rank').textContent = [e.dept, e.date].filter(Boolean).join(' · ');
       b.querySelector('.cnt1').textContent = '서명 완료 ' + (e.count || 0) + '명';
       var pdfOk = closed && !!(staff && staff.token && !staff.guest);   // 마감된 서명지: 직원은 눌러서 PDF (서명은 불가)
-      b.querySelector('.badge').textContent = pdfOk ? '📄 PDF' : closed ? '접수 마감' : '선택';
+      var pdfTx = e.pdfDl ? '📄 PDF ✓' : '📄 PDF';     // 누가 받았으면 ✓ (서버 기록)
+      b.querySelector('.badge').textContent = pdfOk ? pdfTx : closed ? '접수 마감' : '선택';
+      if (pdfOk && e.pdfDl) { var dl = document.createElement('span'); dl.className = 'pdfDl'; dl.textContent = '✓ PDF 받음 · ' + (e.pdfDl.n || '') + ' ' + (e.pdfDl.at || ''); b.firstChild.appendChild(document.createElement('br')); b.firstChild.appendChild(dl); }
       if (pdfOk) b.onclick = function () {            // 실수로 눌러도 PDF를 만들지 않게 두 번 눌러 받기
         var bd = b.querySelector('.badge');
         if (!b.classList.contains('armed')) {
           b.classList.add('armed'); bd.textContent = '한 번 더 누르면 PDF';
-          setTimeout(function () { b.classList.remove('armed'); bd.textContent = '📄 PDF'; }, 4000);
+          setTimeout(function () { b.classList.remove('armed'); bd.textContent = pdfTx; }, 4000);
           return;
         }
-        b.classList.remove('armed'); bd.textContent = '📄 PDF'; eduPdfGet(e);
+        b.classList.remove('armed'); bd.textContent = pdfTx; eduPdfGet(e);
       };
       else if (closed) b.disabled = true;
       else b.onclick = function () { openCode(e); };   // 누르면 접속 코드 창
@@ -1163,11 +1218,18 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
     var w = document.createElement('div'); w.className = 'esw';
     var act = document.createElement('div'); act.className = 'eswAct';
     var closed = e.open === false;
-    w.style.setProperty('--sw', closed ? '-176px' : '-88px');
-    act.innerHTML = closed ? '<button type="button" class="reopen">다시 열기</button><button type="button" class="del">삭제</button>' : '<button type="button" class="close">마감</button>';
+    w.style.setProperty('--sw', '-88px');
+    // 왼쪽으로 밀기: 진행 중 [마감], 마감 탭 [다시 열기]. 오른쪽으로 밀기: 마감 탭 [삭제], 진행 중 환불 등록 [5분 연장]
+    act.innerHTML = closed ? '<button type="button" class="reopen">다시 열기</button>' : '<button type="button" class="close">마감</button>';
     var f = document.createElement('div'); f.className = 'eswFront'; f.appendChild(el);
-    w.appendChild(act); w.appendChild(f);
-    [].forEach.call(act.querySelectorAll('button'), function (b) {
+    w.appendChild(act);
+    if (closed || e.refund) {
+      var actL = document.createElement('div'); actL.className = 'eswAct eswActL';
+      actL.innerHTML = closed ? '<button type="button" class="del">삭제</button>' : '<button type="button" class="ext">5분<br>연장</button>';
+      w.appendChild(actL);
+    }
+    w.appendChild(f);
+    [].forEach.call(w.querySelectorAll('.eswAct button'), function (b) {
       b.onclick = function () { eswDo(e, b); };
     });
     return w;
@@ -1182,7 +1244,15 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
   }
   function eswDo(e, b) {
     if (eswBusy) return;
-    var k = b.classList.contains('del') ? 'del' : b.classList.contains('close') ? 'close' : 'reopen';
+    var k = b.classList.contains('del') ? 'del' : b.classList.contains('close') ? 'close' : b.classList.contains('ext') ? 'ext' : 'reopen';
+    if (k === 'ext') {                                // 5분 연장: 한 번 누르면 바로 (되돌릴 위험 없음)
+      eswArm(null, false); eswBusy = true;
+      msg($('msg1'), e.title + ' QR 접수 연장 중…', '#6b7686');
+      google.script.run.withSuccessHandler(function (r) { eswBusy = false; loadInit(r); saveState(); msg($('msg1'), r.note || '', '#12833b'); })
+        .withFailureHandler(function (x) { eswBusy = false; if (/로그인이 필요/.test(errText(x))) { logout(errText(x)); return; } eswClose(); msg($('msg1'), errText(x), '#c0392b'); })
+        .staffRfExtend(staff && staff.token || '', e.id);
+      return;
+    }
     if (k !== 'reopen' && !b.classList.contains('armed')) { eswArm(b, true, k === 'del' ? '한 번 더 누르면 삭제' : '한 번 더 누르면 마감'); return; }
     eswArm(null, false); eswBusy = true;
     msg($('msg1'), e.title + (k === 'del' ? ' 삭제 중…' : k === 'close' ? ' 마감 중…' : ' 다시 여는 중…'), '#6b7686');
@@ -1191,29 +1261,33 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
     if (k === 'del') google.script.run.withSuccessHandler(ok).withFailureHandler(fail).staffDeleteEdu(staff && staff.token || '', e.id);
     else google.script.run.withSuccessHandler(ok).withFailureHandler(fail).staffSetOpen(staff && staff.token || '', e.id, k === 'reopen');
   }
-  function eswClose(except) { [].forEach.call(document.querySelectorAll('#edus .esw.open'), function (x) { if (x !== except) x.classList.remove('open'); }); }
+  function eswClose(except) { [].forEach.call(document.querySelectorAll('#edus .esw.open, #edus .esw.openR'), function (x) { if (x !== except) x.classList.remove('open', 'openR'); }); }
   (function () {                                     // 밀기: 손가락·마우스 모두. 민 직후의 누르기와 열린 카드 누르기는 닫기만
     var box = $('edus'), S = null, at = 0;
-    var width = function (w) { return w.querySelectorAll('.eswAct button').length * 88; };
+    var width = function (w) { return w.querySelectorAll('.eswAct:not(.eswActL) button').length * 88; };   // 왼쪽으로 밀 때 (오른쪽 버튼)
+    var widthL = function (w) { return w.querySelectorAll('.eswActL button').length * 88; };             // 오른쪽으로 밀 때 (왼쪽 버튼, 환불 [5분 연장])
     box.addEventListener('pointerdown', function (ev) {
       var w = ev.target.closest('.esw');
       if (!w || ev.target.closest('.eswAct')) return;
-      S = { w: w, f: w.querySelector('.eswFront'), x: ev.clientX, y: ev.clientY, on: false, open: w.classList.contains('open'), dx: 0, wd: width(w) };
+      var wd = width(w), wl = widthL(w);
+      S = { w: w, f: w.querySelector('.eswFront'), x: ev.clientX, y: ev.clientY, on: false, dx: 0, wd: wd, wl: wl,
+        start: w.classList.contains('open') ? -wd : w.classList.contains('openR') ? wl : 0 };
     });
     box.addEventListener('pointermove', function (ev) {
       if (!S) return;
       var dx = ev.clientX - S.x, dy = ev.clientY - S.y;
       if (!S.on) { if (Math.abs(dy) > 12 && Math.abs(dy) > Math.abs(dx)) { S = null; return; } if (Math.abs(dx) < 10) return; S.on = true; eswClose(S.w); S.w.classList.add('drag'); }
       S.dx = dx; S.f.style.transition = 'none';
-      S.f.style.transform = 'translateX(' + Math.max(-S.wd, Math.min(0, (S.open ? -S.wd : 0) + dx)) + 'px)';
+      S.f.style.transform = 'translateX(' + Math.max(-S.wd, Math.min(S.wl, S.start + dx)) + 'px)';
     });
     var end = function () {
       if (!S) return;
       var s = S; S = null;
       if (!s.on) return;
       s.f.style.transition = ''; s.f.style.transform = '';
-      var open = s.open ? s.dx < 30 : s.dx < -40;
-      s.w.classList.toggle('open', open);
+      var pos = Math.max(-s.wd, Math.min(s.wl, s.start + s.dx));
+      var open = s.wd > 0 && pos < -Math.min(40, s.wd / 2), openR = s.wl > 0 && pos > Math.min(40, s.wl / 2);
+      s.w.classList.toggle('open', open); s.w.classList.toggle('openR', openR);
       setTimeout(function () { s.w.classList.remove('drag'); }, 250);
       if (!open) eswArm(null, false);
       at = Date.now();
@@ -1225,7 +1299,7 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
       var w = ev.target.closest('.esw');
       if (!w || ev.target.closest('.eswAct')) return;
       if (Date.now() - at < 350) { ev.preventDefault(); ev.stopPropagation(); return; }
-      if (w.classList.contains('open')) { ev.preventDefault(); ev.stopPropagation(); w.classList.remove('open'); eswArm(null, false); }
+      if (w.classList.contains('open') || w.classList.contains('openR')) { ev.preventDefault(); ev.stopPropagation(); w.classList.remove('open', 'openR'); eswArm(null, false); }
     }, true);
   })();
   /** 휴대폰: 손을 떼는 순간 바로 실행 (뒤따르는 click은 무시) */
@@ -2057,6 +2131,16 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
       return t;
     } catch (x) { return ''; }
   })();
+  /** 직원 대리 등록: 제목 줄 [고객용 QR] → 쓰던 내용은 두고 QR 크게 보기 (QR 접수 시간 안일 때만, 끝나면 숨김, 연장되면 다시 보임) */
+  function rfMiniSetup(e) {
+    if (!e.qrEnd) e.qrEnd = Date.now() + (Number(e.qrLeft) || 0);
+    var qSpan = $('rfQrBtn').querySelector('span');
+    RQ.items = RQ.items.filter(function (it) { return it.el !== qSpan; });
+    var qOn = !rfDirect && !!e.qrKey && RQ.ok && !!rfUrl(e.id) && e.qrEnd > Date.now();
+    $('rfQrBtn').classList.toggle('hidden', !qOn);
+    $('rfQrBtn').onclick = function () { rqOpen(e); };
+    if (qOn) rqAdd(e, qSpan, e.qrEnd);
+  }
   function openRefund(e) {
     rfEdu = e; edu = null; code = ''; person = null;
     $('rfTitle').textContent = e.title; $('rfDate').textContent = e.date || '';
@@ -2064,6 +2148,7 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
     $('rfLocBox').classList.toggle('hidden', !rfDirect);     // 위치정보는 QR로 들어온 승객만 (역 직원 대리 등록은 안 받음)
     $('rfLocText').textContent = e.form ? e.form.locConsent || '' : '';
     $('rfBack').classList.toggle('hidden', rfDirect);        // 고객용 QR은 [처음으로] 없음 (직원용은 그대로)
+    rfMiniSetup(e);
     $('rfAgree').checked = false; $('rfLocAgree').checked = false; $('rfAccOn').checked = false; rfConsentSync(); msg($('rfMsg'), ''); $('rfOk').disabled = false;
     show('sf');
     rfTimer();
@@ -2302,6 +2387,7 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
       skPdfBusy = false; $('skPdfAll').disabled = false;
       if (r.pdf) saveFile(r.base + '.pdf', b64Blob(r.pdf, 'application/pdf'));
       else r.pdfs.forEach(function (b64, i) { setTimeout(function () { saveFile(r.base + '_' + (r.names[i] || i + 1) + '.pdf', b64Blob(b64, 'application/pdf')); }, i * 700); });
+      if (r.dl) { sk.pdfDl = sk.pdfDl || {}; sk.pdfDl[st || '*'] = r.dl; skGrid(); }   // PDF 받음 ✓ (서버에 남음)
       msg($('skMsg'), 'PDF를 저장했습니다 (' + r.names.length + '개 역). 컴퓨터·휴대폰 다운로드 폴더를 확인하세요.', '#12833b');
     }).withFailureHandler(function (e) {
       skPdfBusy = false; $('skPdfAll').disabled = false; msg($('skMsg'), errText(e), '#c0392b');
@@ -2325,13 +2411,20 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
       };
       cell.appendChild(b);
       if (x.lead) {                                   // 점검자·팀장 서명이 끝난 역: PDF
-        var p = document.createElement('button'); p.type = 'button'; p.className = 'skPdfS'; p.textContent = '📄 PDF';
+        var got = (sk.pdfDl || {})[x.st];             // 받은 역: ✓ + 누가·언제
+        var p = document.createElement('button'); p.type = 'button'; p.className = 'skPdfS' + (got ? ' got' : ''); p.textContent = got ? '📄 PDF ✓' : '📄 PDF';
         p.onclick = function () { skPdfGet(x.st); };
         cell.appendChild(p);
+        if (got) { var gd = document.createElement('div'); gd.className = 'pdfDl'; gd.style.textAlign = 'center'; gd.textContent = (got.n || '') + ' ' + (got.at || ''); cell.appendChild(gd); }
       }
       g.appendChild(cell);
     });
     $('skPdfAll').classList.toggle('hidden', !sk.stations.some(function (x) { return x.lead; }));
+    var all = (sk.pdfDl || {})['*'];                  // 전체 PDF 받음 ✓ (역별 ✓와 따로)
+    $('skPdfAll').textContent = all ? '전체 PDF ✓' : '전체 PDF';
+    $('skPdfAll').title = all ? '받음: ' + (all.n || '') + ' ' + (all.at || '') : '';
+    $('skPdfAllDl').textContent = all ? '✓ 전체 PDF 받음 · ' + (all.n || '') + ' ' + (all.at || '') : '';
+    $('skPdfAllDl').classList.toggle('hidden', !all || $('skPdfAll').classList.contains('hidden'));
     skLeadBox();
   }
   /* 팀장: 진행 상황 · 일괄 서명 (모든 역 점검자 서명이 끝나야 켜짐, 팀장 확인 전인 역에만 들어감) */
@@ -2917,7 +3010,6 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
   function tickRfLeft() { [].forEach.call(document.querySelectorAll('.rfLeft'), setRfLeft); }
   function setRfLeft(el) {
     var ms = Number(el.getAttribute('data-end')) - Date.now();
-    if (el.rfBtn) el.rfBtn.classList.toggle('hidden', ms > 0);   // 관리자 카드: QR 접수가 끝나면 다시 열기 버튼
     if (ms <= 0) { el.textContent = 'QR 접수 마감 · 직원 등록 가능'; el.classList.remove('soon'); el.classList.add('over'); return; }
     var m = Math.ceil(ms / 60000), h = Math.floor(m / 60); m = m % 60;
     el.textContent = 'QR 접수 남은 시간 ' + (h ? h + '시간 ' : '') + m + '분';
@@ -3120,22 +3212,7 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
     if (e.refund && e.open) {                        // 고객용 QR 접수 남은 시간 (줄어들며 표시, 끝나면 'QR 접수 마감 · 직원 등록 가능')
       var left = document.createElement('span'); left.className = 'rfLeft';
       left.setAttribute('data-end', String(Date.now() + (Number(e.autoCloseLeft) || 0))); left.title = (e.autoClose ? e.autoClose + ' QR 접수 마감 · ' : '') + 'QR 접수 ' + (e.qrMin || '') + '분';
-      q('.cnt').appendChild(document.createElement('br')); q('.cnt').appendChild(left);
-      // QR 접수 시간이 끝나면 [QR 접수 다시 열기] (두 번 눌러 실행): 다시 N분, 예전 QR은 못 씀
-      var rb = document.createElement('button'); rb.type = 'button'; rb.className = 'rfReset hidden'; rb.textContent = 'QR 접수 다시 열기 (' + (e.qrMin || '') + '분)';
-      rb.style.cssText = 'display:block;width:100%;margin-top:8px;height:40px;border:1px solid var(--pri);border-radius:10px;background:#fff;color:var(--pri);font-size:14px;font-weight:700;font-family:inherit';
-      var rbT = null;
-      rb.onclick = function (ev) {
-        ev.stopPropagation();
-        if (!rb.classList.contains('armed')) {
-          rb.classList.add('armed'); rb.textContent = '한 번 더 누르면 다시 엽니다'; rb.style.background = 'var(--pri)'; rb.style.color = '#fff';
-          clearTimeout(rbT); rbT = setTimeout(function () { rb.classList.remove('armed'); rb.textContent = 'QR 접수 다시 열기 (' + (e.qrMin || '') + '분)'; rb.style.background = '#fff'; rb.style.color = 'var(--pri)'; }, 4000);
-          return;
-        }
-        clearTimeout(rbT); rb.disabled = true;
-        admCall('adminRfQrReset', [e.id], function (d) { renderAdmin(d); }, q('.m'), function () { rb.disabled = false; });
-      };
-      left.rfBtn = rb; q('.cnt').appendChild(rb); setRfLeft(left);
+      q('.cnt').appendChild(document.createElement('br')); q('.cnt').appendChild(left); setRfLeft(left);
     }
     if (e.error) { var m0 = q('.m'); msg(m0, e.error, '#c0392b'); }
 
