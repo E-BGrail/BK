@@ -178,7 +178,7 @@
   .person.closed { background:#f3f4f6; color:#9aa3af; border-color:var(--line); }
   .person .cnt1 { display:block; font-size:13px; color:var(--pri); font-weight:700; margin-top:2px; }
   .person.closed .cnt1 { color:#9aa3af; }
-  .person.closed .badge { color:#b42318; }
+  .person.closed .badge { color:#b42318; } .person.armed .badge { color:#fff; background:var(--pri); border-radius:8px; padding:4px 8px; }
   .ecard { border:1px solid var(--line); border-radius:12px; padding:12px; margin-top:10px; }
   .ecard .t { font-weight:700; font-size:16px; }
   .ecard .head { cursor:pointer; position:relative; padding-right:34px; }
@@ -273,7 +273,7 @@
   .tprev table { border-collapse:collapse; background:#fff; font-size:10px; flex:1; min-width:0; table-layout:fixed; }
   .tprev th, .tprev td { border:1px solid #c8cfdd; padding:2px 3px; text-align:center; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; height:15px; }
   .tprev th { background:#e9edf7; color:#33405a; font-weight:700; }
-  .tprev table.skPrev td { white-space:normal; height:auto; } .tprev table.skPrev td.l { text-align:left; }   /* 안전점검 항목은 줄바꿈 */
+  .tprev table.skPrev td { white-space:normal; height:auto; } .tprev table.skPrev td.l { text-align:left; } .tprev table.skPrev td.more { font-size:10px; padding:3px; }   /* 안전점검 항목은 줄바꿈 */
   .tprev th.k-role { background:#ffe7d4; color:#b54708; }
   .tprev th.k-sign { background:#dfe6fb; color:var(--pri2); }
   .tprev td.more { color:var(--sub); font-size:9px; height:11px; padding:0; }
@@ -1086,7 +1086,15 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
       b.querySelector('.cnt1').textContent = '서명 완료 ' + (e.count || 0) + '명';
       var pdfOk = closed && !!(staff && staff.token && !staff.guest);   // 마감된 서명지: 직원은 눌러서 PDF (서명은 불가)
       b.querySelector('.badge').textContent = pdfOk ? '📄 PDF' : closed ? '접수 마감' : '선택';
-      if (pdfOk) b.onclick = function () { eduPdfGet(e); };
+      if (pdfOk) b.onclick = function () {            // 실수로 눌러도 PDF를 만들지 않게 두 번 눌러 받기
+        var bd = b.querySelector('.badge');
+        if (!b.classList.contains('armed')) {
+          b.classList.add('armed'); bd.textContent = '한 번 더 누르면 PDF';
+          setTimeout(function () { b.classList.remove('armed'); bd.textContent = '📄 PDF'; }, 4000);
+          return;
+        }
+        b.classList.remove('armed'); bd.textContent = '📄 PDF'; eduPdfGet(e);
+      };
       else if (closed) b.disabled = true;
       else b.onclick = function () { openCode(e); };   // 누르면 접속 코드 창
       put(e, b);
@@ -1518,7 +1526,7 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
   function staffExpire() {
     if (!staff || !staff.exp || Date.now() < staff.exp || signingNow()) return;
     if (typeof DIALOG !== 'undefined' && DIALOG) return;   // 시트 메뉴 창은 관리자 표시로만
-    admTok = null; landOff();
+    landOff();
     if (!$('skView').classList.contains('hidden')) { $('skView').classList.add('hidden'); document.body.classList.remove('skLock'); }
     ['qrOver', 'regOver'].forEach(function (id) { $(id).classList.add('hidden'); });
     logout('로그인 2시간이 지나 자동으로 로그아웃되었습니다. 사번과 개인 코드를 다시 입력하세요.');
@@ -1536,6 +1544,7 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
   }
   function logout(text) {
     if (staff && staff.token) google.script.run.staffLogout(staff.token);
+    if (admTok && !(typeof DIALOG !== 'undefined' && DIALOG)) { google.script.run.adminLogout(admTok); admTok = null; }   // 관리자 접속 표시도 서버에서 지움
     setStaff(null); edus = []; renderEdus(); resetAll();
     $('lgPin').value = savedPin(); $('lgCode').value = '';
     if (text) msg($('lgMsg'), text, '#c0392b');
