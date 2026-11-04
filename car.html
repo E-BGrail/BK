@@ -11,6 +11,7 @@
   :root { --bg:#eef1f7; --card:#fff; --text:#1b2333; --sub:#667085; --pri:#324eb3; --pri2:#22378a; --gray:#9fa9aa; --ok:#12833b; --line:#d8dde8; --warn:#9a5b00; }
   * { box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
   html, body { margin:0; height:100%; }
+  html { touch-action:manipulation; }   /* 휴대폰: 두 번 탭 확대 제스처 끔 */
   body { font-family:-apple-system,"Noto Sans KR","Malgun Gothic",sans-serif; background:var(--bg); color:var(--text); }
   .hidden { display:none !important; }
   button { font-family:inherit; }
@@ -625,6 +626,7 @@ function swEnd() {
 }
 $('carList2').addEventListener('pointerup', swEnd);
 $('carList2').addEventListener('pointercancel', swEnd);
+$('carList2').addEventListener('touchmove', function (e) { if (SW && SW.on) e.preventDefault(); }, { passive: false });   // 옆으로 미는 중에는 페이지 스크롤 막음
 $('carList2').addEventListener('click', function (e) {
   var c = e.target.closest('.carSw');
   if (Date.now() - swAt < 350 || (c && c.classList.contains('open') && !e.target.closest('.carDel'))) {
