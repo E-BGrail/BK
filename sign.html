@@ -761,8 +761,7 @@
           <div class="row"><button class="btn gray" id="skLeadView" type="button">역별 내용 보기</button><button class="btn pri" id="skLeadSign" type="button">일괄 서명</button></div>
           <div class="row hidden" id="skLeadCRow"><button class="btn del" id="skLeadCancel" type="button">일괄 서명 취소</button></div>
         </div>
-        <div class="row"><button class="btn gray" id="skHome" type="button">서명지 목록</button><button class="btn pri hidden" id="skPdfAll" type="button">전체 PDF</button></div>
-        <div class="pdfDl hidden" id="skPdfAllDl" style="text-align:right;margin-top:4px"></div>
+        <div class="row"><button class="btn gray" id="skHome" type="button">서명지 목록</button></div>
       </div>
       <div id="skForm" class="hidden">
         <div class="who" id="skStName" style="margin-top:10px;color:var(--pri)"></div>
@@ -2378,22 +2377,21 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
     if (s === 'sig') { msg($('skMsg'), ''); $('skSigEdu').textContent = [sk.title, sk.date].filter(Boolean).join(' · '); setTimeout(function () { skPad.setup(); }, 30); }   // 서명 칸 높이는 skPad.fit이 맞춤
     window.scrollTo(0, 0); saveState();
   }
-  /* ---------- PDF 출력: 팀장 확인이 끝난 역 (마감된 서명지도 받을 수 있음) ---------- */
+  /* ---------- PDF 출력: 팀장 확인이 끝난 역별 (마감된 서명지도 받을 수 있음, 전체 PDF는 없음) ---------- */
   var skPdfBusy = false;
   function skPdfGet(st) {
     if (skPdfBusy) return;
-    skPdfBusy = true; $('skPdfAll').disabled = true; msg($('skMsg'), 'PDF 만드는 중… (10초 이상 걸릴 수 있습니다)', '#6b7686');
+    skPdfBusy = true; msg($('skMsg'), 'PDF 만드는 중… (10초 이상 걸릴 수 있습니다)', '#6b7686');
     google.script.run.withSuccessHandler(function (r) {
-      skPdfBusy = false; $('skPdfAll').disabled = false;
+      skPdfBusy = false;
       if (r.pdf) saveFile(r.base + '.pdf', b64Blob(r.pdf, 'application/pdf'));
       else r.pdfs.forEach(function (b64, i) { setTimeout(function () { saveFile(r.base + '_' + (r.names[i] || i + 1) + '.pdf', b64Blob(b64, 'application/pdf')); }, i * 700); });
-      if (r.dl) { sk.pdfDl = sk.pdfDl || {}; sk.pdfDl[st || '*'] = r.dl; skGrid(); }   // PDF 받음 ✓ (서버에 남음)
-      msg($('skMsg'), 'PDF를 저장했습니다 (' + r.names.length + '개 역). 컴퓨터·휴대폰 다운로드 폴더를 확인하세요.', '#12833b');
+      if (r.dl) { sk.pdfDl = sk.pdfDl || {}; sk.pdfDl[st] = r.dl; skGrid(); }   // PDF 받음 ✓ (서버에 남음)
+      msg($('skMsg'), st + ' PDF를 저장했습니다. 컴퓨터·휴대폰 다운로드 폴더를 확인하세요.', '#12833b');
     }).withFailureHandler(function (e) {
-      skPdfBusy = false; $('skPdfAll').disabled = false; msg($('skMsg'), errText(e), '#c0392b');
-    }).safetyPdf(staff && staff.token || '', sk.id, st || '');
+      skPdfBusy = false; msg($('skMsg'), errText(e), '#c0392b');
+    }).safetyPdf(staff && staff.token || '', sk.id, st);
   }
-  $('skPdfAll').onclick = function () { skPdfGet(''); };
   function skGrid() {
     var g = $('skGrid'); g.innerHTML = '';
     sk.stations.forEach(function (x) {
@@ -2419,12 +2417,6 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
       }
       g.appendChild(cell);
     });
-    $('skPdfAll').classList.toggle('hidden', !sk.stations.some(function (x) { return x.lead; }));
-    var all = (sk.pdfDl || {})['*'];                  // 전체 PDF 받음 ✓ (역별 ✓와 따로)
-    $('skPdfAll').textContent = all ? '전체 PDF ✓' : '전체 PDF';
-    $('skPdfAll').title = all ? '받음: ' + (all.n || '') + ' ' + (all.at || '') : '';
-    $('skPdfAllDl').textContent = all ? '✓ 전체 PDF 받음 · ' + (all.n || '') + ' ' + (all.at || '') : '';
-    $('skPdfAllDl').classList.toggle('hidden', !all || $('skPdfAll').classList.contains('hidden'));
     skLeadBox();
   }
   /* 팀장: 진행 상황 · 일괄 서명 (모든 역 점검자 서명이 끝나야 켜짐, 팀장 확인 전인 역에만 들어감) */
