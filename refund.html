@@ -1176,8 +1176,12 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
     el.addEventListener('pointerup', function (e) { if (e.pointerType !== 'mouse') { e.preventDefault(); t = Date.now(); fn(); } });
     el.addEventListener('click', function () { if (Date.now() - t > 600) fn(); });
   }
-  fastTap($('edTabOpen'), function () { edTab = 'open'; renderEdus(); saveState(); });
-  fastTap($('edTabClosed'), function () { edTab = 'closed'; renderEdus(); saveState(); });
+  var edTabAt = 0;                       // 탭을 바꾼 시각: 그 직후 0.5초는 목록 카드 누르기·밀기 무시 (탭 터치가 새로 그린 카드로 들어가지 않게)
+  fastTap($('edTabOpen'), function () { edTabAt = Date.now(); edTab = 'open'; renderEdus(); saveState(); });
+  fastTap($('edTabClosed'), function () { edTabAt = Date.now(); edTab = 'closed'; renderEdus(); saveState(); });
+  ['pointerdown', 'click'].forEach(function (t) {
+    $('edus').addEventListener(t, function (e) { if (Date.now() - edTabAt < 500) { e.preventDefault(); e.stopPropagation(); } }, true);
+  });
   /* ---------- 첫 화면 QR (이 웹 앱 주소, 접속 코드는 넣지 않음) ---------- */
   /* 작은 QR 코드 생성기 (바이트 모드, 오류정정 M, 버전 1~10 = 영문 최대 213자). 외부 라이브러리 없이 동작 */
   function makeQR(text) {
