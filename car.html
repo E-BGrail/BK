@@ -19,7 +19,9 @@
   /* ---------- 카메라 화면 ---------- */
   #cam { position:fixed; inset:0; display:flex; flex-direction:column; background:#111318; color:#fff; }
   .camTop { display:flex; align-items:center; justify-content:space-between; gap:8px; padding:calc(10px + env(safe-area-inset-top)) 16px 10px; }
-  .camTop b { font-size:17px; }
+  .camTop b { font-size:17px; flex:1; min-width:0; }
+  .dnBtn { flex:none; height:34px; padding:0 12px; border-radius:17px; border:1.5px solid rgba(255,255,255,.5); background:rgba(255,255,255,.14); color:#fff; font-size:14px; font-weight:800; font-family:inherit; }
+  .dnBtn.night { background:#1e2a5a; border-color:#8ea2ff; color:#dfe5ff; }
   .round { width:44px; height:44px; border-radius:50%; border:0; background:rgba(255,255,255,.14); color:#fff; display:flex; align-items:center; justify-content:center; }
   .round.on { background:#ffd34d; color:#1b2333; }
   .view { position:relative; flex:1; overflow:hidden; min-height:0; }
@@ -220,6 +222,7 @@
 <section id="cam" class="hidden">
   <div class="camTop">
     <b id="camTitle">운행 시작 · 탑승 km</b>
+    <button class="dnBtn" id="dayNight" type="button" aria-label="주간·야간 모드 바꾸기">주간</button>
     <button class="round hidden" id="torch" type="button" aria-label="플래시 켜기">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 2 4 14h7l-1 8 9-12h-7z"/></svg>
     </button>
@@ -815,7 +818,7 @@ function showPick() {
 
 /* ===================== 카메라 ===================== */
 var CAM = { stream: null, track: null, caps: null, hwZoom: 1, dz: 1, zoom: 3, torch: false, on: false };
-var OCR = { worker: null, ready: false, failed: false, loading: false, busy: false, last: null, hits: 0, timer: null };
+var OCR = { workers: null, k: 0, n: 0, ready: false, failed: false, loading: false, busy: false, last: null, hits: 0, timer: null };
 
 function shRows(rows) { $('shRows').innerHTML = rows.map(function (r) { return '<div class="kv"><span>' + esc(r[0]) + '</span><b>' + esc(r[1]) + '</b></div>'; }).join(''); }
 function openCam() {
@@ -899,20 +902,52 @@ $('torch').addEventListener('click', function () {
   CAM.torch = !CAM.torch;
   CAM.track.applyConstraints({ advanced: [{ torch: CAM.torch }] }).catch(function () {});
   this.classList.toggle('on', CAM.torch); this.setAttribute('aria-label', CAM.torch ? '플래시 끄기' : '플래시 켜기');
+  if (CAM.torch) setOcrState('계기판은 플래시 없이 찍어야 잘 읽혀요 (유리에 반사)');
 });
 
-/* ---------- 밝기(노출): 처음 1단계 어둡게 시작 → 박스 안 밝기에 맞춰 자동 조절 (−/＋를 누르면 수동) ---------- */
-var EXP = { ok: false, min: 0, max: 0, step: 0.1, v: 0, auto: true, timer: null };
-function initExposure() {
-  var c = CAM.caps && CAM.caps.exposureCompensation;
-  EXP.ok = !!(c && c.max > c.min);
-  $('expRow').classList.toggle('hidden', !EXP.ok);
+/* ---------- 주간·야간 모드: 저녁 7시~아침 7시는 야간 (카메라 위 버튼으로 바꿀 수 있음, 이 탭에서만 기억) ----------
+ * 야간: 계기판 숫자가 스스로 빛나서 하얗게 번짐 → 노출을 크게 낮추고(셔터 속도·감도도 지원하면), 사진 처리에서 번짐을 깎음 */
+var NIGHT = (function () {
+  try { var v = sessionStorage.getItem('bglCarNight'); if (v === '1' || v === '0') return v === '1'; } catch (e) {}
+  var h = new Date().getHours(); return h >= 19 || h < 7;
+})();
+function dnDraw() { var b = $('dayNight'); b.textContent = NIGHT ? '야간' : '주간'; b.classList.toggle('night', NIGHT); }
+dnDraw();
+$('dayNight').addEventListener('click', function () {
+  NIGHT = !NIGHT; dnDraw();
+  try { sessionStorage.setItem('bglCarNight', NIGHT ? '1' : '0'); } catch (e) {}
+  if (CAM.on) initExposure();
+  setOcrState(NIGHT ? '야간 모드 · 숫자가 또렷하게 보이도록 어둡게 찍습니다' : '주간 모드');
+});
 
-  if (!EXP.ok) return;
-  EXP.min = c.min; EXP.max = c.max; EXP.step = c.step || 0.1;
-  setExposure(Math.max(EXP.min, -1));              // 처음부터 1단계 어둡게 (계기판은 자체 발광)
+/* ---------- 밝기(노출): 처음 어둡게 시작 → 박스 안 밝기에 맞춰 자동 조절 (−/＋를 누르면 수동) ---------- */
+var EXP = { ok: false, min: 0, max: 0, step: 0.1, v: 0, auto: true, timer: null, t: null };   // t: 야간 셔터 속도 직접 조절 { min, max, v }
+function initExposure() {
+  var c = CAM.caps && CAM.caps.exposureCompensation, et = CAM.caps && CAM.caps.exposureTime, modes = (CAM.caps && CAM.caps.exposureMode) || [];
+  EXP.ok = !!(c && c.max > c.min);
+  EXP.t = null;
+  if (NIGHT && et && et.max > et.min && modes.indexOf('manual') > -1) {          // 셔터 속도를 직접 정할 수 있는 휴대폰: 지금 값의 절반에서 시작
+    var cur = 0; try { cur = Number(CAM.track.getSettings().exposureTime) || 0; } catch (e) {}
+    EXP.t = { min: et.min, max: et.max, v: Math.max(et.min, Math.min(et.max, (cur || (et.min + et.max) / 8) * 0.5)) };
+  }
+  $('expRow').classList.toggle('hidden', !EXP.ok && !EXP.t);
+  if (EXP.ok) { EXP.min = c.min; EXP.max = c.max; EXP.step = c.step || 0.1; }
   EXP.auto = true; $('expAuto').textContent = ' 자동';
-  expLoop();
+  if (EXP.t) setExpTime(EXP.t.v);
+  else {
+    if (modes.indexOf('continuous') > -1) { try { CAM.track.applyConstraints({ advanced: [{ exposureMode: 'continuous' }] }).catch(function () {}); } catch (e) {} }
+    if (EXP.ok) setExposure(Math.max(EXP.min, NIGHT ? -2 : -1));                  // 주간 1단계, 야간 2단계 어둡게 시작 (계기판은 자체 발광)
+  }
+  if (EXP.ok || EXP.t) expLoop();
+}
+/** 야간: 셔터 속도(노출 시간) 직접, 감도는 가장 낮게 */
+function setExpTime(v) {
+  var t = EXP.t; if (!t) return;
+  t.v = Math.max(t.min, Math.min(t.max, v));
+  var k = { exposureMode: 'manual', exposureTime: t.v }, iso = CAM.caps && CAM.caps.iso;
+  if (iso && iso.min) k.iso = iso.min;
+  try { CAM.track.applyConstraints({ advanced: [k] }).catch(function () {}); } catch (e) {}
+  $('expVal').textContent = '셔터';
 }
 /** 박스 안에서 밝은 쪽(상위 5%)의 밝기 0~255: 계기판 숫자가 하얗게 날아갔는지, 너무 어두운지 봄 */
 function brightTop(c) {
@@ -924,19 +959,24 @@ function brightTop(c) {
 /** 1초마다 박스 안 밝기를 보고 한 단계씩 보정 (사이에 있으면 그대로) */
 function expLoop() {
   clearTimeout(EXP.timer);
-  if (!CAM.on || !EXP.ok || !EXP.auto) return;
+  if (!CAM.on || (!EXP.ok && !EXP.t) || !EXP.auto) return;
   EXP.timer = setTimeout(function () {
     var c = null;
     try { c = cropGuide(160); } catch (e) {}
     if (c && CAM.on && EXP.auto) {
-      var b = brightTop(c), d = Math.max(EXP.step, 0.3);
-      if (b > 225 && EXP.v > EXP.min) setExposure(EXP.v - d);
-      else if (b < 150 && EXP.v < EXP.max) setExposure(EXP.v + d);
+      // 밝은 쪽(숫자) 목표: 주간 150~225, 야간 110~190 (야간은 숫자가 하얗게 날지 않게 낮게)
+      var b = brightTop(c), d = Math.max(EXP.step, 0.3), hi = NIGHT ? 190 : 225, lo = NIGHT ? 110 : 150;
+      if (EXP.t) { if (b > hi) setExpTime(EXP.t.v * 0.7); else if (b < lo) setExpTime(EXP.t.v * 1.4); }
+      else if (b > hi && EXP.v > EXP.min) setExposure(EXP.v - d);
+      else if (b < lo && EXP.v < EXP.max) setExposure(EXP.v + d);
     }
     expLoop();
   }, 1000);
 }
-function expManual(d) { EXP.auto = false; clearTimeout(EXP.timer); $('expAuto').textContent = ' 수동'; setExposure(EXP.v + d); }
+function expManual(d) {
+  EXP.auto = false; clearTimeout(EXP.timer); $('expAuto').textContent = ' 수동';
+  if (EXP.t) setExpTime(EXP.t.v * (d > 0 ? 1.4 : 0.7)); else setExposure(EXP.v + d);
+}
 function setExposure(v) {
   v = Math.max(EXP.min, Math.min(EXP.max, Math.round(v / EXP.step) * EXP.step));
   EXP.v = v;
@@ -983,27 +1023,37 @@ function toJpeg(c, maxW) {
 }
 
 /** 촬영: 박스 영역을 흑백으로 저장하고 확인 화면으로 (숫자는 사진을 보고 숫자 패드로 입력) */
-/* ===================== 숫자 자동 인식 (Tesseract.js, 폰 안에서 무료) ===================== */
+/* ===================== 숫자 자동 인식 (Tesseract.js, 폰 안에서 무료) =====================
+ * 디지털(7세그먼트·LCD) 숫자 모델과 영문 모델을 함께 띄워 화면마다 번갈아 읽음 (둘 중 먼저 준비된 것부터)
+ * 디지털 숫자 모델: github.com/Shreeshrii/tessdata_ssd 의 ssd_int (1.4MB) */
+var OCR_SSD = 'https://cdn.jsdelivr.net/gh/Shreeshrii/tessdata_ssd@master';
 function loadOcr() {
-  if (OCR.worker || OCR.failed || OCR.loading) return;
-  OCR.loading = true;
-  var to = setTimeout(function () { if (!OCR.ready) ocrFail(); }, 25000);
+  if (OCR.workers || OCR.failed || OCR.loading) return;
+  OCR.loading = true; OCR.workers = []; OCR.k = 0;
+  var to = setTimeout(function () { if (!OCR.ready) ocrFail(); }, 25000), left = 2;
+  var add = function (lang, opt) {
+    return Tesseract.createWorker(lang, 1, opt).then(function (w) {
+      return w.setParameters({ tessedit_char_whitelist: '0123456789', tessedit_pageseg_mode: '7' }).then(function () {
+        OCR.workers.push({ w: w, lang: lang });
+        if (!OCR.ready) { clearTimeout(to); OCR.ready = true; if (CAM.on) setOcrState('박스 안 숫자를 읽는 중 · 가운데 버튼으로 바로 촬영 가능'); }
+      });
+    }).catch(function () {}).then(function () { if (--left === 0 && !OCR.ready) { clearTimeout(to); ocrFail(); } });
+  };
   var sc = document.createElement('script');
   sc.src = 'https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js';
-  sc.onload = function () {
-    Tesseract.createWorker('eng', 1, {}).then(function (w) {
-      OCR.worker = w;
-      return w.setParameters({ tessedit_char_whitelist: '0123456789', tessedit_pageseg_mode: '7' });
-    }).then(function () { clearTimeout(to); OCR.ready = true; if (CAM.on) setOcrState('박스 안 숫자를 읽는 중 · 가운데 버튼으로 바로 촬영 가능'); })
-      .catch(function () { clearTimeout(to); ocrFail(); });
-  };
+  sc.onload = function () { add('ssd_int', { langPath: OCR_SSD, gzip: false }); add('eng', {}); };
   sc.onerror = function () { clearTimeout(to); ocrFail(); };
   document.head.appendChild(sc);
 }
+/** 다음에 쓸 인식기 (번갈아) */
+function ocrWorker() { var a = OCR.workers || []; return a.length ? a[(OCR.k++) % a.length] : null; }
 function ocrFail() { OCR.failed = true; setOcrState('자동 인식을 쓸 수 없어요 · 가운데 버튼으로 촬영하세요'); }
 function setOcrState(t) { $('ocrState').textContent = t; }
 /** 인식용 전처리: 이진화(오츠) → 글자 검정·배경 흰색, 여백 */
-function prepOcr(c) {
+/** 인식용 흑백: 자동 기준(Otsu)에서 숫자 쪽으로 기준을 옮겨 번짐을 잘라 내고, 디지털 숫자 모델은 끊어진 획을 두껍게 이어 붙임
+ *  (가짜 야간 사진 시험: 디지털 숫자는 기준 0.3~0.55 + 글자 높이의 1/50 두께 잇기, 일반 글꼴은 기준 0.55 + 1칸이 가장 잘 읽힘)
+ *  v: 강도 0·1 (화면마다 번갈아), seg: 디지털(7세그먼트) 숫자 모델용 */
+function prepOcr(c, v, seg) {
   var x = c.getContext('2d'), d = x.getImageData(0, 0, c.width, c.height), p = d.data, hist = new Array(256).fill(0), n = p.length / 4, sum = 0, i;
   for (i = 0; i < p.length; i += 4) { hist[p[i] | 0]++; sum += p[i]; }
   var sumB = 0, wB = 0, best = 0, thr = 127;
@@ -1015,7 +1065,25 @@ function prepOcr(c) {
   var dark = 0;
   for (i = 0; i < p.length; i += 4) if (p[i] <= thr) dark++;
   var inv = dark > n / 2;
-  for (i = 0; i < p.length; i += 4) { var on = p[i] > thr, v = inv ? (on ? 0 : 255) : (on ? 255 : 0); p[i] = p[i + 1] = p[i + 2] = v; }
+  // 기준을 숫자 쪽으로: 밝은 숫자(어두운 바탕)면 더 밝은 쪽, 어두운 숫자면 더 어두운 쪽 (번짐은 숫자보다 흐림). 야간은 더 세게
+  var f = NIGHT ? (v ? 0.55 : 0.3) : (v ? 0.3 : 0);
+  if (f) {
+    if (inv) { var top = 255; while (top > thr && !hist[top]) top--; thr = Math.round(thr + (top - thr) * f); }
+    else { var bot = 0; while (bot < thr && !hist[bot]) bot++; thr = Math.round(thr - (thr - bot) * f); }
+  }
+  var W = c.width, H = c.height, ink = new Uint8Array(n);
+  for (i = 0; i < n; i++) { var on = p[i * 4] > thr; ink[i] = inv ? (on ? 1 : 0) : (on ? 0 : 1); }   // 1 = 글자
+  // 획 잇기(두껍게): 디지털 숫자 모델은 글자 높이의 약 1/50만큼, 영문 모델은 야간만 1칸
+  var grows = seg ? Math.max(1, Math.round(H / 50)) : NIGHT ? 1 : 0;
+  for (var gi = 0; gi < grows; gi++) {
+    var grow = new Uint8Array(n);
+    for (var yy = 0; yy < H; yy++) for (var xx = 0; xx < W; xx++) {
+      var k = yy * W + xx;
+      grow[k] = ink[k] || (xx > 0 && ink[k - 1]) || (xx < W - 1 && ink[k + 1]) || (yy > 0 && ink[k - W]) || (yy < H - 1 && ink[k + W]) ? 1 : 0;
+    }
+    ink = grow;
+  }
+  for (i = 0; i < n; i++) { var g = ink[i] ? 0 : 255; p[i * 4] = p[i * 4 + 1] = p[i * 4 + 2] = g; }
   x.putImageData(d, 0, 0);
   var o = document.createElement('canvas'); o.width = c.width + 40; o.height = c.height + 40;
   var ox = o.getContext('2d'); ox.fillStyle = '#fff'; ox.fillRect(0, 0, o.width, o.height); ox.drawImage(c, 20, 20);
@@ -1044,8 +1112,9 @@ function ocrLoop() {
   if (!OCR.ready || OCR.busy || !INIT.st) { OCR.timer = setTimeout(ocrLoop, 400); return; }
   var c = cropGuide(640);
   if (!c) { OCR.timer = setTimeout(ocrLoop, 300); return; }
-  OCR.busy = true;
-  OCR.worker.recognize(prepOcr(c)).then(function (r) {
+  OCR.busy = true; OCR.n = (OCR.n || 0) + 1;
+  var ow = ocrWorker();
+  ow.w.recognize(prepOcr(c, (OCR.n >> 1) & 1, ow.lang !== 'eng')).then(function (r) {
     OCR.busy = false;
     if (!CAM.on) return;
     var v = pickKm(r && r.data && r.data.text);
@@ -1053,7 +1122,8 @@ function ocrLoop() {
     else {
       OCR.hits = v === OCR.last ? OCR.hits + 1 : 1; OCR.last = v;
       $('live').textContent = fmt(v); placeLive();
-      if (OCR.hits >= 2) { $('guide').classList.add('hit'); setOcrState('인식 완료 · 자동 촬영'); return capture(v); }
+      var ex = expectKm(), near = ex != null && v - ex <= 300;   // 이전 km에서 300km 안이면 한 번에, 아니면 같은 값 두 번
+      if (OCR.hits >= (near ? 1 : 2)) { $('guide').classList.add('hit'); setOcrState('인식 완료 · 자동 촬영'); return capture(v); }
     }
     OCR.timer = setTimeout(ocrLoop, 250);
   }).catch(function () { OCR.busy = false; OCR.timer = setTimeout(ocrLoop, 800); });
@@ -1067,9 +1137,14 @@ function ocrOnce(c, cb) {
   if (!OCR.ready || OCR.busy || !c) return cb(null);
   var done = false, fin = function (v) { if (done) return; done = true; cb(v); };
   OCR.busy = true;
-  OCR.worker.recognize(prepOcr(c)).then(function (r) { OCR.busy = false; fin(pickKm(r && r.data && r.data.text)); })
-    .catch(function () { OCR.busy = false; fin(null); });
-  setTimeout(function () { fin(null); }, 4000);
+  var ws = OCR.workers.slice(), src = c, tryNext = function (i) {   // 사진 한 장: 인식기를 차례로 (먼저 읽힌 값)
+    if (i >= ws.length || done) { OCR.busy = false; return fin(null); }
+    var cc = document.createElement('canvas'); cc.width = src.width; cc.height = src.height; cc.getContext('2d').drawImage(src, 0, 0);
+    ws[i].w.recognize(prepOcr(cc, 0, ws[i].lang !== 'eng')).then(function (r) { var v = pickKm(r && r.data && r.data.text); if (v != null) { OCR.busy = false; fin(v); } else tryNext(i + 1); })
+      .catch(function () { tryNext(i + 1); });
+  };
+  tryNext(0);
+  setTimeout(function () { OCR.busy = false; fin(null); }, 4000);
 }
 
 /** 촬영: 박스 영역을 흑백으로 저장하고 확인 화면으로. 종료 때는 인식한 숫자를 하차 km에 미리 채움 */
