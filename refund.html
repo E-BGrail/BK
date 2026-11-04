@@ -655,7 +655,7 @@
       <div class="field" id="nDateRow"><label>날짜</label><input type="text" id="nDate" autocomplete="off"></div>
       <div class="field" id="nCodeRow"><label>접속 코드 (숫자 4자리, 서명지마다 다르게)</label><input type="text" id="nCode" placeholder="예: 1024" autocomplete="off" inputmode="numeric" maxlength="4" pattern="[0-9]*"></div>
       <div class="field hidden" id="nRfMinRow"><label>고객용 QR 접수 시간</label>
-        <div class="rfMins" id="nRfMins"><button type="button" data-m="10" class="on">10분</button><button type="button" data-m="20">20분</button><button type="button" data-m="30">30분</button><input type="tel" id="nRfMin" placeholder="직접(분)" inputmode="numeric" maxlength="3" autocomplete="off"></div>
+        <div class="rfMins" id="nRfMins"><button type="button" data-m="10" class="on">10분</button><input type="tel" id="nRfMin" placeholder="직접(분)" inputmode="numeric" maxlength="3" autocomplete="off"></div>
         <div class="note">이 시간이 지나면 고객용 QR로는 등록할 수 없고, 직원 등록은 마감할 때까지 됩니다. 다시 열면 이 시간만큼 다시 받습니다.</div></div>
       <div class="note hidden" id="nRfNote">환불 등록: 접속 코드 없이 첫 화면 맨 위에 보이고, QR로 바로 들어옵니다. 제목은 "년.월.일.(요일) 운행 장애 환불 신청"으로 자동으로 정해집니다.</div>
       <div class="row"><button class="btn pri" id="nCreate">서명지 열기</button></div>
@@ -1027,6 +1027,57 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
     var u = qrUrl.replace(/sign\.html(?=$|[?#])/, 'refund.html');
     return u ? u + (u.indexOf('?') > -1 ? '&' : '?') + 'e=' + encodeURIComponent(id) : '';
   }
+  /* ---------- 고객용 환불 QR (20초마다 바뀜) ----------
+   * 주소 ?e=건&k=시각(초).서명. 서명 = HMAC-SHA256(서버가 직원에게만 준 건별 열쇠, 시각) 앞 16자리
+   * 서버는 만든 지 30초 안의 QR만 받음. 시각은 서버 기준 (RQ.off = 서버 시각 - 이 기기 시각) */
+  var RQ = { STEP: 20, off: 0, slot: 0, items: [], keys: {}, big: null, t: null,
+    ok: !!(window.crypto && crypto.subtle && window.TextEncoder) };
+  function rqNow() { return Date.now() + RQ.off; }
+  function rqSig(key, t) {
+    var enc = new TextEncoder();
+    var kp = RQ.keys[key] || (RQ.keys[key] = crypto.subtle.importKey('raw', enc.encode(key), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']));
+    return kp.then(function (k) { return crypto.subtle.sign('HMAC', k, enc.encode(String(t))); }).then(function (b) {
+      return Array.prototype.map.call(new Uint8Array(b), function (x) { return (x < 16 ? '0' : '') + x.toString(16); }).join('').slice(0, 16);
+    });
+  }
+  function rqUrl(e, t) { return rqSig(e.qrKey, t).then(function (s) { return rfUrl(e.id) + '&k=' + t + '.' + s; }); }
+  function rqDraw(it, t) {
+    rqUrl(it.e, t).then(function (u) {
+      if (RQ.slot !== t) return;               // 그사이 다음 QR로 바뀜
+      var svg = qrSvg(u, '#1b2333'); if (svg) it.el.innerHTML = svg;
+    }).catch(function () {});
+  }
+  function rqAdd(e, el, end) { var it = { e: e, el: el, end: end }; RQ.items.push(it); if (RQ.slot) rqDraw(it, RQ.slot); setTimeout(rqStart, 0); }   // 카드가 화면에 붙은 뒤 시작
+  function rqTick() {
+    var ms = Date.now();
+    RQ.items = RQ.items.filter(function (it) {
+      if (!document.body.contains(it.el)) return false;          // 목록을 다시 그리면 예전 카드는 빠짐
+      if (ms < it.end) return true;
+      var b = it.el.closest('.rfQr'); if (b) b.remove();          // QR 접수 시간이 끝남 → QR 숨김 (직원 등록은 그대로)
+      if (RQ.big && RQ.big.e.id === it.e.id) closeQr();
+      return false;
+    });
+    var big = RQ.big && !$('qrOver').classList.contains('hidden') ? RQ.big : null;
+    if (!big) RQ.big = null;
+    if (!RQ.items.length && !big) { clearInterval(RQ.t); RQ.t = null; RQ.slot = 0; return; }
+    var now = rqNow(), t = Math.floor(now / 1000 / RQ.STEP) * RQ.STEP;
+    if (t !== RQ.slot) { RQ.slot = t; RQ.items.forEach(function (it) { rqDraw(it, t); }); if (big) rqDraw(big, t); }
+    if (big) {
+      $('qrCap').textContent = '휴대폰 카메라로 찍으면 바로 환불 등록 화면으로 이동합니다 · ' + Math.max(1, Math.ceil(t + RQ.STEP - now / 1000)) + '초 뒤 새 QR';
+      if (!document.hidden) markAct();         // 크게 보기를 띄워 둔 동안은 로그인 유지
+    }
+  }
+  function rqStart() { if (!RQ.t) RQ.t = setInterval(rqTick, 1000); rqTick(); }
+  function rqOpen(e) {                         // QR 크게 보기 (누르면 닫힘)
+    $('qrBig').innerHTML = ''; $('qrUrl').textContent = '';
+    $('qrOver').classList.add('picOnly');
+    $('qrOver').classList.remove('hidden'); popPush();
+    RQ.big = { e: e, el: $('qrBig') };
+    if (RQ.slot) rqDraw(RQ.big, RQ.slot);
+    rqStart();
+  }
+  document.addEventListener('visibilitychange', function () { if (!document.hidden && RQ.t) rqTick(); });   // 화면을 다시 켜면 바로 새 QR
+
   function rfItem(e) {
     var closed = e.open === false;
     var w = document.createElement('div'); w.className = 'rfItem' + (closed ? ' closed' : '');
@@ -1045,12 +1096,12 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
     if (closed) w.querySelector('.rfMain').disabled = true;
     else {
       w.querySelector('.rfMain').onclick = function () { openRefund(e); };
-      var url = rfUrl(e.id), svg = url ? qrSvg(url, '#1b2333') : '';
-      if (svg) {
+      if (e.qrKey && rfUrl(e.id) && RQ.ok) {         // 고객용 QR: 20초마다 바뀜 (화면이 직접 만듦)
         var qb = document.createElement('button'); qb.className = 'rfQr'; qb.type = 'button'; qb.setAttribute('aria-label', 'QR 크게 보기');
-        qb.innerHTML = '<em>고객용</em><span>' + svg + '</span><small>QR 크게</small>';
-        qb.onclick = function () { openQr(url, '휴대폰 카메라로 찍으면 바로 환불 등록 화면으로 이동합니다', true); };
+        qb.innerHTML = '<em>고객용</em><span></span><small>QR 크게</small>';
+        qb.onclick = function () { rqOpen(e); };
         w.appendChild(qb);
+        rqAdd(e, qb.querySelector('span'), Date.now() + (Number(e.qrLeft) || 0));
       }
     }
     return w;
@@ -1394,18 +1445,20 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
   /** QR 크게 보기 (누르면 닫힘) */
   function openQr(url, cap, picOnly) {   // picOnly: 링크 주소 없이 그림과 안내문만 (환불 등록 QR)
     var svg = qrSvg(url, '#1b2333'); if (!svg) return;
+    RQ.big = null;
     $('qrBig').innerHTML = svg; $('qrUrl').textContent = picOnly ? '' : url;
     $('qrCap').textContent = cap;
     $('qrOver').classList.toggle('picOnly', !!picOnly);
     $('qrOver').classList.remove('hidden'); popPush();
   }
-  function closeQr() { $('qrOver').classList.add('hidden'); popSync(); }
+  function closeQr() { $('qrOver').classList.add('hidden'); RQ.big = null; popSync(); }
   $('qrBtn').onclick = function () { openQr(qrUrl, '휴대폰 카메라로 찍으면 이 서명 화면으로 들어옵니다'); };
   $('qrOver').onclick = closeQr;
   document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !$('qrOver').classList.contains('hidden')) closeQr(); });
 
   function loadInit(r) {
     edus = (r && r.educations) || [];
+    if (r && r.now) RQ.off = Number(r.now) - Date.now();   // 서버 시각에 맞춤 (고객용 환불 QR)
     if (r && r.url) setupQr(r.url);
     if (selId && !edus.some(function (e) { return e.id === selId && e.open !== false && !e.refund; })) selId = '';
     renderEdus();
@@ -2864,6 +2917,7 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
   function tickRfLeft() { [].forEach.call(document.querySelectorAll('.rfLeft'), setRfLeft); }
   function setRfLeft(el) {
     var ms = Number(el.getAttribute('data-end')) - Date.now();
+    if (el.rfBtn) el.rfBtn.classList.toggle('hidden', ms > 0);   // 관리자 카드: QR 접수가 끝나면 다시 열기 버튼
     if (ms <= 0) { el.textContent = 'QR 접수 마감 · 직원 등록 가능'; el.classList.remove('soon'); el.classList.add('over'); return; }
     var m = Math.ceil(ms / 60000), h = Math.floor(m / 60); m = m % 60;
     el.textContent = 'QR 접수 남은 시간 ' + (h ? h + '시간 ' : '') + m + '분';
@@ -3000,7 +3054,7 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
     setTimeout(function () { $('nCreate').disabled = false; }, 20000);
   };
 
-  /* 새 환불 등록: 고객용 QR 접수 시간 [10분][20분][30분] 또는 직접 입력 */
+  /* 새 환불 등록: 고객용 QR 접수 시간 [10분] 또는 직접 입력 */
   [].forEach.call($('nRfMins').querySelectorAll('button'), function (b) {
     b.onclick = function () { [].forEach.call($('nRfMins').querySelectorAll('button'), function (x) { x.classList.toggle('on', x === b); }); $('nRfMin').value = ''; };
   });
@@ -3066,7 +3120,22 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
     if (e.refund && e.open) {                        // 고객용 QR 접수 남은 시간 (줄어들며 표시, 끝나면 'QR 접수 마감 · 직원 등록 가능')
       var left = document.createElement('span'); left.className = 'rfLeft';
       left.setAttribute('data-end', String(Date.now() + (Number(e.autoCloseLeft) || 0))); left.title = (e.autoClose ? e.autoClose + ' QR 접수 마감 · ' : '') + 'QR 접수 ' + (e.qrMin || '') + '분';
-      q('.cnt').appendChild(document.createElement('br')); q('.cnt').appendChild(left); setRfLeft(left);
+      q('.cnt').appendChild(document.createElement('br')); q('.cnt').appendChild(left);
+      // QR 접수 시간이 끝나면 [QR 접수 다시 열기] (두 번 눌러 실행): 다시 N분, 예전 QR은 못 씀
+      var rb = document.createElement('button'); rb.type = 'button'; rb.className = 'rfReset hidden'; rb.textContent = 'QR 접수 다시 열기 (' + (e.qrMin || '') + '분)';
+      rb.style.cssText = 'display:block;width:100%;margin-top:8px;height:40px;border:1px solid var(--pri);border-radius:10px;background:#fff;color:var(--pri);font-size:14px;font-weight:700;font-family:inherit';
+      var rbT = null;
+      rb.onclick = function (ev) {
+        ev.stopPropagation();
+        if (!rb.classList.contains('armed')) {
+          rb.classList.add('armed'); rb.textContent = '한 번 더 누르면 다시 엽니다'; rb.style.background = 'var(--pri)'; rb.style.color = '#fff';
+          clearTimeout(rbT); rbT = setTimeout(function () { rb.classList.remove('armed'); rb.textContent = 'QR 접수 다시 열기 (' + (e.qrMin || '') + '분)'; rb.style.background = '#fff'; rb.style.color = 'var(--pri)'; }, 4000);
+          return;
+        }
+        clearTimeout(rbT); rb.disabled = true;
+        admCall('adminRfQrReset', [e.id], function (d) { renderAdmin(d); }, q('.m'), function () { rb.disabled = false; });
+      };
+      left.rfBtn = rb; q('.cnt').appendChild(rb); setRfLeft(left);
     }
     if (e.error) { var m0 = q('.m'); msg(m0, e.error, '#c0392b'); }
 
@@ -3244,7 +3313,7 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
   } else {
     var DIRECT = typeof INIT !== 'undefined' && INIT && INIT.direct;     // 환불 등록 QR(주소?e=…)로 들어온 경우
     var NOQR = typeof INIT !== 'undefined' && INIT && INIT.noQr;         // 환불 주소에 건 번호가 없는 경우
-    var enterNew = DIRECT && INIT.enter || '', enterLeft = DIRECT && INIT.enterLeft || 0, initErr = DIRECT && INIT.error || '';
+    var enterNew = DIRECT && INIT.enter || '', enterLeft = DIRECT && INIT.enterLeft || 0, initErr = DIRECT && INIT.error || '', qrOld = DIRECT && INIT.qrOld;
     if (typeof INIT !== 'undefined' && INIT) { loadInit(INIT); INIT = null; }
     if (NOQR) showNotice('QR을 찍어 들어오세요', '환불 등록은 현장에 있는 QR을 휴대폰 카메라로 찍어야 할 수 있습니다.');
     else if (!DIRECT) restoreState();
@@ -3255,6 +3324,7 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
         var de = edus.filter(function (x) { return x.id === DIRECT && x.refund; })[0];
         if (de && de.open !== false) { rfDirect = true; rfEnter = enterNew; rfEnd = Date.now() + enterLeft; openRefund(de); }
         else if (initErr) showNotice('불러오지 못했습니다', initErr);
+        else if (qrOld) showNotice('QR을 다시 찍어 주세요', '환불 등록 QR은 20초마다 바뀝니다. 역 직원 휴대폰 화면의 QR을 지금 다시 찍어 주세요.');
         else showNotice('환불 등록이 마감되었습니다', de ? de.title : '이 QR로는 더 이상 등록할 수 없습니다. 역 직원에게 문의해 주세요.');
       }
     }
@@ -3269,12 +3339,13 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
   var base = { url: SIGN_HOME, carPage: SIGN_HOME.replace(/[^\/]*$/, '') + 'car.html', educations: [] };   // QR은 이 화면 주소로, 업무차량관리는 같은 저장소의 car.html
   var onRefund = /refund\.html$/.test(location.pathname);               // 환불 등록 QR은 refund.html, e-싸인은 sign.html
   if (e && !onRefund) { location.replace('refund.html' + location.search); return; }
+  var k = String(q.get('k') || '').replace(/[^\w.]/g, '').slice(0, 40), re = '';   // k: 20초마다 바뀌는 QR의 시각·서명
   if (onRefund) {
     // 주소창에서 환불 건 번호를 지움: 주소를 복사해 보내도 QR 없이는 못 들어옴. 이 탭에서 새로고침하면 입력 시간 안(또는 완료 화면)일 때만 이어서
     if (e) { try { history.replaceState(null, '', location.pathname); } catch (x) {} }
     else {
       var kept = null; try { kept = JSON.parse(sessionStorage.getItem('bglSign.v2') || 'null'); } catch (x) {}
-      if (kept && kept.rf && kept.rfd && (kept.s === 's3' || Number(kept.rz) > Date.now())) e = String(kept.rf).replace(/[^\w]/g, '').slice(0, 20);
+      if (kept && kept.rf && kept.rfd && (kept.s === 's3' || Number(kept.rz) > Date.now())) { e = String(kept.rf).replace(/[^\w]/g, '').slice(0, 20); re = String(kept.re || ''); }
     }
   }
   if (!e && onRefund) { START({ noQr: true, educations: [] }); return; }
@@ -3285,7 +3356,7 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
     START(d);
     document.documentElement.classList.remove('rfBoot');
   };
-  fetch(API + '?api=sign&e=' + encodeURIComponent(e)).then(function (r) { return r.json(); })
+  fetch(API + '?api=sign&e=' + encodeURIComponent(e) + (k ? '&k=' + encodeURIComponent(k) : '') + (re ? '&re=' + encodeURIComponent(re) : '')).then(function (r) { return r.json(); })
     .then(function (j) { go(j.ok ? j.data : { error: j.error || '불러오기 실패', educations: [] }); })
     .catch(function () { go({ error: '서버에 연결할 수 없습니다. 인터넷 연결을 확인하세요.', educations: [] }); });
 })();
