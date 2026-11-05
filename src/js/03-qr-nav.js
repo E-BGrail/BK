@@ -154,7 +154,7 @@
     if (typeof DIALOG !== 'undefined' && DIALOG) return 0;   // 시트 메뉴 창
     var id = curScreen;
     if (rfEdu && rfDirect && (id === 'sf' || id === 's3')) return 0;   // 환불 등록 QR로 바로 들어온 승객은 제외
-    return ({ sp: 1, s2: edu && edu.guest ? 2 : 1, s3: 1, sf: 1, sa: 1, so: 2, sr: 2, sk: 1 })[id] || 0;
+    return ({ sp: 1, s2: edu && edu.guest ? 2 : 1, s3: 1, sf: 1, sa: 1, so: 2, sr: 2, sk: 1, su: 1 })[id] || 0;
   }
   function navApply() {                    // 쌓아 둔 칸을 지금 화면에 맞춤 (같은 순간의 여러 변화는 한 번에)
     if (NAV.q) return;
@@ -175,6 +175,7 @@
   function screenBack() {                  // 휴대폰 뒤로가기 = 화면의 [뒤로]·[처음으로] 버튼
     var s = curScreen;
     if (s === 'sp' || s === 's3' || s === 'sf') resetAll();
+    else if (s === 'su') $('puBack').onclick();
     else if (s === 's2') { if (!submitting) signBack(); }
     else if (s === 'sa') $('aLogout').onclick();
     else if (s === 'so') $('oBack').onclick();

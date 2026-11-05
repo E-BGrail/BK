@@ -398,3 +398,23 @@
   .lvPage { flex:1; overflow-y:auto; -webkit-overflow-scrolling:touch; overscroll-behavior:contain; padding:10px; }
   .lvHint { text-align:center; font-size:12px; color:var(--sub); padding:8px 0; }
   .lvNav { margin:6px 0 30px; }
+  /* PDF 서명지 */
+  .pdfTag { display:inline-block; font-size:12px; font-weight:800; color:#fff; background:#6d28d9; border-radius:6px; padding:1px 6px; margin-right:6px; vertical-align:2px; }
+  .person.closed .pdfTag { background:#9aa3af; }
+  .pdfNames { display:block; font-size:13px; margin-top:3px; color:var(--sub); line-height:1.5; }
+  .pdfNames .ok { color:#12833b; font-weight:700; }
+  .eswAct .pdfdl { background:var(--pri); }
+  .puHits { display:flex; flex-wrap:wrap; gap:6px; margin-top:8px; }
+  .puHit { border:1px solid var(--line); background:#fff; border-radius:8px; padding:8px 10px; font:inherit; font-size:14px; }
+  .puSigners { margin:8px 0 0; padding-left:22px; }
+  .puSigners li { padding:6px 0; border-bottom:1px solid var(--line); font-size:15px; }
+  .puSigners li span { margin-right:8px; }
+  .puDel { float:right; border:0; background:none; color:#b42318; font:inherit; font-size:13px; font-weight:700; }
+  .puPg { position:relative; margin-top:12px; border:1px solid var(--line); background:#fff; }
+  .puPg canvas { display:block; width:100%; height:100%; }
+  .puLayer { position:absolute; inset:0; }
+  .puBox { position:absolute; border:2px solid #d92d20; background:rgba(217,45,32,.12); border-radius:3px; box-sizing:border-box; }
+  .puBox span { position:absolute; left:0; top:0; max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; background:#d92d20; color:#fff; font-size:10px; line-height:12px; font-weight:800; padding:0 3px; border-radius:0 0 3px 0; }
+  .puBox.extra { border-color:#9aa3af; background:rgba(154,163,175,.15); } .puBox.extra span { background:#9aa3af; }
+  .puNo { position:absolute; right:4px; bottom:4px; font-size:11px; color:#fff; background:rgba(0,0,0,.45); border-radius:4px; padding:0 5px; }
+  .puCount { font-size:14px; font-weight:700; margin-bottom:8px; }

@@ -102,6 +102,7 @@
       <div class="eTabs"><button type="button" id="edTabOpen"></button><button type="button" id="edTabClosed"></button></div>
       <div class="list" id="edus"><div class="hint">불러오는 중…</div></div>
       <div class="msg" id="msg1"></div>
+      <div class="row hidden" id="puOpenRow"><button class="btn gray" id="puOpen" type="button">＋ PDF 서명지 만들기</button></div>
     </div>
     <div class="card" id="chgCard">
       <div class="nhead" id="chgHead"><b>개인정보 변경</b></div>
@@ -166,6 +167,36 @@
           <div class="msg" id="msg2"></div>
         </div>
       </div>
+    </div>
+  </section>
+
+  <!-- PDF 서명지 만들기 -->
+  <section id="su" class="hidden">
+    <div class="card">
+      <b>PDF 서명지 만들기</b>
+      <div class="note" style="margin-top:6px">한글은 [파일 → PDF로 저장하기], 엑셀은 [다른 이름으로 저장 → PDF]로 저장한 파일을 올리세요. 스캔·사진으로 만든 PDF는 서명란을 자동으로 찾지 못합니다.</div>
+      <div class="field"><label>PDF 파일 (10MB · 30쪽까지)</label><input type="file" id="puFile" accept="application/pdf,.pdf"></div>
+      <div class="field"><label>제목</label><input type="text" id="puTitle" maxlength="60" autocomplete="off"></div>
+      <div class="msg" id="puMsg"></div>
+    </div>
+    <div class="card">
+      <b>서명자</b> <span class="hint">넣은 순서 = 서명 순서 = 서명란 번호</span>
+      <div class="codeRow" style="margin-top:8px">
+        <div style="flex:1"><input type="text" id="puFind" placeholder="이름" autocomplete="off" maxlength="20" enterkeyhint="search"></div>
+        <button class="btn gray sbtn" id="puFindBtn" type="button" style="flex:none">찾기</button>
+      </div>
+      <div class="puHits" id="puHits"></div>
+      <ol class="puSigners" id="puSigners"></ol>
+    </div>
+    <div class="card hidden" id="puPrevCard">
+      <b>서명란 확인</b>
+      <div class="hint">빨간 칸 = 서명이 들어갈 자리 (번호·서명자), 회색 칸 = 서명자 없음. 칸을 누르면 지우고, 빈 곳을 누르면 추가합니다.</div>
+      <div class="puPages" id="puPages"></div>
+    </div>
+    <div class="card">
+      <div class="puCount" id="puCount"></div>
+      <div class="row"><button class="btn gray" id="puBack" type="button">뒤로</button><button class="btn pri" id="puSave" type="button">만들기</button></div>
+      <div class="msg" id="puMsg2"></div>
     </div>
   </section>
 

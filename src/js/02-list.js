@@ -153,10 +153,13 @@
     if (!list.length) { box.innerHTML = '<div class="hint" style="margin-top:8px">' + (isOpen ? '현재 진행 중인 서명지가 없습니다.' : '마감된 서명지가 없습니다.') + '</div>'; }
     var adm = !!(staff && staff.admin && !staff.guest);
     if (adm && list.length) { var hn = document.createElement('div'); hn.className = 'eswHint'; hn.textContent = '카드를 옆으로 밀어 보세요'; box.appendChild(hn); }
-    var put = function (e, el) { box.appendChild(adm ? eswWrap(e, el) : el); };
+    var pdfSw = function (e) { return !!(e.pdfSign && (e.open === false || e.pdfSign.canDel)); };   // PDF 서명지: 완료되면 [PDF 받기], 올린 사람·관리자는 [삭제]
+    if (!adm && list.some(pdfSw)) { var hp = document.createElement('div'); hp.className = 'eswHint'; hp.textContent = 'PDF 서명지 카드를 옆으로 밀어 보세요'; box.appendChild(hp); }
+    var put = function (e, el) { box.appendChild(adm && !e.pdfSign || pdfSw(e) ? eswWrap(e, el) : el); };
     list.forEach(function (e) {
       if (e.refund) { put(e, rfItem(e)); return; }
       if (e.safety) { put(e, skItem(e)); return; }
+      if (e.pdfSign) { put(e, pdfItem(e)); return; }
       var closed = e.open === false;
       var b = document.createElement('button');
       b.className = 'person' + (closed ? ' closed' : '') + (e.id === selId ? ' sel' : '');
@@ -189,12 +192,13 @@
     var closed = e.open === false;
     w.style.setProperty('--sw', '-88px');
     // 왼쪽으로 밀기: 진행 중 [마감], 마감 탭 [다시 열기]. 오른쪽으로 밀기: 마감 탭 [삭제], 진행 중 환불 등록 [5분 연장]
-    act.innerHTML = closed ? '<button type="button" class="reopen">다시 열기</button>' : '<button type="button" class="close">마감</button>';
+    act.innerHTML = e.pdfSign ? (closed ? '<button type="button" class="pdfdl">PDF<br>받기</button>' : '') :
+      closed ? '<button type="button" class="reopen">다시 열기</button>' : '<button type="button" class="close">마감</button>';
     var f = document.createElement('div'); f.className = 'eswFront'; f.appendChild(el);
     w.appendChild(act);
-    if (closed || e.refund) {
+    if (e.pdfSign ? e.pdfSign.canDel : closed || e.refund) {
       var actL = document.createElement('div'); actL.className = 'eswAct eswActL';
-      actL.innerHTML = closed ? '<button type="button" class="del">삭제</button>' : '<button type="button" class="ext">5분<br>연장</button>';
+      actL.innerHTML = closed || e.pdfSign ? '<button type="button" class="del">삭제</button>' : '<button type="button" class="ext">5분<br>연장</button>';
       w.appendChild(actL);
     }
     w.appendChild(f);
@@ -213,6 +217,7 @@
   }
   function eswDo(e, b) {
     if (eswBusy) return;
+    if (b.classList.contains('pdfdl')) { eswArm(null, false); eswClose(); pdfDownload(e); return; }   // PDF 서명지: 서명된 PDF 받기
     var k = b.classList.contains('del') ? 'del' : b.classList.contains('close') ? 'close' : b.classList.contains('ext') ? 'ext' : 'reopen';
     if (k === 'ext') {                                // 5분 연장: 한 번 누르면 바로 (되돌릴 위험 없음)
       eswArm(null, false); eswBusy = true;
@@ -227,7 +232,8 @@
     msg($('msg1'), e.title + (k === 'del' ? ' 삭제 중…' : k === 'close' ? ' 마감 중…' : ' 다시 여는 중…'), '#6b7686');
     var ok = function (r) { eswBusy = false; if (k === 'reopen') edTab = 'open'; loadInit(r); saveState(); msg($('msg1'), r.note || '', '#12833b'); };
     var fail = function (x) { eswBusy = false; if (/로그인이 필요/.test(errText(x))) { logout(errText(x)); return; } eswClose(); msg($('msg1'), errText(x), '#c0392b'); };
-    if (k === 'del') google.script.run.withSuccessHandler(ok).withFailureHandler(fail).staffDeleteEdu(staff && staff.token || '', e.id);
+    if (k === 'del' && e.pdfSign) google.script.run.withSuccessHandler(ok).withFailureHandler(fail).pdfDelete(staff && staff.token || '', e.id);
+    else if (k === 'del') google.script.run.withSuccessHandler(ok).withFailureHandler(fail).staffDeleteEdu(staff && staff.token || '', e.id);
     else google.script.run.withSuccessHandler(ok).withFailureHandler(fail).staffSetOpen(staff && staff.token || '', e.id, k === 'reopen');
   }
   function eswClose(except) { [].forEach.call(document.querySelectorAll('#edus .esw.open, #edus .esw.openR'), function (x) { if (x !== except) x.classList.remove('open', 'openR'); }); }

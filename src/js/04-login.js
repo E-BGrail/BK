@@ -146,6 +146,7 @@
     $('meName').textContent = g ? '외부 참석자' : ((staff.disp ? staff.disp + ' ' : '') + staff.name + ' 님').trim();
     if (!g && staff.admin) { var ma = document.createElement('span'); ma.className = 'meAdm'; ma.textContent = '관리자'; $('meName').appendChild(ma); }
     $('chgCard').classList.toggle('hidden', g);
+    $('puOpenRow').classList.toggle('hidden', g);   // PDF 서명지 만들기: 직원만
     if (!edus.length) $('edus').innerHTML = '<div class="hint">불러오는 중…</div>';
     show('s1');
   }

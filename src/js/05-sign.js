@@ -235,16 +235,18 @@
     submitting = true; drawing = false;
     $('submit').disabled = true; $('clear').disabled = true; $('back').disabled = true; $('pad').classList.add('locked');
     msg($('msg2'), '제출 중…', '#6b7686');
-    google.script.run.withSuccessHandler(function (res) {
+    var run = google.script.run.withSuccessHandler(function (res) {
       $('doneWho').textContent = ((res.disp ? res.disp + ' ' : '') + res.name).trim();
-      $('doneMsg').textContent = res.title + (res.role ? ' · ' + res.role : '') + ' — ' + (res.resigned ? '재서명이 정상적으로 제출되었습니다.' : '서명이 정상적으로 제출되었습니다.');
+      $('doneMsg').textContent = res.title + (res.role ? ' · ' + res.role : '') + ' — ' + (res.resigned ? '재서명이 정상적으로 제출되었습니다.' : '서명이 정상적으로 제출되었습니다.') + (res.done ? ' 모든 서명자가 서명을 마쳤습니다.' : '');
       person = null; unlockPad();
       show('s3');
     }).withFailureHandler(function (e) {
       unlockPad();
       msg($('msg2'), errText(e), '#c0392b');
       $('submit').disabled = false;
-    }).submitSignature({ eduId: edu.id, code: code, token: staff && staff.token || '', guest: person.guest || null, dataUrl: exportPng(), device: devInfo });
+    });
+    if (edu && edu.pdf) { run.pdfSign(staff && staff.token || '', edu.id, exportPng(), devInfo); return; }   // PDF 서명지
+    run.submitSignature({ eduId: edu.id, code: code, token: staff && staff.token || '', guest: person.guest || null, dataUrl: exportPng(), device: devInfo });
   }
   function unlockPad() { submitting = false; $('clear').disabled = false; $('back').disabled = false; $('pad').classList.remove('locked'); }
   $('submit').addEventListener('pointerup', function (e) { if (e.pointerType !== 'mouse') { e.preventDefault(); doSubmit(); } });
