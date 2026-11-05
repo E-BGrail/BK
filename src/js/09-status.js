@@ -154,8 +154,6 @@
 
     // 접수 마감·다시 열기·삭제는 서명지 선택 화면에서 (관리자가 카드를 왼쪽으로 밀기)
     // 교육 정보 (기본은 접힘, 눌러서 펼치기)
-    if (admInfo[e.id]) q('.ibox').classList.add('open');
-    q('.ihead').onclick = function () { admInfo[e.id] = !admInfo[e.id]; q('.ibox').classList.toggle('open', admInfo[e.id]); saveState(); };
     q('.i-title').value = e.title || ''; q('.i-date').value = e.date || '';
     deptTeamSel(q('.i-dept'), q('.i-team'), e.dept || '', e.team || '');
     deptRow(q('.i-deptRow'), e.tpl, e.guest); q('.i-teamRow').classList.toggle('hidden', !!e.guest || !!e.refund);

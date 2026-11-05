@@ -322,12 +322,9 @@
   #newCard.open .nhead::after { transform:rotate(180deg); }
   #newCard .nbody { display:none; }
   #newCard.open .nbody { display:block; }
-  /* 교육 카드 안 '교육 정보': 접고 펼치기 */
-  .ihead { cursor:pointer; position:relative; padding-right:34px; margin-top:12px; }
-  .ihead::after { content:'▾'; position:absolute; right:2px; top:-2px; color:var(--sub); font-size:28px; line-height:1; transition:transform .2s; }
-  .ibox.open .ihead::after { transform:rotate(180deg); }
-  .ibox .ibody { display:none; }
-  .ibox.open .ibody { display:block; margin:8px -12px 0; padding:2px 12px 12px; background:#f3f6fd; border-top:1.5px solid var(--pri); border-bottom:1.5px solid var(--pri); }   /* 펼치면 카드 좌우 끝까지 연한 파랑, 위아래 줄 (입력칸 폭은 그대로) */
+  /* 교육 카드 안 '서명지 정보 수정': 항상 펼침 */
+  .ihead { margin-top:12px; }
+  .ibox .ibody { margin:8px -12px 0; padding:2px 12px 12px; background:#f3f6fd; border-top:1.5px solid var(--pri); border-bottom:1.5px solid var(--pri); }   /* 펼치면 카드 좌우 끝까지 연한 파랑, 위아래 줄 (입력칸 폭은 그대로) */
   .gnote { margin-top:10px; background:#fff1e6; border:1px solid #f9c79c; color:#9a3d06; border-radius:10px; padding:8px 12px; font-size:14px; }
   /* 안전점검의 날: 서명지 목록 카드 (누르면 역 선택 화면) */
   .skItem { border:1.5px solid #9fb3ea; background:#f5f8ff; border-radius:12px; padding:12px; cursor:pointer; }

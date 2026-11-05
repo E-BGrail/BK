@@ -31,7 +31,7 @@
   $('aLogout').onclick = function () {
     if (DIALOG) { google.script.run.withSuccessHandler(function () { google.script.host.close(); }).withFailureHandler(function () { google.script.host.close(); }).adminLogout(admTok); return; }
     admSeq++; if (admTok) google.script.run.adminLogout(admTok);
-    admTok = null; admData = null; admExp = {}; admOpen = {}; admOrder = {}; admInfo = {};
+    admTok = null; admData = null; admExp = {}; admOpen = {}; admOrder = {};
     resetAll();
   };
 

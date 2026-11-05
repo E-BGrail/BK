@@ -101,7 +101,7 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
       if (skL && !$('skView').classList.contains('hidden')) { st.skL = skL.id; st.skLi = skL.idx; }
       if (rfEdu && (curScreen === 'sf' || curScreen === 's3')) { st.rf = rfEdu.id; st.rfd = rfDirect; st.re = rfEnter; st.rz = rfEnd; }          // 환불 등록: 어느 등록인지만 (입력값·연락처는 저장 안 함)
       if (admTok && ['sa', 'so', 'sr'].indexOf(curScreen) > -1) {
-        st.admTok = admTok; st.admOrder = admOrder; st.admOpen = admOpen; st.admInfo = admInfo; st.admTab = admTab; st.admMe = admMe;
+        st.admTok = admTok; st.admOrder = admOrder; st.admOpen = admOpen; st.admTab = admTab; st.admMe = admMe;
         if (curScreen === 'so') st.ordId = ordId;
         if (curScreen === 'sr' && rData) st.r = { id: rData.id, assign: rAssign, head: $('rHead').value };
       }
@@ -113,7 +113,7 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
     var st = loadState() || {};
     edTab = st.edTab === 'closed' ? 'closed' : 'open';
     if (st.admTok && staff) {        // 관리자 화면: 직원 로그인·관리자 표시가 살아 있으면 그대로 다시 열기 (2시간 지나면 처음 화면)
-      admTok = st.admTok; admOrder = st.admOrder || {}; admOpen = st.admOpen || {}; admInfo = st.admInfo || {}; admTab = st.admTab || 'open'; admMe = st.admMe || null;
+      admTok = st.admTok; admOrder = st.admOrder || {}; admOpen = st.admOpen || {}; admTab = st.admTab || 'open'; admMe = st.admMe || null;
       show('sa'); msg($('aMsg'), '불러오는 중…', '#6b7686');
       google.script.run.withFailureHandler(function () {
         admTok = null; resetAll();

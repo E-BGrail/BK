@@ -1,6 +1,6 @@
   /* ---------- 관리자 ---------- */
   var admTab = 'open';                     // 서명지별 현황에서 보는 탭
-  var admTok = null, admData = null, admExp = {}, admOpen = {}, admOrder = {}, admInfo = {};   // admInfo: 교육 정보를 펼친 교육
+  var admTok = null, admData = null, admExp = {}, admOpen = {}, admOrder = {};
   var admMe = null;                      // 로그인한 관리자의 { dept, team }: 새 서명지 부서명·팀 기본값 (시트 메뉴로 열면 없음)
 
   function admCall(fn, args, onOk, m, onFail) {

@@ -332,12 +332,9 @@
   #newCard.open .nhead::after { transform:rotate(180deg); }
   #newCard .nbody { display:none; }
   #newCard.open .nbody { display:block; }
-  /* 교육 카드 안 '교육 정보': 접고 펼치기 */
-  .ihead { cursor:pointer; position:relative; padding-right:34px; margin-top:12px; }
-  .ihead::after { content:'▾'; position:absolute; right:2px; top:-2px; color:var(--sub); font-size:28px; line-height:1; transition:transform .2s; }
-  .ibox.open .ihead::after { transform:rotate(180deg); }
-  .ibox .ibody { display:none; }
-  .ibox.open .ibody { display:block; margin:8px -12px 0; padding:2px 12px 12px; background:#f3f6fd; border-top:1.5px solid var(--pri); border-bottom:1.5px solid var(--pri); }   /* 펼치면 카드 좌우 끝까지 연한 파랑, 위아래 줄 (입력칸 폭은 그대로) */
+  /* 교육 카드 안 '서명지 정보 수정': 항상 펼침 */
+  .ihead { margin-top:12px; }
+  .ibox .ibody { margin:8px -12px 0; padding:2px 12px 12px; background:#f3f6fd; border-top:1.5px solid var(--pri); border-bottom:1.5px solid var(--pri); }   /* 펼치면 카드 좌우 끝까지 연한 파랑, 위아래 줄 (입력칸 폭은 그대로) */
   .gnote { margin-top:10px; background:#fff1e6; border:1px solid #f9c79c; color:#9a3d06; border-radius:10px; padding:8px 12px; font-size:14px; }
   /* 안전점검의 날: 서명지 목록 카드 (누르면 역 선택 화면) */
   .skItem { border:1.5px solid #9fb3ea; background:#f5f8ff; border-radius:12px; padding:12px; cursor:pointer; }
@@ -969,7 +966,7 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
       if (skL && !$('skView').classList.contains('hidden')) { st.skL = skL.id; st.skLi = skL.idx; }
       if (rfEdu && (curScreen === 'sf' || curScreen === 's3')) { st.rf = rfEdu.id; st.rfd = rfDirect; st.re = rfEnter; st.rz = rfEnd; }          // 환불 등록: 어느 등록인지만 (입력값·연락처는 저장 안 함)
       if (admTok && ['sa', 'so', 'sr'].indexOf(curScreen) > -1) {
-        st.admTok = admTok; st.admOrder = admOrder; st.admOpen = admOpen; st.admInfo = admInfo; st.admTab = admTab; st.admMe = admMe;
+        st.admTok = admTok; st.admOrder = admOrder; st.admOpen = admOpen; st.admTab = admTab; st.admMe = admMe;
         if (curScreen === 'so') st.ordId = ordId;
         if (curScreen === 'sr' && rData) st.r = { id: rData.id, assign: rAssign, head: $('rHead').value };
       }
@@ -981,7 +978,7 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
     var st = loadState() || {};
     edTab = st.edTab === 'closed' ? 'closed' : 'open';
     if (st.admTok && staff) {        // 관리자 화면: 직원 로그인·관리자 표시가 살아 있으면 그대로 다시 열기 (2시간 지나면 처음 화면)
-      admTok = st.admTok; admOrder = st.admOrder || {}; admOpen = st.admOpen || {}; admInfo = st.admInfo || {}; admTab = st.admTab || 'open'; admMe = st.admMe || null;
+      admTok = st.admTok; admOrder = st.admOrder || {}; admOpen = st.admOpen || {}; admTab = st.admTab || 'open'; admMe = st.admMe || null;
       show('sa'); msg($('aMsg'), '불러오는 중…', '#6b7686');
       google.script.run.withFailureHandler(function () {
         admTok = null; resetAll();
@@ -2734,7 +2731,7 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
 
   /* ---------- 관리자 ---------- */
   var admTab = 'open';                     // 서명지별 현황에서 보는 탭
-  var admTok = null, admData = null, admExp = {}, admOpen = {}, admOrder = {}, admInfo = {};   // admInfo: 교육 정보를 펼친 교육
+  var admTok = null, admData = null, admExp = {}, admOpen = {}, admOrder = {};
   var admMe = null;                      // 로그인한 관리자의 { dept, team }: 새 서명지 부서명·팀 기본값 (시트 메뉴로 열면 없음)
 
   function admCall(fn, args, onOk, m, onFail) {
@@ -3210,8 +3207,6 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
 
     // 접수 마감·다시 열기·삭제는 서명지 선택 화면에서 (관리자가 카드를 왼쪽으로 밀기)
     // 교육 정보 (기본은 접힘, 눌러서 펼치기)
-    if (admInfo[e.id]) q('.ibox').classList.add('open');
-    q('.ihead').onclick = function () { admInfo[e.id] = !admInfo[e.id]; q('.ibox').classList.toggle('open', admInfo[e.id]); saveState(); };
     q('.i-title').value = e.title || ''; q('.i-date').value = e.date || '';
     deptTeamSel(q('.i-dept'), q('.i-team'), e.dept || '', e.team || '');
     deptRow(q('.i-deptRow'), e.tpl, e.guest); q('.i-teamRow').classList.toggle('hidden', !!e.guest || !!e.refund);
@@ -3353,7 +3348,7 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
   $('aLogout').onclick = function () {
     if (DIALOG) { google.script.run.withSuccessHandler(function () { google.script.host.close(); }).withFailureHandler(function () { google.script.host.close(); }).adminLogout(admTok); return; }
     admSeq++; if (admTok) google.script.run.adminLogout(admTok);
-    admTok = null; admData = null; admExp = {}; admOpen = {}; admOrder = {}; admInfo = {};
+    admTok = null; admData = null; admExp = {}; admOpen = {}; admOrder = {};
     resetAll();
   };
 
