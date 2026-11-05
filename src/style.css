@@ -1,0 +1,403 @@
+
+  /* 부산-김해경전철 CI 색: 블루 DIC 222 (#324EB3), 그레이 DIC 442 (#9FA9AA) */
+  :root { --bg:#eef1f7; --card:#fff; --text:#1b2333; --sub:#667085; --pri:#324eb3; --pri2:#22378a; --gray:#9fa9aa; --ok:#12833b; --line:#d8dde8; }
+  * { box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  body { margin:0; font-family:-apple-system,"Noto Sans KR","Malgun Gothic",sans-serif; background:var(--bg); color:var(--text);
+         padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom); }
+  header { background:#fff; color:var(--text); padding:10px 16px; display:flex; align-items:center; justify-content:space-between; gap:10px;
+           border-bottom:3px solid var(--pri); position:relative; }
+  header::after { content:''; position:absolute; left:0; right:0; bottom:-3px; height:3px;
+           background:linear-gradient(90deg, var(--pri) 0 70%, var(--gray) 70% 100%); }
+  .brand { display:flex; align-items:center; gap:8px; min-width:0; }
+  .brand img { height:30px; width:auto; max-width:190px; display:block; }
+  /* 오른쪽 위 전환 버튼: [전자서명][업무차량관리] 나란히. 지금 화면에 불(파랑)이 켜져 있고, 다른 쪽을 누르면 그쪽에 불이 들어오며 이동 */
+  .appSw { display:flex; flex:none; padding:3px; gap:2px; border-radius:20px; background:#f0f2f6; border:1px solid #d8dde8; }
+  .appSw .sw { height:28px; padding:0 10px; display:flex; align-items:center; border-radius:16px; font-size:12.5px; font-weight:700; white-space:nowrap;
+    color:#667085; text-decoration:none; user-select:none; -webkit-user-select:none; transition:background .2s, color .2s, box-shadow .2s; }
+  .appSw .sw.on { background:var(--pri); color:#fff; box-shadow:0 1px 4px rgba(50,78,179,.35); }
+  .appSw:not(.go) .sw:not(.on):active { background:#e3e7ef; }
+  header:has(.appSw:not(.hidden)) .brand img { max-width:130px; height:26px; }
+  .wm { display:none; align-items:center; gap:8px; font-weight:800; font-size:16px; color:var(--pri2); white-space:nowrap; }
+  .wm i { font-style:normal; background:var(--pri); color:#fff; border-radius:7px; padding:3px 6px; font-size:13px; letter-spacing:.5px; }
+  .brand.noimg img { display:none; } .brand.noimg .wm { display:flex; }
+  header h1 { margin:0; font-size:13px; font-weight:700; color:var(--pri); background:#eef1fb; border:1px solid #cdd6f3;
+              border-radius:20px; padding:4px 10px; white-space:nowrap; }
+  /* 첫 화면 그림 */
+  .hero { position:relative; overflow:hidden; color:#fff;
+          background:linear-gradient(160deg, #3d5cc8 0%, var(--pri) 45%, var(--pri2) 100%); padding:20px 18px 0; }
+  .hero .txt { position:relative; z-index:1; padding-right:84px; }
+  /* 첫 화면 QR: 오른쪽 위 작은 QR → 누르면 크게 */
+  .qrBtn { position:absolute; right:16px; top:18px; z-index:2; border:0; padding:5px 5px 3px; background:#fff; border-radius:10px;
+           box-shadow:0 2px 10px rgba(0,0,0,.25); display:flex; flex-direction:column; align-items:center; gap:1px; cursor:pointer; }
+  .qrBtn span { display:block; width:58px; height:58px; flex:none; } .hero .qrBtn span svg { width:100%; height:100%; display:block; margin:0; }
+  .qrBtn b { font-size:10px; color:var(--pri2); letter-spacing:.5px; }
+  .qrOver { position:fixed; top:var(--vvt, 0px); left:0; right:0; height:var(--vvh, 100%); z-index:50; background:rgba(16,24,48,.72); display:flex; align-items:center; justify-content:center; padding:20px;
+            animation:fadeIn .15s ease-out; }
+  .qrOver .qrBox { background:#fff; border-radius:18px; padding:18px 18px 14px; width:min(88vw, 380px); text-align:center; animation:pop .2s ease-out; }
+  .qrOver #qrBig svg { width:100%; height:auto; display:block; }
+  .qrOver p { margin:10px 0 0; font-size:15px; font-weight:700; color:var(--text); }
+  .qrOver .u { font-size:11px; font-weight:400; color:var(--sub); word-break:break-all; margin-top:6px; }
+  .qrOver .close { display:block; margin-top:10px; font-size:12px; color:var(--sub); }
+  .qrOver.picOnly .qrBox { padding:18px; } .qrOver.picOnly .u, .qrOver.picOnly .close { display:none; }   /* 환불 등록 QR: 그림과 안내문만 */
+  /* 관리자 로그인 팝업 (서명지 목록 열차를 왼쪽으로 밀면) */
+  #codeOver { align-items:flex-start; padding-top:10vh; }   /* 로그인 팝업은 화면 위쪽에 (휴대폰 키보드에 가리지 않게) */
+  body.kbOpen .qrOver, body.kbOpen #codeOver { align-items:flex-start; padding:10px 14px; }   /* 키보드가 올라오면 보이는 영역 맨 위로 */
+  .qrOver .qrBox { max-height:calc(var(--vvh, 100vh) - 20px); overflow-y:auto; }
+  .qrOver .msg { overflow-wrap:anywhere; }
+  .qrOver .admBox { text-align:left; }
+  .qrOver .admBox p { margin:0 0 4px; font-size:17px; }
+  @keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
+  .hero .k { font-size:12px; letter-spacing:2px; opacity:.85; font-weight:700; }
+  .hero h2 { margin:4px 0 4px; font-size:22px; line-height:1.35; }
+  .hero p { margin:0; font-size:14px; opacity:.9; }
+  .hero svg { display:block; width:100%; height:auto; margin-top:8px; }
+  .hero .run { animation:run 9s linear infinite; }
+  .hero > svg { touch-action:pan-y; } #trainHit { touch-action:pan-y; user-select:none; -webkit-user-select:none; }   /* 열차 높이의 띠: 왼쪽으로 밀면 관리자 로그인 (세로 스크롤은 그대로) */
+  @keyframes run { from { transform:translateX(-260px); } to { transform:translateX(420px); } }
+  @media (prefers-reduced-motion: reduce) { .hero .run { animation:none; transform:translateX(90px); } }
+  /* 진행 단계 */
+  .steps { display:flex; justify-content:space-between; max-width:560px; margin:0 auto; padding:14px 22px 0; position:relative; }
+  .steps::before { content:''; position:absolute; left:40px; right:40px; top:27px; height:2px; background:var(--line); }
+  .steps .st1 { position:relative; z-index:1; display:flex; flex-direction:column; align-items:center; gap:4px; font-size:11px; color:var(--sub); width:56px; }
+  .steps .st1 b { width:28px; height:28px; border-radius:50%; background:#fff; border:2px solid var(--line); display:flex; align-items:center;
+                  justify-content:center; font-size:13px; color:var(--sub); }
+  .steps .st1.on b { background:var(--pri); border-color:var(--pri); color:#fff; box-shadow:0 0 0 4px rgba(50,78,179,.18); }
+  .steps .st1.on { color:var(--pri); font-weight:700; }
+  .steps .st1.done b { background:#e7ecfa; border-color:var(--pri); color:var(--pri); }
+  footer { text-align:center; color:#98a1b3; font-size:14px; padding:6px 0 18px; }
+  main { padding:14px; max-width:560px; margin:0 auto; }
+  .card { background:var(--card); border-radius:16px; padding:16px; box-shadow:0 1px 2px rgba(16,24,40,.05), 0 4px 14px rgba(34,55,138,.07); margin-bottom:12px; }
+  .card > b:first-child { font-size:16px; }
+  .hidden { display:none !important; }
+  input[type=text], input[type=tel], input[type=email], input[type=password] {
+    width:100%; font-size:17px; padding:12px; border:1px solid var(--line); border-radius:10px; margin-top:8px; }
+  .list { display:flex; flex-direction:column; gap:8px; margin-top:10px; }
+  /* 관리자: 서명지 카드를 왼쪽으로 밀면 뒤에 있던 [마감] 또는 [다시 열기][삭제] */
+  .esw { position:relative; border-radius:12px; overflow:hidden; }
+  .esw > .eswAct { position:absolute; top:0; right:0; bottom:0; display:flex; visibility:hidden; }
+  .esw.open > .eswAct, .esw.drag > .eswAct { visibility:visible; }
+  .eswAct button { width:88px; border:0; color:#fff; font-size:15px; font-weight:800; font-family:inherit; line-height:1.3; padding:0 6px; }
+  .eswAct .close, .eswAct .del { background:#b42318; } .eswAct .reopen { background:var(--pri); }
+  .eswAct button.armed { background:#7a1610; font-size:13px; }
+  .esw > .eswFront { position:relative; transition:transform .2s ease-out; touch-action:pan-y; background:#fff; border-radius:12px; }
+  .esw.open > .eswFront { transform:translateX(var(--sw, -88px)); }
+  .esw > .eswActL { left:0; right:auto; } .esw > .eswActL { visibility:hidden; } .esw.openR > .eswActL, .esw.drag > .eswActL { visibility:visible; }   /* 환불 카드 오른쪽으로 밀기 → 왼쪽 [5분 연장] */
+  .esw.open > .eswActL { visibility:hidden; } .esw.openR > .eswAct:not(.eswActL) { visibility:hidden; }
+  .eswAct .ext { background:#12833b; }
+  .esw.openR > .eswFront { transform:translateX(88px); }
+  .esw > .eswFront > * { margin:0; }
+  .eswHint { font-size:12.5px; color:var(--sub); margin-top:6px; }
+  .person { display:flex; align-items:center; justify-content:space-between; padding:14px; border:1px solid var(--line);
+            border-radius:12px; background:#fff; font-size:17px; width:100%; text-align:left; }
+  .person .rank { color:var(--sub); font-size:14px; margin-right:8px; }
+  .person { transition:border-color .15s, background .15s; }
+  input:focus, select:focus, textarea:focus { outline:none; border-color:var(--pri); box-shadow:0 0 0 3px rgba(50,78,179,.15); }
+  .badge { font-size:13px; font-weight:600; }
+  canvas { width:100%; height:220px; border:2px dashed #b9c4e6; border-radius:12px; touch-action:none; display:block;
+           background:#fff linear-gradient(transparent calc(100% - 46px), #c9d1e8 calc(100% - 46px), #c9d1e8 calc(100% - 45px), transparent calc(100% - 45px)); }
+  .row { display:flex; gap:8px; margin-top:10px; }
+  button.btn { flex:1; font-size:17px; padding:14px; border:0; border-radius:12px; font-weight:600; }
+  .pri { background:linear-gradient(180deg, #3b58c0, var(--pri)); color:#fff; box-shadow:0 2px 6px rgba(50,78,179,.3); }
+  .pri:disabled { opacity:.45; box-shadow:none; }
+  button.btn:active:not(:disabled) { transform:translateY(1px); }
+  .gray { background:#e6eaf0; color:var(--text); }
+  .gray:disabled { opacity:.45; }
+  .msg { color:#c0392b; font-size:14px; margin-top:8px; min-height:18px; }
+  .center { text-align:center; padding:30px 10px; }
+  .check { width:76px; height:76px; margin:0 auto 12px; border-radius:50%; background:var(--pri); color:#fff; font-size:40px;
+           display:flex; align-items:center; justify-content:center; box-shadow:0 0 0 10px rgba(50,78,179,.12); animation:pop .45s ease-out; }
+  @keyframes pop { 0% { transform:scale(.4); opacity:0; } 70% { transform:scale(1.08); } 100% { transform:scale(1); opacity:1; } }
+  .who { font-size:19px; font-weight:700; }
+  .hint { color:var(--sub); font-size:13px; margin-top:6px; }
+  .warn { background:#fff7e0; border:1px solid #f0d58a; color:#7a5a00; border-radius:10px; padding:10px 12px; font-size:14px; margin-top:10px; }
+  /* 서명 칸 첫 줄 오른쪽: 안드로이드는 [가로 서명] 버튼, 그 밖은 "가로 화면으로 서명 가능" (세로 화면에서만) */
+  .whoRow { display:flex; align-items:center; gap:8px; } .whoRow .who { flex:1; min-width:0; }
+  .lsTag { display:none; flex:none; font-size:12.5px; font-weight:700; color:var(--pri); }
+  .lsTag button { display:flex; align-items:center; gap:3px; height:26px; padding:0 8px; border:0; border-radius:7px; background:#324eb3; color:#fff; font-size:12px; font-weight:700; font-family:inherit; }
+  .lsTag button svg { width:14px; height:14px; flex:none; }
+  @media (orientation: portrait) {
+    .lsTag { display:block; }
+    /* 세로 서명 화면: 한 화면에 서명 칸과 '서명 제출'이 다 보이게 */
+    body[data-s="s2"] .steps { padding-top:8px; }
+    body[data-s="s2"] .steps::before { top:18px; }
+    body[data-s="s2"] .steps .st1 { font-size:10px; gap:2px; }
+    body[data-s="s2"] .steps .st1 b { width:22px; height:22px; font-size:11px; }
+    body[data-s="s2"] main { padding-top:8px; }
+    #s2 .card { padding:12px 14px; }
+    #s2 .who { font-size:18px; }
+    #s2 .warn { padding:6px 10px; font-size:13px; margin-top:6px; }
+    #s2 .padarea, #skSig .padarea { margin-top:8px; }
+    #s2 .actions, #skSig .actions { display:flex; flex-wrap:wrap; gap:8px; margin-top:8px; }
+    #s2 .actions .row, #skSig .actions .row { display:contents; }
+    #s2 .actions .btn, #skSig .actions .btn { padding:13px 6px; font-size:16px; }
+    #s2 .actions #clear, #s2 .actions #back, #skSig .actions #skClear, #skSig .actions #skSigBack { flex:1; }
+    #s2 .actions #submit, #skSig .actions #skSend { flex:1.8; }
+    #s2 .actions .msg, #skSig .actions .msg { flex-basis:100%; margin-top:0; min-height:0; }
+    /* 안전점검 서명 칸(점검자·팀장 일괄 서명)도 교육 서명과 같게 */
+    body.skSig main { padding-top:8px; }
+    body.skSig #sk .card { padding:12px 14px; }
+    body.skSig #skSigName { font-size:18px; }
+  }
+  .edu { color:var(--sub); font-size:14px; margin-top:2px; }
+  /* 관리자 화면 */
+  .adm-top { display:flex; align-items:center; justify-content:space-between; gap:8px; }
+  .adm-top .who { font-size:17px; }
+  #sa > .card:first-child { padding:8px 14px; }   /* 관리자 맨 위 박스: 낮게 */
+  #aMsg { margin-top:6px; min-height:0; } #aMsg:empty { display:none; }
+  .sbtn { flex:none !important; width:auto; padding:8px 12px !important; font-size:14px !important; }
+  .chip { display:inline-block; font-size:12px; font-weight:700; border-radius:20px; padding:2px 8px; margin-left:6px; vertical-align:2px; }
+  .chip.on { background:#eef8f1; color:var(--ok); border:1px solid #bfe3cb; }
+  .chip.off { background:#fdecea; color:#b42318; border:1px solid #f5c2bd; }
+  .chip.ext { background:#fff4e6; color:#b45309; border:1px solid #f5d0a6; }
+  .chip.rf { background:#fdecea; color:#b42318; border:1px solid #f5c2bd; }
+  /* 비상(운행 장애 환불 등록): 첫 화면 맨 위, 오른쪽에 QR */
+  .rfItem { display:flex; gap:8px; align-items:stretch; }
+  .rfItem .rfMain { flex:1; display:block; text-align:left; border:1.5px solid #f0a7a0; background:#fff6f5; border-radius:12px; padding:12px 14px; font-size:17px; }
+  .rfItem .rfMain b { display:block; margin-top:2px; }
+  .rfItem .rfMain .rank { color:var(--sub); font-size:14px; }
+  .rfItem .rfTag { display:inline-block; font-size:12px; font-weight:800; color:#fff; background:#c0392b; border-radius:6px; padding:2px 7px; }
+  .rfItem .rfGo { display:block; margin-top:6px; font-size:13px; font-weight:700; color:#b42318; }
+  .rfItem .rfQr { flex:none; width:84px; border:1.5px solid #f0a7a0; background:#fff; border-radius:12px; padding:6px 6px 4px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px; }
+  .rfItem .rfQr span { display:block; width:68px; height:68px; } .rfItem .rfQr span svg { width:100%; height:100%; display:block; }
+  .rfItem .rfQr small { font-size:10px; color:#b42318; font-weight:700; }
+  .rfItem .rfQr em { font-style:normal; font-size:11px; font-weight:800; color:#b42318; }   /* QR 박스 위 '고객용' */
+  .rfItem .rfWho { margin-left:6px; font-size:12px; font-weight:800; color:#b42318; }   /* 태그 옆 '(직원용)' */
+  .rfItem.closed .rfMain { border-color:var(--line); background:#f4f5f7; color:#98a2b3; }
+  .doneClose { margin-top:16px; font-size:17px; font-weight:700; color:var(--pri); background:#f3f6fd; border-radius:12px; padding:14px; }
+  .rfHead { display:flex; align-items:center; gap:8px; }
+  .rfHead .rfQrMini { margin-left:auto; height:28px; padding:0 10px; border:1.5px solid #f0a7a0; border-radius:8px; background:#fff; color:#b42318; font-size:12px; font-weight:800; font-family:inherit; }   /* 직원 대리 등록 중 고객용 QR 잠깐 보기 */
+  .rfHead .rfTag { font-size:12px; font-weight:800; color:#fff; background:#c0392b; border-radius:6px; padding:2px 7px; }
+  .consent { display:flex; gap:8px; align-items:flex-start; justify-content:space-between; margin-top:14px; font-size:15px; font-weight:700; }
+  .consent input { width:20px; height:20px; margin:1px 0 0; flex:none; accent-color:var(--pri); }
+  .rfConsent { white-space:pre-line; font-size:12px; color:var(--sub); background:#f6f7f9; border-radius:8px; padding:8px 10px; margin-top:6px; line-height:1.6; }
+  .person.closed { background:#f3f4f6; color:#9aa3af; border-color:var(--line); }
+  .person .cnt1 { display:block; font-size:13px; color:var(--pri); font-weight:700; margin-top:2px; }
+  .person.closed .cnt1 { color:#9aa3af; }
+  .person.closed .badge { color:#b42318; } .person.armed .badge { color:#fff; background:var(--pri); border-radius:8px; padding:4px 8px; }
+  .ecard { border:1px solid var(--line); border-radius:12px; padding:12px; margin-top:10px; }
+  .ecard .t { font-weight:700; font-size:16px; }
+  .ecard .head { cursor:pointer; position:relative; padding-right:34px; }
+  .ecard .head::after { content:'▾'; position:absolute; right:2px; top:-2px; color:var(--sub); font-size:28px; line-height:1; transition:transform .2s; }
+  .ecard.open .head::after { transform:rotate(180deg); }
+  .ecard .body { display:none; border-top:1px dashed var(--line); margin-top:10px; padding-top:4px; }
+  .ecard.open .body { display:block; }
+  .ecard .tap { color:var(--sub); font-size:12px; margin-top:2px; }
+  .ecard.open .tap { display:none; }
+  .ecard .d { color:var(--sub); font-size:13px; margin-top:2px; }
+  .cnt { font-size:14px; }
+  .ecard .row button { font-size:14px; padding:10px; }
+  .del { background:#fdecea; color:#b42318; }
+  .padarea { margin-top:10px; }
+  canvas.locked { opacity:.55; }
+  @media (orientation: landscape) and (max-height: 600px) {   /* 휴대폰을 가로로 돌렸을 때만 (컴퓨터 화면은 아래 '휴대폰 비율' 적용) */
+    header { padding:4px 14px; }
+    .brand img { height:22px; } header h1 { font-size:11px; padding:2px 8px; }
+    .steps, .hero, footer { display:none !important; }
+    main { max-width:none; padding:8px; }
+    .card { padding:10px; margin-bottom:0; }
+    #s2 .who { font-size:16px; }
+    #s2 .edu { font-size:12px; margin-top:0; }
+    #s2 .hint { display:none; }
+    #s2 .warn { padding:4px 8px; font-size:12px; margin-top:4px; }
+    #s2 .roleT { margin-top:4px; padding:2px 10px; font-size:12px; }
+    .padarea { display:flex; gap:12px; margin-top:6px; }
+    .padwrap { flex:1; min-width:0; }
+    /* 가로 모드 서명 칸: 예전보다 약 1.2배 (아래로 늘림). 위쪽 로고 줄은 서명 화면에서만 숨기고 이름·교육명은 한 줄로 */
+    canvas { height:min(calc((100vh - 140px) * 1.2), calc(100vh - 92px)); height:min(calc((100dvh - 140px) * 1.2), calc(100dvh - 92px)); min-height:120px; }
+    body[data-s="s2"] header, body.skSig header { display:none; }
+    #s2 .whoRow, #skSig .whoRow { display:inline; }
+    #s2 .who, #skSig .who { display:inline; } #s2 .edu, #skSig .edu { display:inline; margin-left:8px; }
+    #skSig .who { font-size:16px; } #skSig .edu { font-size:12px; margin-top:0; }
+    .actions { width:150px; display:flex; flex-direction:column; gap:8px; }
+    .actions .row { flex-direction:column; margin-top:0; }
+    .actions .sub { order:-1; }
+    .actions .sub .btn { padding:22px 10px; }
+  }
+  /* 컴퓨터처럼 넓은 화면: 서명 화면을 휴대폰 폭(430px)으로 가운데에 (관리자 화면은 넓게 그대로) */
+  @media (min-width: 600px) and (min-height: 601px) {
+    html { background:#cfd5e1; }
+    body:not([data-s="sa"]):not([data-s="so"]):not([data-s="sr"]) { max-width:430px; margin:0 auto; min-height:100vh;
+      box-shadow:0 0 0 1px #c3cad8, 0 10px 40px rgba(16,24,48,.18); }
+  }
+  /* v2 추가 */
+  .person.sel { border:2px solid var(--pri); background:#eef3ff; }
+  .person.sel .badge { color:var(--pri); }
+  .codeRow { display:flex; gap:8px; align-items:center; margin-top:8px; }
+  .codeRow input { margin-top:0; }
+  .field { margin-top:10px; }
+  .field label { font-size:13px; color:var(--sub); }
+  .fRow { display:flex; gap:8px; } .fRow > .field { flex:1; min-width:0; }   /* 부서명·날짜 한 줄 (한쪽이 숨으면 나머지가 줄 전체) */
+  .rfSeg { display:flex; gap:6px; margin-top:4px; }
+  .rfSeg button { flex:1; min-width:0; font-size:16px; font-weight:700; padding:12px 4px; border:0; border-radius:10px; background:#e4e7ec; color:var(--sub); }
+  .rfSeg button.on { background:var(--pri); color:#fff; }
+  .rfStRow { display:flex; gap:8px; } .rfStRow .field { flex:1; min-width:0; }
+  #rfAcc .field:last-child { flex:2; }   /* 계좌번호가 한 번에 보이게 (은행 1 : 계좌번호 2) */
+  #rfAcc .field:first-child input { padding-left:8px; padding-right:8px; }   /* 좁은 은행 칸에 이름이 보이게 */
+  #rfFields .field label { font-size:16px; font-weight:700; color:var(--text); }   /* 환불 등록: 칸 이름 크게 */
+  select { width:100%; font-size:16px; padding:11px; border:1px solid var(--line); border-radius:10px; margin-top:4px; background:#fff; }
+  .slist { margin-top:8px; border:1px solid var(--line); border-radius:10px; overflow:hidden; }
+  .srow { display:flex; align-items:center; gap:6px; padding:6px 8px; border-top:1px solid var(--line); font-size:14px; }
+  .srow:first-child { border-top:0; }
+  .srow .no { width:26px; color:var(--sub); text-align:right; }
+  .srow .nm { flex:1; }
+  .srow .nm small { color:var(--sub); margin-right:6px; }
+  .mv { border:1px solid var(--line); background:#fff; border-radius:8px; width:34px; height:30px; font-size:14px; }
+  .mv:disabled { opacity:.35; }
+  .note { font-size:12px; color:var(--sub); margin-top:4px; }
+  /* 새 교육: 본인 확인 체크 (기본 체크) */
+  .vchk { display:flex; align-items:center; gap:8px; border:1px solid var(--line); border-radius:10px; padding:11px 12px; font-size:15px; color:var(--text) !important; cursor:pointer; }
+  .vchk input { width:20px; height:20px; margin:0; accent-color:var(--pri); flex:none; }
+  .vchk small { color:var(--sub); font-size:12px; }
+  .vRow { display:flex; gap:8px; } .vRow .vchk { flex:1; min-width:0; }   /* 본인 확인·명단 지정 한 줄 */
+  .lockRow { display:flex; align-items:center; justify-content:space-between; gap:8px; margin-top:8px; padding:8px 10px; border-radius:10px; background:#fdecea; color:#b42318; font-size:13px; font-weight:700; }
+  .rfLeft.soon, .rfLeft.over { color:#c0392b; font-weight:700; }
+  .rfMins { display:flex; gap:6px; } .rfMins button { flex:1; height:42px; border:1px solid var(--line); border-radius:10px; background:#fff; color:var(--text); font-size:15px; font-weight:700; font-family:inherit; }
+  .rfMins button.on { background:var(--pri); color:#fff; border-color:var(--pri); } .rfMins input { flex:1.3; min-width:0; height:42px; font-size:15px; text-align:center; }
+  .lockRow .btn { background:#b42318; color:#fff; }
+  .roleT { display:inline-block; margin-top:8px; background:#eef3ff; color:var(--pri); border:1px solid #c9d8fb; border-radius:20px; padding:4px 12px; font-size:14px; font-weight:700; }
+  textarea { width:100%; font-size:15px; padding:10px; border:1px solid var(--line); border-radius:10px; margin-top:6px; font-family:inherit; resize:vertical; }
+  .srow .x { border:0; background:none; color:#b42318; font-size:16px; width:28px; }
+  .srow .st { font-size:11px; color:var(--ok); margin-left:4px; }
+  .srow.rrow .nm { flex:none; white-space:nowrap; }
+  .srow .rl { flex:1; color:var(--pri); font-weight:700; text-align:right; word-break:keep-all; overflow-wrap:anywhere; }
+  /* 양식 미리보기 (구조만 작게) */
+  .tprev { margin-top:6px; background:#f7f8fb; border:1px solid var(--line); border-radius:10px; padding:8px; }
+  .tprev .cap { font-size:12px; color:var(--sub); margin-bottom:6px; }
+  .tprev .cap b { color:var(--text); }
+  .tprev .tag { display:inline-block; font-size:11px; font-weight:700; color:#b54708; background:#fff1e6; border:1px solid #f9c79c; border-radius:10px; padding:0 6px; margin-left:4px; }
+  .tprev .wrap { display:flex; gap:6px; align-items:flex-start; }
+  .tprev .wrap + .wrap { margin-top:6px; }
+  .tprev table { border-collapse:collapse; background:#fff; font-size:10px; flex:1; min-width:0; table-layout:fixed; }
+  .tprev th, .tprev td { border:1px solid #c8cfdd; padding:2px 3px; text-align:center; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; height:15px; }
+  .tprev th { background:#e9edf7; color:#33405a; font-weight:700; }
+  .tprev table.skPrev td { white-space:normal; height:auto; } .tprev table.skPrev td.l { text-align:left; } .tprev table.skPrev td.more { font-size:10px; padding:3px; }   /* 안전점검 항목은 줄바꿈 */
+  .tprev th.k-role { background:#ffe7d4; color:#b54708; }
+  .tprev th.k-sign { background:#dfe6fb; color:var(--pri2); }
+  .tprev td.more { color:var(--sub); font-size:9px; height:11px; padding:0; }
+  /* 직원 등록 카드 */
+  #chgCard .nhead, #pcCard .nhead, #gstCard .nhead { cursor:pointer; position:relative; padding-right:34px; }
+  #chgCard .nhead::after, #pcCard .nhead::after, #gstCard .nhead::after { content:'▾'; position:absolute; right:2px; top:-2px; color:var(--sub); font-size:28px; line-height:1; transition:transform .2s; }
+  #chgCard.open .nhead::after, #pcCard.open .nhead::after, #gstCard.open .nhead::after { transform:rotate(180deg); }
+  #chgCard .ebody, #pcCard .ebody, #gstCard .ebody { display:none; } #chgCard.open .ebody, #pcCard.open .ebody, #gstCard.open .ebody { display:block; }
+  #chgCard .codeRow, #pcCard .codeRow { align-items:flex-end; }
+  /* 개인 코드: 입력 글자를 점으로 가림 (비밀번호 칸이 아니라서 휴대폰·브라우저가 저장하자고 묻지 않음) */
+  .secret { -webkit-text-security:disc; letter-spacing:4px; }
+  /* 로그인 */
+  .meBar { display:flex; align-items:center; gap:6px; } .meBar b { flex:1; min-width:0; font-size:15px; }
+  .meAdm { display:inline-block; margin-left:6px; padding:1px 7px; border-radius:999px; background:var(--pri); color:#fff; font-size:12px; font-weight:700; vertical-align:1px; }
+  .rfTime { margin-top:6px; font-size:14px; font-weight:700; color:var(--sub); } .rfTime.soon { color:#c0392b; }
+  .qrOver .regBox { padding:0; overflow-x:hidden; }
+  .regHead { display:flex; align-items:center; gap:12px; padding:16px 18px; color:#fff; background:linear-gradient(160deg, #3d5cc8 0%, var(--pri) 45%, var(--pri2) 100%); }
+  .regIco { flex:none; width:42px; height:42px; border-radius:12px; background:rgba(255,255,255,.16); display:flex; align-items:center; justify-content:center; }
+  .regIco svg { width:24px; height:24px; display:block; }
+  .regHead b { display:block; font-size:17px; line-height:1.3; } .regHead small { display:block; margin-top:2px; font-size:12.5px; opacity:.85; }
+  .regSteps { display:flex; margin:0; padding:12px 18px 0; list-style:none; }
+  .regSteps li { flex:1; position:relative; font-size:12px; font-weight:600; color:var(--sub); text-align:center; }
+  .regSteps li i { display:block; width:24px; height:24px; line-height:22px; margin:0 auto 3px; border:1px solid var(--line); border-radius:50%; background:#fff; font-style:normal; font-size:12px; position:relative; z-index:1; }
+  .regSteps li + li::before { content:''; position:absolute; top:12px; left:-50%; width:100%; height:1px; background:var(--line); }
+  .regSteps li.on { color:var(--pri); font-weight:700; } .regSteps li.on i { background:var(--pri); border-color:var(--pri); color:#fff; box-shadow:0 0 0 4px rgba(50,78,179,.16); }
+  .regSteps li.done i { background:#e7ecfa; border-color:var(--pri); color:var(--pri); } .regSteps li.done + li::before, .regSteps li.on + li::before { background:var(--line); } .regSteps li.done::before, .regSteps li.on::before { background:var(--pri) !important; }
+  .regBody { padding:14px 18px 16px; }
+  .regAskText { font-size:15px; line-height:1.6; color:var(--text); } .regAskText b { color:var(--pri2); }
+  .regMailTo { font-size:14px; line-height:1.5; color:var(--text); background:#f3f6fd; border-radius:10px; padding:9px 12px; overflow-wrap:anywhere; }
+  .codeCells { position:relative; display:flex; gap:6px; margin-top:12px; } .codeCells i { flex:1; min-width:0; height:52px; line-height:50px; border:1.5px solid var(--line); border-radius:10px; background:#fff; color:var(--text); font-style:normal; font-size:24px; font-weight:700; text-align:center; transition:border-color .12s, box-shadow .12s; }
+  .codeCells i.fill { border-color:#9db0e6; background:#f7f9fe; } .codeCells.focus i.cur { border-color:var(--pri); box-shadow:0 0 0 3px rgba(50,78,179,.16); }
+  .codeCells input[type=tel] { position:absolute; inset:0; width:100%; height:100%; margin:0; padding:0; opacity:0; border:0; font-size:16px; }
+  .mailRow { display:flex; align-items:center; gap:6px; margin-top:8px; } .mailRow input[type=text] { flex:1; min-width:0; margin-top:0; } .mailRow span { flex:none; font-size:15px; font-weight:600; color:var(--text); }
+  #regOver.full { padding:0; align-items:stretch; background:var(--bg); }
+  #regOver.full .regBox { width:100%; max-width:430px; height:100%; max-height:none; border-radius:0; animation:none; }
+  #regOver.full .regHead { position:sticky; top:0; z-index:2; }
+  .regInfo { white-space:pre-line; font-size:12px; line-height:1.6; color:var(--sub); background:#f6f7f9; border-radius:8px; padding:8px 10px; margin-top:10px; }
+  .regChk { font-size:14px; line-height:1.8; background:#f3f6fd; border-radius:8px; padding:8px 10px; margin-top:8px; }
+  input[readonly] { background:#eef1f5; color:var(--sub); }
+  .eTabs { display:flex; margin-top:10px; border-bottom:1px solid var(--line); } .eTabs button { flex:1; height:42px; border:1px solid var(--line); border-bottom:0; border-radius:10px 10px 0 0; background:#eef1f5; color:var(--sub); font-size:15px; font-weight:700; }
+  .eTabs button.on { background:#fff; color:var(--pri); box-shadow:0 1px 0 #fff; }
+  .pickBox { background:#fff7e6; border:1px solid #f5d0a6; border-radius:10px; padding:8px 10px; margin-top:8px; font-size:14px; } .pickBox label { display:flex; align-items:center; gap:8px; padding:5px 0; color:var(--text) !important; } .pickBox input { width:20px; height:20px; margin:0; flex:none; accent-color:var(--pri); }
+  /* 환불 등록 QR: 입력 화면이 다 불러질 때까지 다른 화면을 보이지 않음 */
+  .rfBoot header, .rfBoot #hero, .rfBoot #steps, .rfBoot main, .rfBoot #foot { visibility:hidden; }
+  .rfBoot body::before { content:'불러오는 중…'; position:fixed; inset:0; display:flex; align-items:center; justify-content:center; color:var(--sub); font-size:15px; }
+  /* 새 교육 열기: 접고 펼치기 */
+  #newCard .nhead { cursor:pointer; position:relative; padding-right:34px; }
+  #newCard .nhead::after { content:'▾'; position:absolute; right:2px; top:-2px; color:var(--sub); font-size:28px; line-height:1; transition:transform .2s; }
+  #newCard.open .nhead::after { transform:rotate(180deg); }
+  #newCard .nbody { display:none; }
+  #newCard.open .nbody { display:block; }
+  /* 교육 카드 안 '교육 정보': 접고 펼치기 */
+  .ihead { cursor:pointer; position:relative; padding-right:34px; margin-top:12px; }
+  .ihead::after { content:'▾'; position:absolute; right:2px; top:-2px; color:var(--sub); font-size:28px; line-height:1; transition:transform .2s; }
+  .ibox.open .ihead::after { transform:rotate(180deg); }
+  .ibox .ibody { display:none; }
+  .ibox.open .ibody { display:block; margin:8px -12px 0; padding:2px 12px 12px; background:#f3f6fd; border-top:1.5px solid var(--pri); border-bottom:1.5px solid var(--pri); }   /* 펼치면 카드 좌우 끝까지 연한 파랑, 위아래 줄 (입력칸 폭은 그대로) */
+  .gnote { margin-top:10px; background:#fff1e6; border:1px solid #f9c79c; color:#9a3d06; border-radius:10px; padding:8px 12px; font-size:14px; }
+  /* 안전점검의 날: 서명지 목록 카드 (누르면 역 선택 화면) */
+  .skItem { border:1.5px solid #9fb3ea; background:#f5f8ff; border-radius:12px; padding:12px; cursor:pointer; }
+  .skItem .skTop b { display:block; font-size:17px; margin-top:4px; }
+  .skItem .skTop .rank { color:var(--sub); font-size:14px; }
+  .skTag { display:inline-block; font-size:12px; font-weight:800; color:#fff; background:var(--pri); border-radius:6px; padding:2px 7px; }
+  .skCnt { margin-top:8px; font-size:14px; } .skCnt strong { color:var(--pri); } .skCnt strong.done { color:var(--ok); }
+  .skGo { font-size:12px; color:var(--sub); margin-top:2px; }
+  .skItem.busy { opacity:.6; pointer-events:none; }
+  .skCell { display:flex; flex-direction:column; gap:4px; } .skCell > button:first-child { flex:1; }
+  .pdfDl { font-size:11.5px; font-weight:600; color:#12833b; }   /* PDF 받음 표시 (누가·언제) */
+  .skPdfS.got { border-color:#12833b !important; color:#12833b; }
+  .skPdfS { border:1.5px solid var(--pri) !important; background:#fff !important; color:var(--pri); font-size:13px !important; font-weight:700; padding:7px 4px !important; border-radius:8px !important; }
+  .skPdfB { width:100%; margin-top:8px; padding:10px; border:1.5px solid var(--line); border-radius:12px; background:#fff; font-size:14px; font-weight:700; color:var(--pri); }
+  .skPdfB:disabled { color:#98a2b3; background:#f4f5f7; }
+  .skItem.closed { border-color:var(--line); background:#f4f5f7; color:#98a2b3; }
+  .skItem.closed .skCnt strong { color:#98a2b3; }
+  /* 역 선택 화면의 팀장 확인 (진행 상황 · 일괄 서명) */
+  .skLead { margin-top:12px; border:1.5px solid #9fb3ea; background:#f5f8ff; border-radius:12px; padding:10px 12px; }
+  .skLead .who { font-size:16px; color:var(--pri); }
+  html { touch-action:manipulation; }   /* 휴대폰: 두 번 탭 확대 제스처 끔 → 첫 터치가 바로 버튼으로 */
+  html.noPull, html.noPull body { overscroll-behavior-y:none; }        /* 안전점검 화면: 당겨서 새로고침 끔 */
+  body.skSig #sk .rfHead, body.skSig #skTitle, body.skSig #skDate { display:none; }   /* 서명 단계: 교육 서명처럼 이름 줄 + 제목 한 줄만 */
+  .skGrid button.chk { border-color:#f0d58a; background:#fff3c4; } .skGrid button small.ck { color:#b45309; font-weight:700; }   /* 확인 필요한 역 */
+  /* 점검자 화면 */
+  .skGrid { display:grid; grid-template-columns:repeat(3, 1fr); gap:6px; margin-top:10px; }
+  .skGrid button { border:1.5px solid var(--line); background:#fff; border-radius:10px; padding:10px 4px; font-size:15px; font-weight:700; color:var(--text); line-height:1.3; }
+  .skGrid button small { display:block; font-size:11px; font-weight:400; color:var(--sub); }
+  .skGrid button.done { border-color:#bfe3cb; background:#eef8f1; } .skGrid button.done small { color:var(--ok); }
+  .skGrp { margin-top:14px; font-size:13px; font-weight:800; color:var(--pri2); border-bottom:1px solid var(--line); padding-bottom:4px; }
+  .skIt { padding:10px 0; border-bottom:1px dashed var(--line); }
+  .skH { display:flex; align-items:center; gap:8px; }
+  .skH .t { flex:1; min-width:0; font-size:15px; }
+  .skL { display:flex; align-items:center; gap:14px; margin-top:6px; }          /* 수량 칸 옆에 양호, 비고 칸 옆에 불량 (둘 중 하나만 체크) */
+  .skL .qi, .skL .ni { flex:1; width:auto !important; margin-top:0 !important; }
+  .skL label { flex:none; width:68px; display:flex; align-items:center; gap:4px; font-size:15px; font-weight:700; color:var(--text); cursor:pointer; white-space:nowrap; }
+  .skIt .skL label input { padding:0; width:24px; height:24px; margin:0; accent-color:var(--pri); flex:none; }
+  .skL label.on { color:var(--pri); } .skL label.x.on { color:#b42318; } .skL label.x input { accent-color:#c0392b; }
+  .skQ textarea.ni { width:100%; margin-top:6px; font-size:15px; padding:9px 10px; border:1px solid var(--line); border-radius:10px; font-family:inherit; line-height:1.4; resize:none; overflow:hidden; display:block; }
+  .skQ textarea.ni.fold { height:42px; white-space:pre; }                       /* 접힘: 한 줄만 보임 */
+  .skQ .nTog { align-self:flex-end; border:0; background:none; color:var(--pri); font-size:13px; font-weight:700; padding:4px 2px; }
+  .skIt.miss { background:#fff5f4; }
+  .skIt input { margin-top:6px; font-size:15px; padding:9px 10px; }
+  #sk textarea { width:100%; font-size:15px; padding:10px; border:1px solid var(--line); border-radius:10px; margin-top:6px; font-family:inherit; }
+  .skChecks { display:grid; grid-template-columns:repeat(3, 1fr); gap:4px 8px; margin-top:6px; }
+  .skChecks label { display:flex; align-items:center; gap:5px; font-size:14px; color:var(--text); }
+  .skChecks input { width:18px; height:18px; margin:0; accent-color:var(--pri); flex:none; }
+  .skQ { display:flex; flex-direction:column; } .skQ .qi, .skQ .ni { width:100%; min-width:0; }   /* 수량 한 줄 · 비고 다음 줄 */
+  .skQ input::placeholder { color:#98a2b3; }
+  /* 체크리스트 모양 (점검자 최종 확인 · 팀장 확인) */
+  .skPaper { background:#fff; border:1px solid #c9ced8; border-radius:6px; padding:10px; color:#111; font-size:12px; }
+  .skPaper .pT { text-align:center; font-size:17px; font-weight:800; margin:2px 0 8px; }
+  .skPaper table { width:100%; border-collapse:collapse; table-layout:fixed; }
+  .skPaper th, .skPaper td { border:1px solid #888; padding:4px 3px; vertical-align:middle; text-align:center; word-break:keep-all; overflow-wrap:anywhere; }
+  .skPaper th { background:#f1f1f1; font-weight:700; }
+  .skPaper .pHead td { font-weight:700; } .skPaper .pSign { height:46px; } .skPaper .pSign img { max-width:100%; max-height:44px; display:block; margin:0 auto; }
+  .skPaper .pNote { font-size:11px; margin:6px 0 4px; }
+  .skPaper .pi { text-align:left; } .skPaper .pr { font-weight:800; font-size:14px; } .skPaper .pr.x { color:#c0392b; }
+  .skPaper .pn { font-size:11px; }
+  .skPaper tr.chg td { background:#fff3c4; }
+  .skPaper td.ck { background:#fff3c4; }   /* 팀장 보기: 수량 바뀜·비고·불량 칸 */
+  .skPaper .was { display:block; font-size:10.5px; color:#b45309; font-weight:700; margin-top:2px; }
+  .skPaper .pChg { font-size:12px; font-weight:700; color:#b45309; margin-bottom:6px; } .skPaper .pChg.none { color:var(--sub); }
+  /* 팀장 내용 보기: 전체 화면 (역마다 체크리스트, 이전·다음 역) */
+  .skView { position:fixed; top:var(--vvt, 0px); left:0; right:0; height:var(--vvh, 100%); z-index:40; background:#e9edf4; display:flex; flex-direction:column; }
+  body.skLock { overflow:hidden; }
+  .lvTop { flex:none; display:flex; align-items:center; gap:8px; padding:8px 10px; background:#fff; border-bottom:2px solid var(--pri); }
+  .lvTop b { flex:1; min-width:0; font-size:15px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .lvTop span { font-size:13px; font-weight:700; color:var(--pri); white-space:nowrap; }
+  .lvTop select { flex:none; max-width:44%; height:36px; font-size:15px; border:1px solid var(--line); border-radius:8px; padding:0 6px; background:#fff; color:var(--text); }
+  .lvPage { flex:1; overflow-y:auto; -webkit-overflow-scrolling:touch; overscroll-behavior:contain; padding:10px; }
+  .lvHint { text-align:center; font-size:12px; color:var(--sub); padding:8px 0; }
+  .lvNav { margin:6px 0 30px; }

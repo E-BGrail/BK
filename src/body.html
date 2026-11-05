@@ -1,0 +1,453 @@
+</head>
+<body>
+<header>
+  <div class="brand" id="brand">
+    <img id="logo" alt="부산-김해경전철" referrerpolicy="no-referrer"
+      src="https://www.bglrt.com/_res/english/img/inc/logo_bgl%28k%29.png"
+      onerror="if(!this.dataset.alt){this.dataset.alt=1;this.src='https://www.bglrt.com/_res/default/img/sub/p00563_img05_04.png';}else{document.getElementById('brand').className='brand noimg';}">
+    <span class="wm"><i>BGL</i>부산-김해경전철</span>
+  </div>
+  <h1>e-싸인</h1>
+  <div class="appSw hidden" id="appSw" role="tablist"><a class="sw on" data-k="sign" href="#" role="tab" aria-selected="true">e-싸인</a><a class="sw" data-k="car" href="#" target="_top" role="tab" aria-selected="false">업무차량관리</a></div>
+</header>
+
+<!-- 첫 화면 그림 (교육 선택 화면에서만) -->
+<div class="hero" id="hero">
+  <div class="txt">
+    <div class="k">BUSAN · GIMHAE LRT</div>
+    <h2>BGL e-싸인</h2>
+    <p id="heroText">사번과 개인 코드로 로그인하세요.</p>
+  </div>
+  <button class="qrBtn hidden" id="qrBtn" type="button" aria-label="QR 크게 보기"><span id="qrSmall"></span><b>QR</b></button>
+  <svg viewBox="0 0 400 120" aria-hidden="true">
+    <!-- 먼 산 -->
+    <path d="M0 88 L40 62 L70 76 L110 44 L150 70 L190 52 L230 74 L270 40 L310 66 L350 50 L400 72 L400 120 L0 120Z" fill="#fff" opacity=".08"/>
+    <!-- 도시 -->
+    <g fill="#fff" opacity=".13">
+      <rect x="18" y="58" width="16" height="40"/><rect x="38" y="48" width="12" height="50"/><rect x="54" y="66" width="18" height="32"/>
+      <rect x="300" y="54" width="14" height="44"/><rect x="318" y="40" width="12" height="58"/><rect x="334" y="62" width="20" height="36"/><rect x="358" y="50" width="12" height="48"/>
+    </g>
+    <!-- 고가 궤도 -->
+    <rect x="0" y="92" width="400" height="7" fill="#dfe5f7"/>
+    <rect x="0" y="99" width="400" height="3" fill="#9fa9aa"/>
+    <g fill="#c9d1e8"><rect x="34" y="102" width="9" height="18"/><rect x="134" y="102" width="9" height="18"/><rect x="234" y="102" width="9" height="18"/><rect x="334" y="102" width="9" height="18"/></g>
+    <!-- 경전철 2량 (실제 열차처럼: 흰·회색 차체, 주황 지붕띠가 양 끝에서 아래로 내려옴, 검은 창, 가운데 연결막) -->
+    <g id="trainDrag"><g class="run" id="train">
+      <!-- 지붕 장비 -->
+      <g fill="#eef0f2" stroke="#c3c8ce" stroke-width=".6">
+        <rect x="22" y="53.5" width="20" height="5" rx="1"/><rect x="60" y="54.5" width="10" height="4" rx="1"/><rect x="88" y="53.5" width="20" height="5" rx="1"/>
+        <rect x="132" y="53.5" width="20" height="5" rx="1"/><rect x="170" y="54.5" width="10" height="4" rx="1"/><rect x="198" y="53.5" width="20" height="5" rx="1"/>
+      </g>
+      <!-- 차체 -->
+      <rect x="6" y="58" width="112" height="32" rx="4" fill="#f3f4f6"/>
+      <rect x="122" y="58" width="112" height="32" rx="4" fill="#f3f4f6"/>
+      <!-- 아래쪽 회색 -->
+      <rect x="6" y="86" width="112" height="4" fill="#c9ced4"/><rect x="122" y="86" width="112" height="4" fill="#c9ced4"/>
+      <!-- 주황 지붕띠 (양 끝은 아래로 둥글게 내려옴) -->
+      <path d="M10 58 H118 V65 H26 Q15 65 8 80 H6 V62 Q6 58 10 58 Z" fill="#f26b1d"/>
+      <path d="M122 58 H230 Q234 58 234 62 V80 H232 Q225 65 214 65 H122 Z" fill="#f26b1d"/>
+      <!-- 연결막 -->
+      <rect x="118" y="60" width="4" height="28" fill="#8b9198"/>
+      <!-- 양 끝 앞유리 -->
+      <path d="M7.5 70 Q10 67 15 67 V80 H7.5 Z" fill="#1d2127"/>
+      <path d="M232.5 70 Q230 67 225 67 V80 H232.5 Z" fill="#1d2127"/>
+      <!-- 창문·출입문 -->
+      <g fill="#1d2127">
+        <rect x="21" y="67" width="24" height="11" rx="1.5"/><rect x="70" y="67" width="18" height="11" rx="1.5"/><rect x="108" y="67" width="7" height="11" rx="1.5"/>
+        <rect x="125" y="67" width="7" height="11" rx="1.5"/><rect x="152" y="67" width="18" height="11" rx="1.5"/><rect x="195" y="67" width="24" height="11" rx="1.5"/>
+      </g>
+      <g fill="#e4e7ea" stroke="#b8bec5" stroke-width=".6">
+        <rect x="50" y="66" width="15" height="21"/><rect x="92" y="66" width="13" height="21"/>
+        <rect x="135" y="66" width="13" height="21"/><rect x="175" y="66" width="15" height="21"/>
+      </g>
+      <g fill="#1d2127">
+        <rect x="52" y="68" width="5" height="9" rx="1"/><rect x="58" y="68" width="5" height="9" rx="1"/><rect x="94" y="68" width="4" height="9" rx="1"/><rect x="99" y="68" width="4" height="9" rx="1"/>
+        <rect x="137" y="68" width="4" height="9" rx="1"/><rect x="142" y="68" width="4" height="9" rx="1"/><rect x="177" y="68" width="5" height="9" rx="1"/><rect x="183" y="68" width="5" height="9" rx="1"/>
+      </g>
+      <!-- 앞등 -->
+      <rect x="230" y="82" width="3" height="2" rx="1" fill="#ffd27a"/>
+    </g></g>
+    <rect id="trainHit" x="0" y="50" width="400" height="42" fill="transparent"/>
+  </svg>
+</div>
+
+<!-- 진행 단계 -->
+<div class="steps" id="steps">
+  <div class="st1"><b>1</b>서명지 선택</div>
+  <div class="st1"><b>2</b>서명</div>
+  <div class="st1"><b>3</b>완료</div>
+</div>
+
+<main>
+  <!-- 로그인: 사번 + 개인 코드 (외부 참석자는 배포용 아이디만) -->
+  <section id="sl">
+    <div class="card">
+      <div id="lgFields">
+      <div class="field"><label>사번</label><input type="tel" id="lgPin" placeholder="사번" autocomplete="off" inputmode="numeric" pattern="[0-9]*" maxlength="20" enterkeyhint="next"></div>
+      <div class="field"><label>개인 코드</label><input type="text" id="lgCode" class="secret" placeholder="숫자 6자리" autocomplete="off" inputmode="numeric" maxlength="6" enterkeyhint="go"></div>
+      </div>
+      <div class="msg" id="lgMsg"></div>
+      <div class="row"><button class="btn pri" id="lgOk" type="button">로그인</button></div>
+      <div class="hint" id="lgHintStaff">처음이면 사번만 입력하고 [로그인]을 눌러 사내 메일 인증으로 직원 등록하세요.<br>개인 코드 분실시 관리자에게 문의하세요.<br>외부 참석자는 담당자에게 받은 아이디와 코드를 입력하세요.</div>
+    </div>
+  </section>
+
+  <!-- 1단계: 서명지 선택 + 접속 코드 -->
+  <section id="s1" class="hidden">
+    <div class="card">
+      <div class="meBar"><b id="meName"></b><button class="btn gray sbtn" id="meOut" type="button">로그아웃</button></div>
+    </div>
+    <div class="card">
+      <b>서명지를 선택하세요</b>
+      <div class="eTabs"><button type="button" id="edTabOpen"></button><button type="button" id="edTabClosed"></button></div>
+      <div class="list" id="edus"><div class="hint">불러오는 중…</div></div>
+      <div class="msg" id="msg1"></div>
+    </div>
+    <div class="card" id="chgCard">
+      <div class="nhead" id="chgHead"><b>개인정보 변경</b></div>
+      <div class="ebody">
+        <div class="note">개인정보 등록 시 사용한 본인 메일로 인증 코드를 보냅니다. 코드를 확인 후 입력하면 개인정보 변경이 가능합니다. 사번과 개인 코드, 메일은 바꿀 수 없습니다. 개인 코드 분실 시 관리자에게 문의 바랍니다.</div>
+        <div class="row"><button class="btn gray" id="chgMailSend" type="button">메일로 인증 코드 받기</button></div>
+        <div class="codeRow hidden" id="chgCodeRow">
+          <div style="flex:1"><input type="tel" id="chgMailCode" placeholder="인증 코드 6자리" autocomplete="one-time-code" inputmode="numeric" pattern="[0-9]*" maxlength="6"></div>
+          <button class="btn gray sbtn" id="chgCodeOk" type="button" style="flex:none">확인</button>
+        </div>
+        <div class="hidden" id="chgForm">
+          <div class="field"><label>이름</label><input type="text" id="chgName" autocomplete="off" maxlength="20"></div>
+          <div class="field"><label>사번 (변경 불가)</label><input type="text" id="chgPinShow" readonly></div>
+          <div class="fRow"><div class="field"><label>부서명</label><input type="text" id="chgDept" autocomplete="off" maxlength="30"></div>
+          <div class="field"><label>팀 (선택)</label><input type="text" id="chgTeam" autocomplete="off" maxlength="30"></div></div>
+          <div class="fRow"><div class="field"><label>직책 (선택)</label><input type="text" id="chgPost" autocomplete="off" maxlength="20"></div>
+          <div class="field"><label>직위</label><input type="text" id="chgRank" autocomplete="off" maxlength="20"></div></div>
+          <div class="row"><button class="btn pri" id="chgSend" type="button">변경</button></div>
+        </div>
+        <div class="msg" id="chgMsg"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 본인 확인 없는 서명지: 양식에 있는 칸 직접 입력 -->
+  <section id="sp" class="hidden">
+    <div class="card">
+      <div class="who" id="eduName"></div>
+      <div class="edu" id="eduDate"></div>
+      <div class="gnote hidden" id="gNote">이 서명지는 개인 코드가 필요 없습니다. 아래 칸을 입력하고 [확인]을 누르세요.</div>
+      <div class="field hidden" id="gDeptRow"><label>소속</label><input type="text" id="gDept" placeholder="예: ○○역, △△회사" autocomplete="off" maxlength="30" enterkeyhint="next"></div>
+      <div class="field hidden" id="gRankRow"><label>직위</label><input type="text" id="gRank" placeholder="예: 대리" autocomplete="off" maxlength="20" enterkeyhint="next"></div>
+      <div class="field"><label id="nameLabel">이름</label><input type="text" id="name" placeholder="이름" autocomplete="off" maxlength="20"></div>
+      <div class="field hidden" id="gRoleRow"><label><span id="gRoleLabel">임무·역할</span> <span class="hint">(선택)</span></label><input type="text" id="gRole" autocomplete="off" maxlength="100" enterkeyhint="next"></div>
+      <div class="field hidden" id="gNoteRow"><label>비고 <span class="hint">(선택)</span></label><input type="text" id="gNoteIn" autocomplete="off" maxlength="100" enterkeyhint="go"></div>
+      <div class="msg" id="msgp"></div>
+      <div class="row">
+        <button class="btn gray" id="pback">처음으로</button>
+        <button class="btn pri" id="pok">확인</button>
+      </div>
+      <div class="hint">서명 시 접속 기기 정보(기종·OS·브라우저)가 함께 기록됩니다.</div>
+    </div>
+  </section>
+
+  <!-- 3단계: 서명 -->
+  <section id="s2" class="hidden">
+    <div class="card">
+      <div class="whoRow"><div class="who" id="who"></div><span class="lsTag"></span></div>
+      <div class="edu" id="eduT"></div>
+      <div class="roleT hidden" id="roleT"></div>
+      <div class="warn hidden" id="warn">이미 서명한 기록이 있습니다. 새로 제출하면 이전 서명이 교체됩니다.</div>
+      <div class="padarea">
+        <div class="padwrap"><canvas id="pad"></canvas></div>
+        <div class="actions">
+          <div class="row">
+            <button class="btn gray" id="clear">지우기</button>
+            <button class="btn gray" id="back">뒤로</button>
+          </div>
+          <div class="row sub">
+            <button class="btn pri" id="submit" disabled>서명 제출</button>
+          </div>
+          <div class="msg" id="msg2"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 4단계: 완료 -->
+  <section id="s3" class="hidden">
+    <div class="card center">
+      <div class="check">✓</div>
+      <div class="who" id="doneWho"></div>
+      <div class="hint" id="doneMsg"></div>
+      <div class="doneClose hidden" id="doneClose">이제 이 창을 닫으셔도 됩니다.</div>
+      <div class="row" id="nextRow"><button class="btn pri" id="nextPerson">같은 서명지 · 다음 사람 서명</button></div>
+      <div class="row" id="againRow"><button class="btn gray" id="again">서명지 목록 보기</button></div>
+    </div>
+  </section>
+
+  <!-- 안내만 보이는 화면: 마감된 환불 등록 QR, 입력 시간 지남 -->
+  <section id="sx" class="hidden">
+    <div class="card center">
+      <div class="who" id="sxTitle"></div>
+      <div class="hint" id="sxMsg" style="margin-top:8px"></div>
+    </div>
+  </section>
+
+  <!-- 비상: 운행 장애 환불 승객 등록 (접속 코드 없음) -->
+  <section id="sf" class="hidden">
+    <div class="card">
+      <div class="rfHead"><span class="rfTag">운행 장애 · 환불 등록</span><button type="button" class="rfQrMini hidden" id="rfQrBtn">고객용 QR<span class="hidden"></span></button></div>
+      <div class="who" id="rfTitle" style="margin-top:6px"></div>
+      <div class="edu" id="rfDate"></div>
+      <div class="rfTime hidden" id="rfTime"></div>
+      <div id="rfFields"></div>
+      <div id="rfAccBox" class="hidden">
+        <label class="consent"><span>[선택] 환불 계좌 입력</span><input type="checkbox" id="rfAccOn"></label>
+        <div class="hidden" id="rfAccForm"><div class="rfStRow" id="rfAcc"></div><div class="rfConsent" id="rfAccText"></div></div>
+      </div>
+      <label class="consent"><span>[필수] 개인정보 수집·이용에 동의합니다.</span><input type="checkbox" id="rfAgree"></label>
+      <div class="rfConsent" id="rfConsentText"></div>
+      <div id="rfLocBox" class="hidden">
+        <label class="consent"><span>[필수] 위치정보 수집·이용에 동의합니다.</span><input type="checkbox" id="rfLocAgree"></label>
+        <div class="rfConsent" id="rfLocText"></div>
+      </div>
+      <div class="msg" id="rfMsg"></div>
+      <div class="row">
+        <button class="btn gray" id="rfBack">처음으로</button>
+        <button class="btn pri" id="rfOk">등록하기</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- 관리자 화면 (관리자로 지정된 직원이 서명지 목록 열차를 왼쪽으로 밀기 → 바로 열림) -->
+  <section id="sa" class="hidden">
+    <div class="card">
+      <div class="adm-top">
+        <span class="who">관리자</span>
+        <span>
+          <button class="btn gray sbtn" id="aRefresh">새로고침</button>
+          <button class="btn gray sbtn" id="aLogout">나가기</button>
+        </span>
+      </div>
+      <div class="msg" id="aMsg"></div>
+    </div>
+    <div class="card" id="newCard">
+      <div class="nhead" id="nHead"><b>새 서명지 열기</b></div>
+      <div class="nbody">
+      <div class="field" id="nKindRow"><div class="vRow"><label class="vchk"><input type="checkbox" id="nVerify" checked> <b>본인 확인</b></label>
+        <label class="vchk" id="nRosterRow"><input type="checkbox" id="nUseRoster"> <b>명단 지정</b></label></div>
+        <div class="note hidden" id="nNoVerify">본인 확인 없음: 서명자가 소속·직위·성명을 직접 입력합니다. 서명지를 연 뒤에는 바꿀 수 없습니다.</div></div>
+      <div class="field"><label>양식</label><select id="nTpl"></select><div class="tprev hidden" id="nTplPrev"></div></div>
+      <div class="field hidden" id="nRosterBox"><textarea id="nRoster" rows="5" placeholder="이름을 한 번에 입력 (줄바꿈·쉼표·띄어쓰기로 구분)&#10;예) 홍길동, 김철수, 이영희&#10;동명이인은 서명지를 열 때 고릅니다"></textarea>
+        <div class="pickBox hidden" id="nPick"></div>
+        <div class="note">명단에 넣은 사람도 이 서명지를 볼 수 있습니다. 이름은 서명한 순서대로 서명지에 들어갑니다. 직원DB에 있는 직원만 넣을 수 있고, 서명지를 연 뒤에는 바꿀 수 없습니다.</div></div>
+      <div class="field hidden" id="nSkBox"><label>점검할 역</label>
+        <label class="vchk" style="margin-top:6px"><input type="checkbox" id="nSkAll" checked> <b>전체 선택</b></label>
+        <div class="skChecks" id="nSkList"></div>
+        <div class="note">안전점검: 제목은 "안전점검의 날 체크리스트"로 고정, 부서명은 서명지를 연 관리자의 부서(그 부서 직원에게만 보임), 접속 코드 없이 서명지 목록에 점검자·팀장 박스로 보입니다. 점검자는 역을 골라 입력하고 서명, 팀장(직책에 '팀장')은 역마다 확인하고 서명합니다. 역은 서명지를 연 뒤에는 바꿀 수 없습니다.</div></div>
+      <div class="field" id="nTitleRow"><label id="nTitleLabel">교육명</label><input type="text" id="nTitle" placeholder="예: 4분기 비상대응 훈련" autocomplete="off"></div>
+      <div class="fRow"><div class="field" id="nDeptRow"><label>부서명</label><select id="nDept"></select></div>
+      <div class="field" id="nTeamRow"><label>팀</label><select id="nTeam"></select></div></div>
+      <div class="note" id="nDeptNote">부서명·팀을 고르면 해당하는 사람에게만 서명지가 보입니다. 명단도 지정하면 명단에 있는 사람까지 보입니다. 모두 [전체]이고 명단이 없으면 모든 직원에게 보입니다.</div>
+      <div class="field" id="nDateRow"><label>날짜</label><input type="text" id="nDate" autocomplete="off"></div>
+      <div class="field" id="nCodeRow"><label>접속 코드 (숫자 4자리, 서명지마다 다르게)</label><input type="text" id="nCode" placeholder="예: 1024" autocomplete="off" inputmode="numeric" maxlength="4" pattern="[0-9]*"></div>
+      <div class="field hidden" id="nRfMinRow"><label>고객용 QR 접수 시간</label>
+        <div class="rfMins" id="nRfMins"><button type="button" data-m="10" class="on">10분</button><input type="tel" id="nRfMin" placeholder="직접(분)" inputmode="numeric" maxlength="3" autocomplete="off"></div>
+        <div class="note">이 시간이 지나면 고객용 QR로는 등록할 수 없고, 직원 등록은 마감할 때까지 됩니다. 다시 열면 이 시간만큼 다시 받습니다.</div></div>
+      <div class="note hidden" id="nRfNote">환불 등록: 접속 코드 없이 첫 화면 맨 위에 보이고, QR로 바로 들어옵니다. 제목은 "년.월.일.(요일) 운행 장애 환불 신청"으로 자동으로 정해집니다.</div>
+      <div class="row"><button class="btn pri" id="nCreate">서명지 열기</button></div>
+      <div class="msg" id="nMsg"></div>
+      </div>
+    </div>
+    <div class="card">
+      <b>서명지별 현황</b>
+      <div class="eTabs"><button type="button" id="aTabOpen"></button><button type="button" id="aTabClosed"></button></div>
+      <div id="aEdus"></div>
+    </div>
+    <div class="card" id="gstCard">
+      <div class="nhead" id="gstHead"><b>배포용 아이디</b></div>
+      <div class="ebody">
+        <div class="note">외부 참석자가 함께 쓰는 아이디입니다. 사번 칸에 이 아이디만 넣으면 로그인되고(개인 코드 없음), 본인 확인 없는 서명지만 보입니다. 아이디를 바꾸면 기존 로그인은 끊깁니다. 비우고 저장하면 사용하지 않습니다.</div>
+        <div class="field"><label>아이디 (숫자 4자리 이상)</label><input type="tel" id="gstId" autocomplete="off" inputmode="numeric" pattern="[0-9]*" maxlength="20"></div>
+        <div class="row"><button class="btn pri" id="gstSave" type="button">저장</button></div>
+        <div class="msg" id="gstMsg"></div>
+      </div>
+    </div>
+    <div class="card" id="pcCard">
+      <div class="nhead" id="pcHead"><b>개인 코드 관리</b></div>
+      <div class="ebody">
+        <div class="note">코드는 암호화 돼 관리자도 볼 수 없습니다.<br>초기화하면 직원DB에서도 삭제되고, 다음 로그인 때 미등록으로 나와 메일 인증으로 다시 등록합니다.</div>
+        <div class="codeRow">
+          <div style="flex:1"><input type="tel" id="pcPin" placeholder="초기화할 직원의 사번" autocomplete="off" inputmode="numeric" pattern="[0-9]*"></div>
+          <button class="btn del sbtn" id="pcReset" style="flex:none">초기화</button>
+        </div>
+        <div class="msg" id="pcMsg"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 서명자 순서 보기 · 수정 (관리자) -->
+  <section id="so" class="hidden">
+    <div class="card">
+      <div class="adm-top">
+        <span class="who">서명자 순서</span>
+        <button class="btn gray sbtn" id="oBack">← 관리자 화면</button>
+      </div>
+      <div class="t" id="oTitle" style="font-weight:700;font-size:16px;margin-top:8px"></div>
+      <div class="d hint" id="oSub"></div>
+      <div class="hint" id="oHint"></div>
+      <div class="slist" id="oList"></div>
+      <div class="row"><button class="btn gray" id="oDb">직원DB 순서로 정렬</button><button class="btn pri" id="oSave" disabled>순서 저장</button></div>
+      <div class="msg" id="oMsg"></div>
+    </div>
+  </section>
+
+  <!-- 임무·역할 지정 (관리자) -->
+  <section id="sr" class="hidden">
+    <div class="card">
+      <div class="adm-top">
+        <span class="who">임무·역할 지정</span>
+        <button class="btn gray sbtn" id="rBack">← 관리자 화면</button>
+      </div>
+      <div style="font-weight:700;font-size:16px;margin-top:8px" id="rTitle"></div>
+      <div class="warn hidden" id="rNoCol">이 서명지의 양식에는 임무·역할 칸이 없어 서명지에는 들어가지 않습니다. (서명 화면과 로그에는 표시)</div>
+    </div>
+    <div class="card" id="rHeadCard">
+      <b>머릿글</b> <span class="hint" id="rHeadAt"></span>
+      <input type="text" id="rHead" maxlength="30" autocomplete="off" placeholder="예: 임무, 역할">
+      <div class="note">서명지의 임무·역할 칸 제목입니다. 바꾸고 저장하면 이 서명지(모든 페이지)에 바로 반영됩니다. 양식은 그대로입니다.</div>
+    </div>
+    <div class="card">
+      <b>여러 명 한 번에 붙여넣기</b>
+      <textarea id="rPaste" rows="6" placeholder="한 줄에 한 명: 이름 임무·역할&#10;예) 홍길동 현장지휘, 상황전파&#10;동명이인은 직책도: 대리 김철수 승객안내"></textarea>
+      <div class="note">이름 뒤에 적은 글자가 쉼표까지 그대로 임무·역할로 표시됩니다. 이미 지정된 사람을 다시 적으면 새 내용으로 바뀝니다.</div>
+      <div class="row"><button class="btn gray" id="rApply">붙여넣은 내용 적용</button></div>
+      <div class="codeRow" id="rFromRow">
+        <select id="rFrom"></select>
+        <button class="btn gray sbtn" id="rLoad">불러오기</button>
+      </div>
+    </div>
+    <div class="card">
+      <b>지정 현황</b> <span class="hint" id="rCount"></span>
+      <div class="slist" id="rList"></div>
+    </div>
+    <div class="card">
+      <div class="row" style="margin-top:0"><button class="btn pri" id="rSave">저장</button></div>
+      <div class="msg" id="rMsg"></div>
+    </div>
+  </section>
+  <!-- 안전점검의 날: 점검자 (역 선택 → 체크리스트 → 최종 확인 → 서명), 팀장 (역 선택 화면에서 진행 상황 → 일괄 서명) -->
+  <section id="sk" class="hidden">
+    <div class="card">
+      <div class="rfHead"><span class="skTag">안전점검의 날</span></div>
+      <div class="who" id="skTitle" style="margin-top:6px"></div>
+      <div class="edu" id="skDate"></div>
+      <div id="skPick">
+        <div class="hint">점검할 역을 고르세요. ✓ 표시는 점검자 서명이 끝난 역이고, 다시 고르면 고쳐서 다시 서명합니다. 팀장 확인까지 끝난 역은 수정할 수 없고 PDF를 받아 출력·보관할 수 있습니다.</div>
+        <div class="skGrid" id="skGrid"></div>
+        <div class="skLead hidden" id="skLead">
+          <div class="who">팀장 확인</div>
+          <div class="hint" id="skLeadSt"></div>
+          <div class="row"><button class="btn gray" id="skLeadView" type="button">역별 내용 보기</button><button class="btn pri" id="skLeadSign" type="button">일괄 서명</button></div>
+          <div class="row hidden" id="skLeadCRow"><button class="btn del" id="skLeadCancel" type="button">일괄 서명 취소</button></div>
+        </div>
+        <div class="row"><button class="btn gray" id="skHome" type="button">서명지 목록</button></div>
+      </div>
+      <div id="skForm" class="hidden">
+        <div class="who" id="skStName" style="margin-top:10px;color:var(--pri)"></div>
+        <div class="hint" id="skDefNote"></div>
+        <div id="skItems"></div>
+        <div class="row"><button class="btn gray" id="skFormBack" type="button">역 목록</button><button class="btn pri" id="skDone" type="button">완료</button></div>
+      </div>
+      <div id="skRev" class="hidden">
+        <div class="hint" style="margin-bottom:8px">입력한 내용을 확인하세요. 맞으면 [최종 확인]을 누르고 서명합니다.</div>
+        <div id="skPaperBox"></div>
+        <div class="row"><button class="btn gray" id="skRevBack" type="button">수정</button><button class="btn pri" id="skRevOk" type="button">최종 확인</button></div>
+      </div>
+      <div id="skSig" class="hidden">
+        <div class="whoRow"><div class="who" id="skSigName"></div><span class="lsTag"></span></div>
+        <div class="edu" id="skSigEdu"></div>
+        <div class="padarea">
+          <div class="padwrap"><canvas id="skPad"></canvas></div>
+          <div class="actions">
+            <div class="row"><button class="btn gray" id="skClear" type="button">지우기</button><button class="btn gray" id="skSigBack" type="button">뒤로</button></div>
+            <div class="row sub"><button class="btn pri" id="skSend" type="button" disabled>다음</button></div>
+          </div>
+        </div>
+      </div>
+      <div class="msg" id="skMsg"></div>
+    </div>
+  </section>
+</main>
+<!-- 안전점검의 날: 팀장 내용 보기 (역마다 체크리스트, 이전·다음 역. 서명은 역 선택 화면의 [일괄 서명]) -->
+<div class="skView hidden" id="skView" role="dialog" aria-label="팀장 내용 보기">
+  <div class="lvTop"><button class="btn gray sbtn" id="lvClose" type="button">닫기</button><b id="lvTitle"></b><select id="lvSel" aria-label="역 바로 보기"></select><span id="lvProg"></span></div>
+  <div class="lvPage" id="lvPage"></div>
+</div>
+<!-- 접속 코드 (첫 화면에서 교육을 누르면 열림) -->
+<div class="qrOver hidden" id="codeOver" role="dialog" aria-label="접속 코드">
+  <div class="qrBox admBox">
+    <p id="codeTitle"></p>
+    <div class="hint" id="codeSub"></div>
+    <div class="field"><input type="text" id="code" placeholder="접속 코드 (숫자 4자리)" autocomplete="off" inputmode="numeric" pattern="[0-9]*" enterkeyhint="go"></div>
+    <div class="msg" id="codeMsg"></div>
+    <div class="row"><button class="btn gray" id="codeCancel" type="button">취소</button><button class="btn pri" id="codeOk" type="button">확인</button></div>
+  </div>
+</div>
+<!-- QR 크게 보기 (누르면 닫힘) -->
+<div class="qrOver hidden" id="qrOver" role="dialog" aria-label="접속 QR">
+  <div class="qrBox">
+    <div id="qrBig"></div>
+    <p id="qrCap">휴대폰 카메라로 찍으면 이 서명 화면으로 들어옵니다</p>
+    <p class="u" id="qrUrl"></p>
+    <span class="close">아무 곳이나 누르면 닫힙니다</span>
+  </div>
+</div>
+<!-- 직원 등록: 미등록 안내 → 입력 → 다시 확인 -->
+<div class="qrOver hidden" id="regOver" role="dialog" aria-label="직원 등록">
+  <div class="qrBox admBox regBox">
+    <div class="regHead">
+      <span class="regIco"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2.5"></rect><path d="m4 7.5 8 6 8-6"></path></svg></span>
+      <div><b id="regHeadT"></b><small id="regHeadS"></small></div>
+    </div>
+    <ol class="regSteps hidden" id="regSteps"><li><i>1</i>메일</li><li><i>2</i>인증 코드</li><li><i>3</i>정보 입력</li></ol>
+    <div class="regBody">
+    <div id="regAsk">
+      <div class="regAskText">사번 <b id="regAskPin"></b>은(는) 아직 등록되지 않았습니다.<br>사내 메일로 본인을 확인한 뒤 직접 등록할 수 있습니다.</div>
+      <div class="row"><button class="btn gray" id="regNo" type="button">취소</button><button class="btn pri" id="regGo" type="button">등록 시작</button></div>
+    </div>
+    <div id="regMailStep" class="hidden">
+      <div class="field" style="margin-top:0"><label>사내 메일</label><div class="mailRow"><input type="text" id="regMail" placeholder="메일 아이디" autocomplete="off" autocapitalize="off" spellcheck="false" inputmode="email" maxlength="60" enterkeyhint="send"><span id="regMailDom"></span></div></div>
+      <div class="note">입력한 메일로 인증 코드를 보냅니다. 메일은 직원DB에 기록됩니다.</div>
+      <div class="msg" id="regMsgM"></div>
+      <div class="row"><button class="btn gray" id="regMailNo" type="button">취소</button><button class="btn pri" id="regMailSend" type="button">인증 코드 받기</button></div>
+    </div>
+    <div id="regCodeStep" class="hidden">
+      <div class="regMailTo" id="regMailShow"></div>
+      <div class="codeCells" id="regCells"><input type="tel" id="regMailCode" aria-label="인증 코드 6자리" autocomplete="one-time-code" inputmode="numeric" pattern="[0-9]*" maxlength="6"><i></i><i></i><i></i><i></i><i></i><i></i></div>
+      <div class="msg" id="regMsgC"></div>
+      <div class="row"><button class="btn gray" id="regMailAgain" type="button">메일 다시 입력</button><button class="btn pri" id="regCodeOk" type="button">확인</button></div>
+    </div>
+    <div id="regForm" class="hidden">
+      <div class="fRow"><div class="field" style="margin-top:0"><label>이름</label><input type="text" id="regName" placeholder="예: 홍길동" autocomplete="off" maxlength="20"></div>
+      <div class="field" style="margin-top:0"><label>사번</label><input type="tel" id="regPin" autocomplete="off" inputmode="numeric" maxlength="20" readonly></div></div>
+      <div class="fRow"><div class="field"><label>부서명</label><input type="text" id="regDept" placeholder="예: 역무처" autocomplete="off" maxlength="30"></div>
+      <div class="field"><label>팀 (선택)</label><input type="text" id="regTeam" placeholder="예: 1팀" autocomplete="off" maxlength="30"></div></div>
+      <div class="fRow"><div class="field"><label>직책 (선택)</label><input type="text" id="regPost" placeholder="예: 팀장" autocomplete="off" maxlength="20"></div>
+      <div class="field"><label>직위</label><input type="text" id="regRank" placeholder="예: 과장" autocomplete="off" maxlength="20"></div></div>
+      <div class="fRow"><div class="field"><label>개인 코드</label><input type="text" id="regC1" class="secret" placeholder="숫자 6자리" autocomplete="off" inputmode="numeric" maxlength="6"></div>
+      <div class="field"><label>한 번 더</label><input type="text" id="regC2" class="secret" placeholder="숫자 6자리" autocomplete="off" inputmode="numeric" maxlength="6"></div></div>
+      <div class="note">같은 숫자 반복(111111), 연속 숫자(123456·654321), 사번 앞·뒤 6자리는 쓸 수 없습니다. 꼭 기억해 두세요.</div>
+      <div class="regInfo">수집 항목: 이름, 사번, 사내 메일, 부서명, 팀, 직책, 직위, 개인 코드
+이용 목적: 서명·차량 운행 시 본인 확인, 서명지 작성
+보유 기간: 퇴직 또는 초기화 때까지
+개인 코드는 암호화되어 관리자도 알 수 없습니다.</div>
+      <div class="msg" id="regMsg"></div>
+      <div class="row"><button class="btn gray" id="regCancel" type="button">취소</button><button class="btn pri" id="regNext" type="button">다음</button></div>
+    </div>
+    <div id="regCheck" class="hidden">
+      <div class="regChk" id="regShow" style="margin-top:0"></div>
+      <div class="msg" id="regMsg2"></div>
+      <div class="row"><button class="btn gray" id="regBack" type="button">수정</button><button class="btn pri" id="regSend" type="button">등록 완료</button></div>
+    </div>
+    </div>
+  </div>
+</div>
+<footer id="foot">부산-김해경전철(주) · e-싸인</footer>
+
