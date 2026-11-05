@@ -139,6 +139,7 @@
       '</div></div>' +
       '<div class="msg m"></div></div>';
     var q = function (s) { return c.querySelector(s); };
+    q('.ihead').classList.add('hidden');   // 창 이름이 '정보 수정'
     if (mode === 'exp') { q('.ibox').classList.add('hidden'); q('.roleBox').classList.add('hidden'); q('.rosterSec').classList.add('hidden'); }
     else q('.expSec').classList.add('hidden');
 
@@ -156,12 +157,13 @@
     if (e.safety) { var kchip = document.createElement('span'); kchip.className = 'chip ext'; kchip.textContent = '안전점검'; q('.t').appendChild(kchip); }
     if (e.refund) { var rchip = document.createElement('span'); rchip.className = 'chip rf'; rchip.textContent = '환불 등록'; q('.t').appendChild(rchip);
       var rcnt = document.createElement('span'); rcnt.style.cssText = 'margin-left:6px;font-size:14px;font-weight:700;vertical-align:1px'; rcnt.textContent = e.signers.length + '명'; q('.t').appendChild(rcnt); }
-    var tInfo = [e.dept, e.team, e.date].filter(Boolean).join(' · ');      // 부서명·팀·날짜는 제목 줄의 표시 옆에
-    if (tInfo && !e.refund) { var tI = document.createElement('span'); tI.style.cssText = 'margin-left:6px;font-size:13px;font-weight:400;color:var(--sub)'; tI.textContent = tInfo; q('.t').appendChild(tI); }
+    var tInfo = [e.dept, e.team, e.date].filter(Boolean).join(' · ');      // 부서명·팀·날짜는 제목 줄의 표시 옆에 (내보내기 창만, 정보 수정 창은 아래 입력칸에 같은 값)
+    if (tInfo && !e.refund && mode === 'exp') { var tI = document.createElement('span'); tI.style.cssText = 'margin-left:6px;font-size:13px;font-weight:400;color:var(--sub)'; tI.textContent = tInfo; q('.t').appendChild(tI); }
     q('.d').textContent = (e.tpl || '') + (e.pages > 1 ? ' · ' + e.pages + '페이지' : '');
-    q('.cnt').textContent = '서명 ' + e.signers.length + (e.roster ? '/' + e.roster : '') + '명 · 접속 코드 ' + (e.code || '-');
+    q('.cnt').textContent = '서명 ' + e.signers.length + (e.roster ? '/' + e.roster : '') + '명';   // 접속 코드는 정보 수정 창의 입력칸에
     q('.d').classList.toggle('hidden', !!e.refund); q('.cnt').classList.toggle('hidden', !!e.refund);   // 환불 등록: 빨간 표시 옆 인원만
-    if (e.safety) { q('.d').textContent = '역 ' + e.safety.n + '개'; q('.cnt').textContent = '점검자 서명 ' + e.safety.ins + '/' + e.safety.n + ' · 팀장 서명 ' + e.safety.lead + '/' + e.safety.n; }
+    if (mode !== 'exp' && !e.roster) q('.cnt').classList.add('hidden');   // 정보 수정 창: 서명 수는 [서명자 순서 (N명)] 버튼에 (명단 지정이면 N/M명은 남김)
+    if (e.safety) { q('.d').textContent = '역 ' + e.safety.n + '개'; q('.cnt').classList.remove('hidden'); q('.cnt').textContent = '점검자 서명 ' + e.safety.ins + '/' + e.safety.n + ' · 팀장 서명 ' + e.safety.lead + '/' + e.safety.n; }
     if (e.refund && e.open) {                        // 고객용 QR 접수 남은 시간 (줄어들며 표시, 끝나면 'QR 접수 마감 · 직원 등록 가능')
       var left = document.createElement('span'); left.className = 'rfLeft';
       left.setAttribute('data-end', String(Date.now() + (Number(e.autoCloseLeft) || 0))); left.title = (e.autoClose ? e.autoClose + ' QR 접수 마감 · ' : '') + 'QR 접수 ' + (e.qrMin || '') + '분';
