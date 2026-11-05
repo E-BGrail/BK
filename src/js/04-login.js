@@ -59,6 +59,29 @@
   }
   $('codeOk').onclick = submitCode;
 
+  /* ---------- 열차 밀기 (이스터 에그): 열차 높이의 띠(좌우 끝까지)를 왼쪽으로 밀면 열차가 멈춰 따라오고, 떼면 제자리로 돌아가 다시 달림 ---------- */
+  var trainX = null, trainY = 0, trainHit = $('trainHit'), trainDrag = $('trainDrag');
+  function trainShift(px, slide) { trainDrag.style.transition = slide ? 'transform .2s ease-out' : 'none'; trainDrag.style.transform = px ? 'translateX(' + px + 'px)' : ''; }
+  function trainRelease() { trainX = null; trainShift(0, true); $('train').style.animationPlayState = ''; }
+  trainHit.addEventListener('pointerdown', function (e) {
+    trainX = e.clientX; trainY = e.clientY; $('train').style.animationPlayState = 'paused';
+    try { trainHit.setPointerCapture(e.pointerId); } catch (x) {}
+  });
+  trainHit.addEventListener('pointermove', function (e) {
+    if (trainX === null) return;
+    var w = trainHit.ownerSVGElement.getBoundingClientRect().width || 400;   // 화면 px → 그림 좌표
+    trainShift(Math.min(0, e.clientX - trainX) * 400 / w);
+  });
+  trainHit.addEventListener('pointercancel', trainRelease);
+  // 휴대폰: 가로로 움직이면 브라우저가 터치를 가져가지 못하게 막음 (안 그러면 pointercancel로 열차가 돌아감). 세로는 스크롤 그대로
+  trainHit.addEventListener('touchmove', function (e) {
+    var t = e.touches && e.touches[0];
+    if (t && trainX !== null && Math.abs(t.clientX - trainX) > Math.abs(t.clientY - trainY)) e.preventDefault();
+  }, { passive: false });
+  trainHit.addEventListener('pointerup', function (e) {
+    if (trainX === null) return;
+    trainRelease();
+  });
   $('code').addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); submitCode(); } });
 
   /* ---------- 로그인: 사번 + 개인 코드, 또는 배포용 아이디 ---------- */

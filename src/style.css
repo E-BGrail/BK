@@ -52,7 +52,7 @@
   .hero p { margin:0; font-size:14px; opacity:.9; }
   .hero svg { display:block; width:100%; height:auto; margin-top:8px; }
   .hero .run { animation:run 9s linear infinite; }
-  .hero > svg { touch-action:pan-y; } #trainHit { touch-action:pan-y; }
+  .hero > svg { touch-action:pan-y; } #trainHit { touch-action:pan-y; user-select:none; -webkit-user-select:none; }   /* 열차 높이의 띠: 왼쪽으로 밀면 열차가 따라옴 (세로 스크롤은 그대로) */
   @keyframes run { from { transform:translateX(-260px); } to { transform:translateX(420px); } }
   @media (prefers-reduced-motion: reduce) { .hero .run { animation:none; transform:translateX(90px); } }
   /* 진행 단계 */
