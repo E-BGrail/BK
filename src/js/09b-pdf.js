@@ -170,8 +170,7 @@
     $('puPages').innerHTML = ''; $('puPrevCard').classList.add('hidden');
     msg($('puMsg'), ''); msg($('puMsg2'), ''); puDrawSigners();
   }
-  function puOpen() { puReset(); show('su'); }
-  $('puOpen').onclick = puOpen;
+  function puOpen() { puReset(); $('newCard').classList.remove('open'); show('su'); }   // 새 서명지 열기 → 양식 [PDF 서명지]
   $('puBack').onclick = function () { if (!PU || !PU.busy) resetAll(); };
 
   function bytesB64(u8) {

@@ -1,21 +1,35 @@
-  /* ---------- 서명지별 현황: 접수 중 · 마감 탭 ---------- */
-  function drawEdus() {
-    var d = admData, isOpen = admTab !== 'closed';
-    // 순서: 환불 등록(새로 만든 것 위) → 일반 서명지(만든 순서). 마감 탭은 일반 서명지 → 환불 등록
-    var rfs = d.educations.filter(function (e) { return e.refund; }).reverse();
-    var plain = d.educations.filter(function (e) { return !e.refund; });
-    var opens = rfs.filter(function (e) { return e.open; }).concat(plain.filter(function (e) { return e.open; }));
-    var closes = plain.filter(function (e) { return !e.open; }).concat(rfs.filter(function (e) { return !e.open; }));
-    $('aTabOpen').textContent = '접수 중 ' + opens.length + '건'; $('aTabClosed').textContent = '마감 ' + closes.length + '건';
-    $('aTabOpen').classList.toggle('on', isOpen); $('aTabClosed').classList.toggle('on', !isOpen);
-    var box = $('aEdus'), list = isOpen ? opens : closes; box.innerHTML = '';
-    if (!list.length) box.innerHTML = '<div class="hint" style="margin-top:8px">' + (isOpen ? '열린 서명지가 없습니다. 위에서 새 서명지를 여세요.' : '마감된 서명지가 없습니다.') + '</div>';
-    list.forEach(function (e) { box.appendChild(eduCard(e)); });
+  /* ---------- 서명지 관리 창: 서명지 목록 카드 밀기 [정보 수정]·[내보내기] (관리자) ---------- */
+  var admOverId = null, admOverMode = '';
+  function admOverOpen(id, mode) {
+    var e = admData && admData.educations.filter(function (x) { return x.id === id; })[0];
+    if (!e) { admOverHide(); msg($('msg1'), '이 서명지의 관리 정보를 찾지 못했습니다. 잠시 뒤 다시 해 보세요.', '#c0392b'); return; }
+    admOverId = id; admOverMode = mode;
+    $('admOverT').textContent = mode === 'exp' ? '내보내기' : '정보 수정';
+    var b = $('admOverBody'); b.innerHTML = ''; b.appendChild(eduCard(e, mode));
+    if ($('admOver').classList.contains('hidden')) { $('admOver').classList.remove('hidden'); popPush(); }
   }
-  $('aTabOpen').onclick = function () { admTab = 'open'; drawEdus(); saveState(); };
-  $('aTabClosed').onclick = function () { admTab = 'closed'; drawEdus(); saveState(); };
+  /** 닫기. keep: 순서·임무역할 화면으로 갔다가 돌아오면 다시 열도록 기억 */
+  function admOverHide(keep) {
+    if (!keep) admOverId = null;
+    if ($('admOver').classList.contains('hidden')) return;
+    $('admOver').classList.add('hidden'); if (!keep) $('admOverBody').innerHTML = '';
+    popSync();
+  }
+  function admOverRedraw() { if (admOverId && !$('admOver').classList.contains('hidden')) admOverOpen(admOverId, admOverMode); }
+  function admOverMsgEl() { return !$('admOver').classList.contains('hidden') && $('admOverBody').querySelector('.m') || $('msg1'); }
+  function admOverMsg(t) { var m = !$('admOver').classList.contains('hidden') && $('admOverBody').querySelector('.m'); msg(m || $('msg1'), t, '#12833b'); }
+  /** 순서·임무역할 화면에서 [← 서명지 목록]: 목록으로, 열어 두었던 정보 수정 창도 다시 */
+  function admBackToList() {
+    show('s1');
+    if (admOverId && admData) admOverOpen(admOverId, admOverMode);
+  }
+  $('admOverClose').onclick = function () { admOverHide(); };
+  $('admOver').addEventListener('click', function (ev) { if (ev.target === $('admOver')) admOverHide(); });   // 바깥 누르면 닫힘
 
-  $('nHead').onclick = function () { $('newCard').classList.toggle('open'); };
+  $('nHead').onclick = function () {
+    var on = $('newCard').classList.toggle('open');
+    if (on && isAdm() && !admData) admEnsure(function () {}, $('nMsg'));   // 관리자: 양식 목록은 펼칠 때 받음
+  };
 
   /* 명단 지정: 동명이인을 부서·직위·이름·사번으로 보여 주고 고르기 (둘 다 가능) */
   function drawRosterPick(list) {
@@ -41,6 +55,8 @@
   $('nRoster').addEventListener('input', function () { $('nPick').classList.add('hidden'); $('nPick').innerHTML = ''; });
 
   $('nCreate').onclick = function () {
+    if ($('nTpl').value === PDF_TPL) { puOpen(); return; }   // PDF 서명지: PDF 올리는 화면
+    if (!admData) { admEnsure(function () { nTplUi(); }, $('nMsg')); return; }
     var rfNew = isRfTpl($('nTpl').value), dept = rfNew || $('nDeptRow').classList.contains('hidden') ? '' : $('nDept').value;   // 숨겨진 칸의 기본값은 보내지 않음
     var skNew = isSkTpl($('nTpl').value);
     var need = [['nTitle', '교육명'], ['nDate', '날짜'], ['nCode', '접속 코드']].filter(function (f) {
@@ -58,7 +74,7 @@
       $('nCreate').disabled = true;
       admCall('adminCreateEdu', [{ tpl: $('nTpl').value, date: $('nDate').value, stations: sts }], function (d) {
         $('nCreate').disabled = false;
-        $('newCard').classList.remove('open'); admTab = 'open'; renderAdmin(d);
+        $('newCard').classList.remove('open'); edTab = 'open'; renderAdmin(d);
       }, $('nMsg'), function () { $('nCreate').disabled = false; });
       setTimeout(function () { $('nCreate').disabled = false; }, 20000);
       return;
@@ -77,7 +93,7 @@
       $('nPick').classList.add('hidden'); $('nPick').innerHTML = '';
       if (!rfNew) { $('nTitle').value = ''; $('nCode').value = ''; $('nRoster').value = ''; $('nUseRoster').checked = false; $('nDept').innerHTML = ''; }
       $('newCard').classList.remove('open');   // 교육을 연 뒤에는 접음
-      renderAdmin(d);
+      edTab = 'open'; renderAdmin(d);
     }, $('nMsg'), function () { $('nCreate').disabled = false; });   // 실패하면 바로 다시 누를 수 있게
     setTimeout(function () { $('nCreate').disabled = false; }, 20000);
   };
@@ -94,8 +110,9 @@
     var v = $('nRfMin').value.trim(), on = $('nRfMins').querySelector('button.on');
     return v ? Number(v) : on ? Number(on.getAttribute('data-m')) : 10;
   }
-  function eduCard(e) {
-    var c = document.createElement('div'); c.className = 'ecard';
+  /** 서명지 관리 창 안의 카드. mode: info 정보 수정(정보·접속 코드·순서·임무역할), exp 내보내기 */
+  function eduCard(e, mode) {
+    var c = document.createElement('div'); c.className = 'ecard open fixed m-' + (mode || 'info');
     if (!e.open) c.style.borderColor = '#f5c2bd';
     c.innerHTML = '<div class="head"><div class="t"></div><div class="d"></div><div class="cnt"></div>' +
       '<div class="tap">눌러서 펼치기</div></div>' +
@@ -116,14 +133,14 @@
       '<div class="roleBox"><div style="margin-top:12px"><b>임무·역할</b></div>' +
       '<div class="row"><button class="btn gray b-role"></button></div></div>' +
       '<div class="rosterSec hidden"><div style="margin-top:12px"><b>아직 서명 안 한 사람</b></div><div class="hint rosterLeft" style="margin-top:4px"></div></div>' +
-      '<div style="margin-top:12px"><b class="expTitle">PDF · 로그</b></div>' +
+      '<div class="expSec"><div style="margin-top:12px"><b class="expTitle">PDF · 로그</b></div>' +
       '<div class="row"><button class="btn pri b-exp">내보내기 준비</button></div>' +
       '<div class="exp hidden"><div class="row"><button class="btn gray b-pdf">PDF 저장</button><button class="btn gray b-csv">CSV 저장</button><button class="btn gray b-html">HTML 저장</button></div>' +
-      '</div>' +
+      '</div></div>' +
       '<div class="msg m"></div></div>';
     var q = function (s) { return c.querySelector(s); };
-    if (admOpen[e.id]) c.classList.add('open');
-    q('.head').onclick = function () { admOpen[e.id] = !admOpen[e.id]; c.classList.toggle('open', admOpen[e.id]); saveState(); };
+    if (mode === 'exp') { q('.ibox').classList.add('hidden'); q('.roleBox').classList.add('hidden'); q('.rosterSec').classList.add('hidden'); }
+    else q('.expSec').classList.add('hidden');
 
     q('.t').textContent = e.title;
     if (e.refund) q('.t').appendChild(document.createElement('br'));   // 환불 건: 제목이 길어 표시는 다음 줄에
@@ -133,7 +150,7 @@
     q('.t').appendChild(chip);
     if (e.guest) { var gchip = document.createElement('span'); gchip.className = 'chip ext'; gchip.textContent = '본인 확인 없음'; q('.t').appendChild(gchip); }
     if (e.roster) { var ochip = document.createElement('span'); ochip.className = 'chip ext'; ochip.textContent = '명단 지정'; q('.t').appendChild(ochip);
-      q('.rosterSec').classList.remove('hidden'); q('.rosterLeft').textContent = (e.rosterLeft || []).join(', ') || '없음 (전원 서명)'; }
+      if (mode !== 'exp') q('.rosterSec').classList.remove('hidden'); q('.rosterLeft').textContent = (e.rosterLeft || []).join(', ') || '없음 (전원 서명)'; }
     if (e.codeLocked) { var lchip = document.createElement('span'); lchip.className = 'chip off'; lchip.textContent = '코드 잠김'; q('.t').appendChild(lchip); }
     if (e.missingTabs) { var tchip = document.createElement('span'); tchip.className = 'chip off'; tchip.textContent = '탭 없음'; q('.t').appendChild(tchip); }
     if (e.safety) { var kchip = document.createElement('span'); kchip.className = 'chip ext'; kchip.textContent = '안전점검'; q('.t').appendChild(kchip); }
@@ -152,7 +169,7 @@
     }
     if (e.error) { var m0 = q('.m'); msg(m0, e.error, '#c0392b'); }
 
-    // 접수 마감·다시 열기·삭제는 서명지 선택 화면에서 (관리자가 카드를 왼쪽으로 밀기)
+    // 접수 마감·다시 열기·삭제는 카드 밀기 버튼으로
     // 교육 정보 (기본은 접힘, 눌러서 펼치기)
     q('.i-title').value = e.title || ''; q('.i-date').value = e.date || '';
     deptTeamSel(q('.i-dept'), q('.i-team'), e.dept || '', e.team || '');
@@ -168,7 +185,7 @@
     q('.c-code').value = e.code || '';
     q('.b-code').onclick = function () {
       admCall('adminSetCode', [e.id, q('.c-code').value], function (d) {
-        renderAdmin(d); msg($('aMsg'), e.title + ': 접속 코드를 저장했습니다.' + (e.codeLocked ? ' 잠금도 풀었습니다.' : ''), '#12833b');
+        renderAdmin(d); admOverMsg(e.title + ': 접속 코드를 저장했습니다.' + (e.codeLocked ? ' 잠금도 풀었습니다.' : ''));
       }, q('.m'));
     };
     // 접속 코드 잠금: 20번 틀려 막혔을 때만 보임 (코드 저장으로도 풀림)
@@ -176,7 +193,7 @@
     q('.b-unlock').onclick = function () {
       q('.b-unlock').disabled = true;
       admCall('adminUnlockCode', [e.id], function (d) {
-        renderAdmin(d); msg($('aMsg'), e.title + ': 접속 코드 잠금을 풀었습니다.', '#12833b');
+        renderAdmin(d); admOverMsg(e.title + ': 접속 코드 잠금을 풀었습니다.');
       }, q('.m'), function () { q('.b-unlock').disabled = false; });
     };
 
@@ -186,7 +203,7 @@
     q('.b-order').onclick = function () { openOrder(e.id); };
     q('.b-role').textContent = '임무·역할 지정 (' + e.assigned + '명)';
     q('.b-role').onclick = function () { openRoles(e.id); };
-    q('.roleBox').classList.toggle('hidden', !e.hasRole || !!e.guest || !!e.refund);
+    q('.roleBox').classList.toggle('hidden', mode === 'exp' || !e.hasRole || !!e.guest || !!e.refund);
     // 비상(환불 등록): 접속 코드·서명자 순서 없음
     q('.codeSec').classList.toggle('hidden', !!e.refund || !!e.safety); q('.ordSec').classList.toggle('hidden', !!e.refund || !!e.safety);   // 안전점검: 접속 코드·순서 없음 (역 순서)
     if (e.safety) { q('.roleBox').classList.add('hidden'); q('.i-title').parentElement.classList.add('hidden'); q('.i-deptRow').classList.add('hidden'); q('.i-teamRow').classList.add('hidden'); }
@@ -254,7 +271,6 @@
     setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 4000);
   }
 
-  $('aRefresh').onclick = function () { admCall('adminRefresh', [], renderAdmin); };
 
   /** 개인 코드 칸: 복사·잘라내기·끌기·길게 눌러 메뉴·선택 막기 */
   ['copy', 'cut', 'dragstart', 'contextmenu'].forEach(function (t) {

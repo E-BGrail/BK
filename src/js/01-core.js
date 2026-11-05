@@ -57,8 +57,8 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
   if (staff && (!staff.token || !staff.ttl || Date.now() - lastAct > staff.ttl * 1000)) staff = null;   // 예전 표시·마지막 동작 후 20분 지난 로그인
 
   function show(id) {
-    ['sl', 's1', 'sp', 's2', 's3', 'sf', 'sx', 'sa', 'so', 'sr', 'sk', 'su', 'sv'].forEach(function (s) { $(s).classList.toggle('hidden', s !== id); });
-    var flow = ['s1', 's2', 's3'], at = id === 'sp' ? 1 : flow.indexOf(id), adminScr = ['sa', 'so', 'sr'].indexOf(id) > -1;
+    ['sl', 's1', 'sp', 's2', 's3', 'sf', 'sx', 'so', 'sr', 'sk', 'su', 'sv'].forEach(function (s) { $(s).classList.toggle('hidden', s !== id); });
+    var flow = ['s1', 's2', 's3'], at = id === 'sp' ? 1 : flow.indexOf(id), adminScr = ['so', 'sr'].indexOf(id) > -1;
     document.body.setAttribute('data-s', id);
     $('hero').classList.toggle('hidden', id !== 's1' && id !== 'sl');
     $('heroText').textContent = id === 'sl' ? '사번과 개인 코드로 로그인하세요.' : '서명지를 고르고 현장에서 안내받은 접속 코드를 입력하세요.';
@@ -100,8 +100,8 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
       if (curScreen === 'sk' && sk) { st.sk = sk.id; st.skSt = skStep !== 'pick' && skSigMode !== 'lead' && skSt ? skSt.st : ''; }
       if (skL && !$('skView').classList.contains('hidden')) { st.skL = skL.id; st.skLi = skL.idx; }
       if (rfEdu && (curScreen === 'sf' || curScreen === 's3')) { st.rf = rfEdu.id; st.rfd = rfDirect; st.re = rfEnter; st.rz = rfEnd; }          // 환불 등록: 어느 등록인지만 (입력값·연락처는 저장 안 함)
-      if (admTok && ['sa', 'so', 'sr'].indexOf(curScreen) > -1) {
-        st.admTok = admTok; st.admOrder = admOrder; st.admOpen = admOpen; st.admTab = admTab; st.admMe = admMe;
+      if (admTok) {                  // 관리자 접속 (새로고침해도 다시 로그인하지 않게)
+        st.admTok = admTok; st.admOrder = admOrder; st.admMe = admMe;
         if (curScreen === 'so') st.ordId = ordId;
         if (curScreen === 'sr' && rData) st.r = { id: rData.id, assign: rAssign, head: $('rHead').value };
       }
@@ -112,24 +112,20 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
   function restoreState() {
     var st = loadState() || {};
     edTab = st.edTab === 'closed' ? 'closed' : 'open';
-    if (st.admTok && staff) {        // 관리자 화면: 직원 로그인·관리자 표시가 살아 있으면 그대로 다시 열기 (2시간 지나면 처음 화면)
-      admTok = st.admTok; admOrder = st.admOrder || {}; admOpen = st.admOpen || {}; admTab = st.admTab || 'open'; admMe = st.admMe || null;
-      show('sa'); msg($('aMsg'), '불러오는 중…', '#6b7686');
-      google.script.run.withFailureHandler(function () {
-        admTok = null; resetAll();
-        msg($(staff ? 'msg1' : 'lgMsg'), '관리자 접속 시간이 지나 처음 화면으로 돌아왔습니다. 서명지 목록의 열차를 왼쪽으로 밀어 다시 들어오세요.', '#c0392b');
-      }).withSuccessHandler(function (d) {
-        msg($('aMsg'), ''); renderAdmin(d);
-        if (st.s === 'so' && st.ordId && ordEduById(st.ordId)) openOrder(st.ordId);
-        else if (st.s === 'sr' && st.r) {
+    if (st.admTok && staff && staff.admin) {   // 관리자 접속: 그대로 이어 씀 (끊겼으면 필요할 때 다시 받음)
+      admTok = st.admTok; admOrder = st.admOrder || {}; admMe = st.admMe || null;
+      if ((st.s === 'so' && st.ordId) || (st.s === 'sr' && st.r)) {   // 순서·임무역할 화면이었으면 그 화면으로
+        enterList(); refreshInit();
+        admEnsure(function () {
+          if (st.s === 'so') { if (ordEduById(st.ordId)) openOrder(st.ordId); return; }
           admCall('adminRoleData', [st.r.id], function (rd) {
             loadRoleData(rd);
             rAssign = st.r.assign || rAssign; $('rHead').value = st.r.head != null ? st.r.head : $('rHead').value;
             drawRoles(); show('sr');
           });
-        }
-      }).adminRefresh(admTok);
-      return;
+        });
+        return;
+      }
     }
     if (st.rf) {                     // 환불 등록 화면이었으면 그 등록 화면으로 (입력값은 다시)
       var rfe = edus.filter(function (x) { return x.id === st.rf && x.refund; })[0];

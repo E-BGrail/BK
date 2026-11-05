@@ -102,7 +102,35 @@
       <div class="eTabs"><button type="button" id="edTabOpen"></button><button type="button" id="edTabClosed"></button></div>
       <div class="list" id="edus"><div class="hint">불러오는 중…</div></div>
       <div class="msg" id="msg1"></div>
-      <div class="row hidden" id="puOpenRow"><button class="btn gray" id="puOpen" type="button">＋ PDF 서명지 만들기</button></div>
+    </div>
+    <div class="card hidden" id="newCard">
+      <div class="nhead" id="nHead"><b>새 서명지 열기</b></div>
+      <div class="nbody">
+      <div class="field" id="nKindRow"><div class="vRow"><label class="vchk"><input type="checkbox" id="nVerify" checked> <b>본인 확인</b></label>
+        <label class="vchk" id="nRosterRow"><input type="checkbox" id="nUseRoster"> <b>명단 지정</b></label></div>
+        <div class="note hidden" id="nNoVerify">본인 확인 없음: 서명자가 소속·직위·성명을 직접 입력합니다. 서명지를 연 뒤에는 바꿀 수 없습니다.</div></div>
+      <div class="field"><label>양식</label><select id="nTpl"></select><div class="tprev hidden" id="nTplPrev"></div></div>
+      <div class="field hidden" id="nRosterBox"><textarea id="nRoster" rows="5" placeholder="이름을 한 번에 입력 (줄바꿈·쉼표·띄어쓰기로 구분)&#10;예) 홍길동, 김철수, 이영희&#10;동명이인은 서명지를 열 때 고릅니다"></textarea>
+        <div class="pickBox hidden" id="nPick"></div>
+        <div class="note">명단에 넣은 사람도 이 서명지를 볼 수 있습니다. 이름은 서명한 순서대로 서명지에 들어갑니다. 직원DB에 있는 직원만 넣을 수 있고, 서명지를 연 뒤에는 바꿀 수 없습니다.</div></div>
+      <div class="field hidden" id="nSkBox"><label>점검할 역</label>
+        <label class="vchk" style="margin-top:6px"><input type="checkbox" id="nSkAll" checked> <b>전체 선택</b></label>
+        <div class="skChecks" id="nSkList"></div>
+        <div class="note">안전점검: 제목은 "안전점검의 날 체크리스트"로 고정, 부서명은 서명지를 연 관리자의 부서(그 부서 직원에게만 보임), 접속 코드 없이 서명지 목록에 점검자·팀장 박스로 보입니다. 점검자는 역을 골라 입력하고 서명, 팀장(직책에 '팀장')은 역마다 확인하고 서명합니다. 역은 서명지를 연 뒤에는 바꿀 수 없습니다.</div></div>
+      <div class="field" id="nTitleRow"><label id="nTitleLabel">교육명</label><input type="text" id="nTitle" placeholder="예: 4분기 비상대응 훈련" autocomplete="off"></div>
+      <div class="fRow"><div class="field" id="nDeptRow"><label>부서명</label><select id="nDept"></select></div>
+      <div class="field" id="nTeamRow"><label>팀</label><select id="nTeam"></select></div></div>
+      <div class="note" id="nDeptNote">부서명·팀을 고르면 해당하는 사람에게만 서명지가 보입니다. 명단도 지정하면 명단에 있는 사람까지 보입니다. 모두 [전체]이고 명단이 없으면 모든 직원에게 보입니다.</div>
+      <div class="field" id="nDateRow"><label>날짜</label><input type="text" id="nDate" autocomplete="off"></div>
+      <div class="field" id="nCodeRow"><label>접속 코드 (숫자 4자리, 서명지마다 다르게)</label><input type="text" id="nCode" placeholder="예: 1024" autocomplete="off" inputmode="numeric" maxlength="4" pattern="[0-9]*"></div>
+      <div class="field hidden" id="nRfMinRow"><label>고객용 QR 접수 시간</label>
+        <div class="rfMins" id="nRfMins"><button type="button" data-m="10" class="on">10분</button><input type="tel" id="nRfMin" placeholder="직접(분)" inputmode="numeric" maxlength="3" autocomplete="off"></div>
+        <div class="note">이 시간이 지나면 고객용 QR로는 등록할 수 없고, 직원 등록은 마감할 때까지 됩니다. 다시 열면 이 시간만큼 다시 받습니다.</div></div>
+      <div class="note hidden" id="nRfNote">환불 등록: 접속 코드 없이 첫 화면 맨 위에 보이고, QR로 바로 들어옵니다. 제목은 "년.월.일.(요일) 운행 장애 환불 신청"으로 자동으로 정해집니다.</div>
+      <div class="note hidden" id="nPdfNote">PDF 파일을 올리고 서명할 사람과 서명 칸을 정합니다.</div>
+      <div class="row"><button class="btn pri" id="nCreate">서명지 열기</button></div>
+      <div class="msg" id="nMsg"></div>
+      </div>
     </div>
     <div class="card" id="chgCard">
       <div class="nhead" id="chgHead"><b>개인정보 변경</b></div>
@@ -123,6 +151,26 @@
           <div class="row"><button class="btn pri" id="chgSend" type="button">변경</button></div>
         </div>
         <div class="msg" id="chgMsg"></div>
+      </div>
+    </div>
+    <div class="card hidden" id="gstCard">
+      <div class="nhead" id="gstHead"><b>배포용 아이디</b></div>
+      <div class="ebody">
+        <div class="note">외부 참석자가 함께 쓰는 아이디입니다. 사번 칸에 이 아이디만 넣으면 로그인되고(개인 코드 없음), 본인 확인 없는 서명지만 보입니다. 아이디를 바꾸면 기존 로그인은 끊깁니다. 비우고 저장하면 사용하지 않습니다.</div>
+        <div class="field"><label>아이디 (숫자 4자리 이상)</label><input type="tel" id="gstId" autocomplete="off" inputmode="numeric" pattern="[0-9]*" maxlength="20"></div>
+        <div class="row"><button class="btn pri" id="gstSave" type="button">저장</button></div>
+        <div class="msg" id="gstMsg"></div>
+      </div>
+    </div>
+    <div class="card hidden" id="pcCard">
+      <div class="nhead" id="pcHead"><b>개인 코드 관리</b></div>
+      <div class="ebody">
+        <div class="note">코드는 암호화 돼 관리자도 볼 수 없습니다.<br>초기화하면 직원DB에서도 삭제되고, 다음 로그인 때 미등록으로 나와 메일 인증으로 다시 등록합니다.</div>
+        <div class="codeRow">
+          <div style="flex:1"><input type="tel" id="pcPin" placeholder="초기화할 직원의 사번" autocomplete="off" inputmode="numeric" pattern="[0-9]*"></div>
+          <button class="btn del sbtn" id="pcReset" style="flex:none">초기화</button>
+        </div>
+        <div class="msg" id="pcMsg"></div>
       </div>
     </div>
   </section>
@@ -259,79 +307,12 @@
     </div>
   </section>
 
-  <!-- 관리자 화면 (관리자로 지정된 직원이 서명지 목록 열차를 왼쪽으로 밀기 → 바로 열림) -->
-  <section id="sa" class="hidden">
-    <div class="card">
-      <div class="adm-top">
-        <span class="who">관리자</span>
-        <span>
-          <button class="btn gray sbtn" id="aRefresh">새로고침</button>
-          <button class="btn gray sbtn" id="aLogout">나가기</button>
-        </span>
-      </div>
-      <div class="msg" id="aMsg"></div>
-    </div>
-    <div class="card" id="newCard">
-      <div class="nhead" id="nHead"><b>새 서명지 열기</b></div>
-      <div class="nbody">
-      <div class="field" id="nKindRow"><div class="vRow"><label class="vchk"><input type="checkbox" id="nVerify" checked> <b>본인 확인</b></label>
-        <label class="vchk" id="nRosterRow"><input type="checkbox" id="nUseRoster"> <b>명단 지정</b></label></div>
-        <div class="note hidden" id="nNoVerify">본인 확인 없음: 서명자가 소속·직위·성명을 직접 입력합니다. 서명지를 연 뒤에는 바꿀 수 없습니다.</div></div>
-      <div class="field"><label>양식</label><select id="nTpl"></select><div class="tprev hidden" id="nTplPrev"></div></div>
-      <div class="field hidden" id="nRosterBox"><textarea id="nRoster" rows="5" placeholder="이름을 한 번에 입력 (줄바꿈·쉼표·띄어쓰기로 구분)&#10;예) 홍길동, 김철수, 이영희&#10;동명이인은 서명지를 열 때 고릅니다"></textarea>
-        <div class="pickBox hidden" id="nPick"></div>
-        <div class="note">명단에 넣은 사람도 이 서명지를 볼 수 있습니다. 이름은 서명한 순서대로 서명지에 들어갑니다. 직원DB에 있는 직원만 넣을 수 있고, 서명지를 연 뒤에는 바꿀 수 없습니다.</div></div>
-      <div class="field hidden" id="nSkBox"><label>점검할 역</label>
-        <label class="vchk" style="margin-top:6px"><input type="checkbox" id="nSkAll" checked> <b>전체 선택</b></label>
-        <div class="skChecks" id="nSkList"></div>
-        <div class="note">안전점검: 제목은 "안전점검의 날 체크리스트"로 고정, 부서명은 서명지를 연 관리자의 부서(그 부서 직원에게만 보임), 접속 코드 없이 서명지 목록에 점검자·팀장 박스로 보입니다. 점검자는 역을 골라 입력하고 서명, 팀장(직책에 '팀장')은 역마다 확인하고 서명합니다. 역은 서명지를 연 뒤에는 바꿀 수 없습니다.</div></div>
-      <div class="field" id="nTitleRow"><label id="nTitleLabel">교육명</label><input type="text" id="nTitle" placeholder="예: 4분기 비상대응 훈련" autocomplete="off"></div>
-      <div class="fRow"><div class="field" id="nDeptRow"><label>부서명</label><select id="nDept"></select></div>
-      <div class="field" id="nTeamRow"><label>팀</label><select id="nTeam"></select></div></div>
-      <div class="note" id="nDeptNote">부서명·팀을 고르면 해당하는 사람에게만 서명지가 보입니다. 명단도 지정하면 명단에 있는 사람까지 보입니다. 모두 [전체]이고 명단이 없으면 모든 직원에게 보입니다.</div>
-      <div class="field" id="nDateRow"><label>날짜</label><input type="text" id="nDate" autocomplete="off"></div>
-      <div class="field" id="nCodeRow"><label>접속 코드 (숫자 4자리, 서명지마다 다르게)</label><input type="text" id="nCode" placeholder="예: 1024" autocomplete="off" inputmode="numeric" maxlength="4" pattern="[0-9]*"></div>
-      <div class="field hidden" id="nRfMinRow"><label>고객용 QR 접수 시간</label>
-        <div class="rfMins" id="nRfMins"><button type="button" data-m="10" class="on">10분</button><input type="tel" id="nRfMin" placeholder="직접(분)" inputmode="numeric" maxlength="3" autocomplete="off"></div>
-        <div class="note">이 시간이 지나면 고객용 QR로는 등록할 수 없고, 직원 등록은 마감할 때까지 됩니다. 다시 열면 이 시간만큼 다시 받습니다.</div></div>
-      <div class="note hidden" id="nRfNote">환불 등록: 접속 코드 없이 첫 화면 맨 위에 보이고, QR로 바로 들어옵니다. 제목은 "년.월.일.(요일) 운행 장애 환불 신청"으로 자동으로 정해집니다.</div>
-      <div class="row"><button class="btn pri" id="nCreate">서명지 열기</button></div>
-      <div class="msg" id="nMsg"></div>
-      </div>
-    </div>
-    <div class="card">
-      <b>서명지별 현황</b>
-      <div class="eTabs"><button type="button" id="aTabOpen"></button><button type="button" id="aTabClosed"></button></div>
-      <div id="aEdus"></div>
-    </div>
-    <div class="card" id="gstCard">
-      <div class="nhead" id="gstHead"><b>배포용 아이디</b></div>
-      <div class="ebody">
-        <div class="note">외부 참석자가 함께 쓰는 아이디입니다. 사번 칸에 이 아이디만 넣으면 로그인되고(개인 코드 없음), 본인 확인 없는 서명지만 보입니다. 아이디를 바꾸면 기존 로그인은 끊깁니다. 비우고 저장하면 사용하지 않습니다.</div>
-        <div class="field"><label>아이디 (숫자 4자리 이상)</label><input type="tel" id="gstId" autocomplete="off" inputmode="numeric" pattern="[0-9]*" maxlength="20"></div>
-        <div class="row"><button class="btn pri" id="gstSave" type="button">저장</button></div>
-        <div class="msg" id="gstMsg"></div>
-      </div>
-    </div>
-    <div class="card" id="pcCard">
-      <div class="nhead" id="pcHead"><b>개인 코드 관리</b></div>
-      <div class="ebody">
-        <div class="note">코드는 암호화 돼 관리자도 볼 수 없습니다.<br>초기화하면 직원DB에서도 삭제되고, 다음 로그인 때 미등록으로 나와 메일 인증으로 다시 등록합니다.</div>
-        <div class="codeRow">
-          <div style="flex:1"><input type="tel" id="pcPin" placeholder="초기화할 직원의 사번" autocomplete="off" inputmode="numeric" pattern="[0-9]*"></div>
-          <button class="btn del sbtn" id="pcReset" style="flex:none">초기화</button>
-        </div>
-        <div class="msg" id="pcMsg"></div>
-      </div>
-    </div>
-  </section>
-
   <!-- 서명자 순서 보기 · 수정 (관리자) -->
   <section id="so" class="hidden">
     <div class="card">
       <div class="adm-top">
         <span class="who">서명자 순서</span>
-        <button class="btn gray sbtn" id="oBack">← 관리자 화면</button>
+        <button class="btn gray sbtn" id="oBack">← 서명지 목록</button>
       </div>
       <div class="t" id="oTitle" style="font-weight:700;font-size:16px;margin-top:8px"></div>
       <div class="d hint" id="oSub"></div>
@@ -347,7 +328,7 @@
     <div class="card">
       <div class="adm-top">
         <span class="who">임무·역할 지정</span>
-        <button class="btn gray sbtn" id="rBack">← 관리자 화면</button>
+        <button class="btn gray sbtn" id="rBack">← 서명지 목록</button>
       </div>
       <div style="font-weight:700;font-size:16px;margin-top:8px" id="rTitle"></div>
       <div class="warn hidden" id="rNoCol">이 서명지의 양식에는 임무·역할 칸이 없어 서명지에는 들어가지 않습니다. (서명 화면과 로그에는 표시)</div>
@@ -444,6 +425,13 @@
   </div>
 </div>
 <!-- 직원 등록: 미등록 안내 → 입력 → 다시 확인 -->
+<div class="qrOver hidden" id="admOver" role="dialog" aria-label="서명지 관리">
+  <div class="qrBox admBox">
+    <div class="adm-top"><b id="admOverT"></b><button class="btn gray sbtn" id="admOverClose" type="button">닫기</button></div>
+    <div id="admOverBody"></div>
+  </div>
+</div>
+
 <div class="qrOver hidden" id="regOver" role="dialog" aria-label="직원 등록">
   <div class="qrBox admBox regBox">
     <div class="regHead">

@@ -1,13 +1,42 @@
   /* ---------- 관리자 ---------- */
-  var admTab = 'open';                     // 서명지별 현황에서 보는 탭
-  var admTok = null, admData = null, admExp = {}, admOpen = {}, admOrder = {};
-  var admMe = null;                      // 로그인한 관리자의 { dept, team }: 새 서명지 부서명·팀 기본값 (시트 메뉴로 열면 없음)
-
-  function admCall(fn, args, onOk, m, onFail) {
-    m = m || $('aMsg');
+  /* 관리자 페이지 없음: 관리자로 지정된 직원은 서명지 목록 화면에서 바로 관리 (카드 밀기 [정보 수정]·[내보내기], 새 서명지 열기, 배포용 아이디, 개인 코드 관리)
+   * 관리자 정보(양식·서명지 현황)는 처음 필요할 때 한 번만 받음 (admEnsure) → 직원 화면 로딩은 그대로 */
+  var admTok = null, admData = null, admExp = {}, admOrder = {};
+  var admMe = null;                      // 로그인한 관리자의 { dept, team }: 새 서명지 부서명·팀 기본값
+  var PDF_TPL = '__pdf__';               // 새 서명지 양식 고르는 칸의 [PDF 서명지] (누구나)
+  var admWait = [], admFails = [];
+  function isAdm() { return !!(staff && staff.admin && !staff.guest && staff.token); }
+  /** 관리자 접속·정보가 없으면 받은 뒤 cb (여러 번 불러도 서버는 한 번) */
+  function admEnsure(cb, m, onFail) {
+    if (admTok && admData) { cb(); return; }
+    if (!isAdm()) { if (onFail) onFail(); return; }
+    m = m || $('msg1');
+    admWait.push(cb); if (onFail) admFails.push(onFail);
+    if (admWait.length > 1) return;
+    msg(m, '관리자 정보 불러오는 중…', '#6b7686');
+    var done = function () { var w = admWait; admWait = []; admFails = []; w.forEach(function (f) { f(); }); };
+    var fail = function (e) {
+      var fs = admFails; admWait = []; admFails = [];
+      if (/로그인이 필요/.test(errText(e))) { logout(errText(e)); return; }
+      msg(m, errText(e), '#c0392b'); fs.forEach(function (f) { f(e); });
+    };
+    var login = function () {
+      google.script.run.withSuccessHandler(function (r) { admTok = r.token; admMe = r.me || null; msg(m, ''); renderAdmin(r.data, true); saveState(); done(); })
+        .withFailureHandler(fail).adminLogin(staff.token);
+    };
+    if (admTok) google.script.run.withSuccessHandler(function (d) { msg(m, ''); renderAdmin(d, true); done(); })
+      .withFailureHandler(function () { admTok = null; login(); }).adminRefresh(admTok);
+    else login();
+  }
+  function admCall(fn, args, onOk, m, onFail, again) {
+    m = m || $('msg1');
+    if (!admTok) { admEnsure(function () { admCall(fn, args, onOk, m, onFail, true); }, m, onFail); return; }
     msg(m, '처리 중…', '#6b7686');
     var run = google.script.run.withSuccessHandler(function (r) { msg(m, ''); onOk(r); })
-      .withFailureHandler(function (e) { msg(m, errText(e), '#c0392b'); if (onFail) onFail(e); });
+      .withFailureHandler(function (e) {
+        if (!again && /관리자 로그인 시간이 지났/.test(errText(e))) { admTok = null; admData = null; admCall(fn, args, onOk, m, onFail, true); return; }   // 관리자 접속만 끊김 → 다시 받고 한 번 더 (서버는 확인 단계에서 멈췄으므로 안전)
+        msg(m, errText(e), '#c0392b'); if (onFail) onFail(e);
+      });
     run[fn].apply(run, [admTok].concat(args));
   }
   function today() {
@@ -21,7 +50,7 @@
   function rState() { return JSON.stringify([rAssign, $('rHead').value.trim()]); }
   function rPeople(k) { return rData.people.filter(function (p) { return p.key === k; })[0]; }
   function openRoles(id) {
-    admCall('adminRoleData', [id], function (d) { loadRoleData(d); show('sr'); });
+    admCall('adminRoleData', [id], function (d) { loadRoleData(d); admOverHide(true); show('sr'); }, admOverMsgEl());
   }
   function loadRoleData(d) {
     rData = d; rAssign = {}; rLeave = false;
@@ -115,7 +144,7 @@
       msg($('rMsg'), '저장하지 않은 변경이 있습니다. 한 번 더 누르면 저장하지 않고 돌아갑니다.', '#c0392b');
       return;
     }
-    rData = null; show('sa');
+    rData = null; admBackToList();
   };
 
   /* ---------- 서명자 순서 화면 ---------- */
@@ -127,12 +156,12 @@
     var e = ordEdu();
     ord = (admOrder[id] || e.signers.map(function (s) { return s.key; })).slice();
     msg($('oMsg'), '');
-    drawOrder(); show('so');
+    admOverHide(true); drawOrder(); show('so');
   }
   function ordChanged() { var e = ordEdu(); return !!e && ord.join() !== e.signers.map(function (s) { return s.key; }).join(); }
   function drawOrder() {
     var e = ordEdu();
-    if (!e) { show('sa'); return; }
+    if (!e) { admBackToList(); return; }
     var byKey = {}; e.signers.forEach(function (s) { byKey[s.key] = s; });
     ord = ord.filter(function (k) { return byKey[k]; });
     e.signers.forEach(function (s) { if (ord.indexOf(s.key) < 0) ord.push(s.key); });
@@ -180,7 +209,7 @@
       return;
     }
     delete admOrder[ordId]; ordId = null;
-    show('sa');
+    admBackToList();
   };
 
   /* 양식 미리보기: 머릿글과 줄 몇 개만 작게 그림 */
@@ -274,7 +303,51 @@
     el.classList.toggle('soon', ms < 180000);               // 3분 안 남으면 빨갛게
   }
   setInterval(tickRfLeft, 15000);
-  function renderAdmin(d) {
+  /** 새 서명지 열기: 고른 양식에 맞게 칸 보이기·숨기기 ([PDF 서명지]는 PDF 올리는 화면으로) */
+  function nTplUi() {
+    var sel = $('nTpl'), pdf = sel.value === PDF_TPL;
+    $('nPdfNote').classList.toggle('hidden', !pdf);
+    if (pdf) {
+      ['nKindRow', 'nRosterBox', 'nSkBox', 'nTitleRow', 'nDeptRow', 'nTeamRow', 'nDeptNote', 'nDateRow', 'nCodeRow', 'nRfMinRow', 'nRfNote', 'nNoVerify', 'nTplPrev'].forEach(function (id) { $(id).classList.add('hidden'); });
+      $('nCreate').textContent = 'PDF 서명지 만들기';
+      return;
+    }
+    var rf = isRfTpl(sel.value), skT = isSkTpl(sel.value);
+    $('nSkBox').classList.toggle('hidden', !skT);
+    if (skT) { skChecks(sel.value); if (!$('nDate').value || $('nDate').value === today()) $('nDate').value = skToday(); }
+    else if ($('nDate').value === skToday()) $('nDate').value = today();
+    var gNew = !$('nVerify').checked;
+    $('nNoVerify').classList.toggle('hidden', !gNew);
+    tplPreview($('nTplPrev'), sel.value); deptRow($('nDeptRow'), sel.value, gNew);
+    if (rf) $('nDeptRow').classList.add('hidden');
+    $('nTeamRow').classList.toggle('hidden', rf || gNew); $('nDeptNote').classList.toggle('hidden', rf || gNew);
+    $('nKindRow').classList.toggle('hidden', rf); $('nCodeRow').classList.toggle('hidden', rf); $('nRfNote').classList.toggle('hidden', !rf); $('nRfMinRow').classList.toggle('hidden', !rf);
+    $('nTitleRow').classList.toggle('hidden', rf); $('nDateRow').classList.toggle('hidden', rf);   // 비상: 제목·날짜 자동
+    $('nCreate').textContent = rf ? '환불 등록 열기' : '서명지 열기';
+    $('nRosterRow').classList.toggle('hidden', rf || !$('nVerify').checked);   // 명단 지정은 본인 확인 서명지만
+    $('nRosterBox').classList.toggle('hidden', rf || !$('nVerify').checked || !$('nUseRoster').checked);
+    if (skT) {                                   // 안전점검: 본인 확인(직원 로그인)만, 명단·접속 코드 없음
+      $('nVerify').checked = true; $('nNoVerify').classList.add('hidden');
+      ['nKindRow', 'nCodeRow', 'nRosterBox', 'nTitleRow', 'nDeptRow', 'nTeamRow', 'nDeptNote'].forEach(function (id) { $(id).classList.add('hidden'); });   // 제목은 고정, 부서명은 연 관리자의 부서
+    }
+  }
+  $('nTpl').onchange = nTplUi; $('nUseRoster').onchange = nTplUi; $('nVerify').onchange = nTplUi;
+  /** 양식 고르는 칸: 관리자는 시트의 양식 + [PDF 서명지], 그 밖의 직원은 [PDF 서명지]만 */
+  function nTplFill(list) {
+    var sel = $('nTpl'), prev = sel.value, had = sel.options.length > 1; sel.innerHTML = '';
+    list.concat([PDF_TPL]).forEach(function (t) { var o = document.createElement('option'); o.value = t; o.textContent = t === PDF_TPL ? 'PDF 서명지 (PDF 올려서 서명받기)' : t; sel.appendChild(o); });
+    if (prev && (list.indexOf(prev) > -1 || (prev === PDF_TPL && had))) sel.value = prev;   // 처음 양식을 받으면 첫 양식
+    nTplUi();
+  }
+  /** 서명지 목록 화면에 들어올 때: 새 서명지 열기(직원 모두)·배포용 아이디·개인 코드 관리(관리자만) */
+  function admCards() {
+    var g = !!(staff && staff.guest), adm = isAdm();
+    $('newCard').classList.toggle('hidden', g || !(staff && staff.token));
+    $('gstCard').classList.toggle('hidden', !adm); $('pcCard').classList.toggle('hidden', !adm);
+    if (!adm || !admData) nTplFill([]);
+  }
+  /** 관리자 작업 응답 그리기. quiet: 처음 받을 때(서명지 목록은 이미 최신) */
+  function renderAdmin(d, quiet) {
     if (d && d.patch) {                  // 관리자 작업 응답: 바뀐 카드만 옴 → 가지고 있던 전체 값에 합쳐 다시 그림
       if (!admData) { admCall('adminRefresh', [], renderAdmin); return; }
       d.patch.forEach(function (x) {
@@ -285,38 +358,14 @@
       admData.note = d.note || ''; d = admData;
     }
     admData = d;
-    var sel = $('nTpl'), prev = sel.value; sel.innerHTML = '';
     var nFirst = !$('nDept').options.length;   // 처음 그릴 때·서명지를 연 뒤에는 관리자의 부서명·팀, 그 밖에는 고른 값 유지
     deptTeamSel($('nDept'), $('nTeam'), nFirst ? (admMe && admMe.dept) || '' : $('nDept').value, nFirst ? (admMe && admMe.team) || '' : $('nTeam').value);
     $('gstId').value = (d.guest && d.guest.id) || '';
-    d.templates.forEach(function (t) { var o = document.createElement('option'); o.value = t; o.textContent = t; sel.appendChild(o); });
-    if (prev && d.templates.indexOf(prev) > -1) sel.value = prev;
-    var nTplUi = function () {
-      var rf = isRfTpl(sel.value), skT = isSkTpl(sel.value);
-      $('nSkBox').classList.toggle('hidden', !skT);
-      if (skT) { skChecks(sel.value); if (!$('nDate').value || $('nDate').value === today()) $('nDate').value = skToday(); }
-      else if ($('nDate').value === skToday()) $('nDate').value = today();
-      var gNew = !$('nVerify').checked;
-      tplPreview($('nTplPrev'), sel.value); deptRow($('nDeptRow'), sel.value, gNew);
-      if (rf) $('nDeptRow').classList.add('hidden');
-      $('nTeamRow').classList.toggle('hidden', rf || gNew); $('nDeptNote').classList.toggle('hidden', rf || gNew);
-      $('nKindRow').classList.toggle('hidden', rf); $('nCodeRow').classList.toggle('hidden', rf); $('nRfNote').classList.toggle('hidden', !rf); $('nRfMinRow').classList.toggle('hidden', !rf);
-      $('nTitleRow').classList.toggle('hidden', rf); $('nDateRow').classList.toggle('hidden', rf);   // 비상: 제목·날짜 자동
-      $('nCreate').textContent = rf ? '환불 등록 열기' : '서명지 열기';
-      $('nRosterRow').classList.toggle('hidden', rf || !$('nVerify').checked);   // 명단 지정은 본인 확인 서명지만
-      $('nRosterBox').classList.toggle('hidden', rf || !$('nVerify').checked || !$('nUseRoster').checked);
-      if (skT) {                                   // 안전점검: 본인 확인(직원 로그인)만, 명단·접속 코드 없음
-        $('nVerify').checked = true; $('nNoVerify').classList.add('hidden');
-        ['nKindRow', 'nCodeRow', 'nRosterBox', 'nTitleRow', 'nDeptRow', 'nTeamRow', 'nDeptNote'].forEach(function (id) { $(id).classList.add('hidden'); });   // 제목은 고정, 부서명은 연 관리자의 부서
-      }
-    };
-    nTplUi(); sel.onchange = nTplUi; $('nUseRoster').onchange = nTplUi;
-    $('nVerify').onchange = function () { $('nNoVerify').classList.toggle('hidden', $('nVerify').checked); nTplUi(); };
+    nTplFill(d.templates);
     if (!d.templates.length) msg($('nMsg'), '양식 탭이 없습니다. 시트에 이름이 "양식"으로 시작하는 탭을 만들어 두세요.', '#c0392b');
     if (!$('nDate').value) $('nDate').value = today();
-    if (!d.educations.length || !d.templates.length) $('newCard').classList.add('open');   // 열린 교육이 없으면 펼쳐 둠
-    drawEdus();
-    if (d.note) msg($('aMsg'), d.note, '#12833b');
-    d.note = '';                         // 안내는 한 번만
+    var note = d.note || ''; d.note = '';   // 안내는 한 번만
+    admOverRedraw();
+    if (note) admOverMsg(note);
+    if (!quiet && staff && staff.token) refreshInit();   // 서명지 목록(제목·마감 등)도 새로
   }
-

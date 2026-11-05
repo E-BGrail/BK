@@ -59,53 +59,6 @@
   }
   $('codeOk').onclick = submitCode;
 
-  /* ---------- 관리자 로그인: 관리자로 등록된 직원이 서명지 목록 열차를 왼쪽으로 밀면 바로 관리자 페이지 (비밀번호 없음) ---------- */
-  function admGate() { return curScreen === 's1' && !!(staff && staff.admin); }   // 관리자로 등록된 직원의 서명지 목록에서만
-  var admLogging = false, admSeq = 0;
-  /** 밀자마자 관리자 화면으로 바꾸고, 내용은 받는 대로 채움 (실패하면 서명지 목록으로 돌아가 안내) */
-  function openAdmLogin() {
-    if (!admGate() || admLogging) return;
-    var seq = ++admSeq;
-    admLogging = true; msg($('msg1'), '');
-    admTok = null; admMe = null; $('nDept').innerHTML = ''; admExp = {}; admOpen = {}; admTab = 'open';
-    $('aEdus').innerHTML = '<div class="hint" style="margin-top:8px">불러오는 중…</div>';
-    show('sa'); msg($('aMsg'), '관리자 페이지 불러오는 중…', '#6b7686');
-    google.script.run.withSuccessHandler(function (r) {
-      admLogging = false;
-      if (seq !== admSeq || curScreen !== 'sa') { google.script.run.adminLogout(r.token); return; }   // 기다리는 동안 나갔음
-      admTok = r.token; admMe = r.me || null; renderAdmin(r.data); msg($('aMsg'), ''); saveState();
-    }).withFailureHandler(function (e) {
-      admLogging = false;
-      if (seq !== admSeq) return;
-      if (/로그인이 필요/.test(errText(e))) { logout(errText(e)); return; }
-      resetAll(); msg($('msg1'), errText(e), '#c0392b');
-    }).adminLogin(staff && staff.token || '');
-  }
-  // 열차 높이의 띠(좌우 끝까지)에서 시작해 왼쪽으로 120px 넘게 밀고 떼면 열림 (밀기는 누구나, 창은 admGate). 미는 동안 열차가 멈춰 따라오고, 떼면 제자리로 돌아가 다시 달림
-  var trainX = null, trainY = 0, trainHit = $('trainHit'), trainDrag = $('trainDrag');
-  function trainShift(px, slide) { trainDrag.style.transition = slide ? 'transform .2s ease-out' : 'none'; trainDrag.style.transform = px ? 'translateX(' + px + 'px)' : ''; }
-  function trainRelease() { trainX = null; trainShift(0, true); $('train').style.animationPlayState = ''; }
-  trainHit.addEventListener('pointerdown', function (e) {
-    trainX = e.clientX; trainY = e.clientY; $('train').style.animationPlayState = 'paused';
-    try { trainHit.setPointerCapture(e.pointerId); } catch (x) {}
-  });
-  trainHit.addEventListener('pointermove', function (e) {
-    if (trainX === null) return;
-    var w = trainHit.ownerSVGElement.getBoundingClientRect().width || 400;   // 화면 px → 그림 좌표
-    trainShift(Math.min(0, e.clientX - trainX) * 400 / w);
-  });
-  trainHit.addEventListener('pointercancel', trainRelease);
-  // 휴대폰: 가로로 움직이면 브라우저가 터치를 가져가지 못하게 막음 (안 그러면 pointercancel로 열차가 돌아감). 세로는 스크롤 그대로
-  trainHit.addEventListener('touchmove', function (e) {
-    var t = e.touches && e.touches[0];
-    if (t && trainX !== null && Math.abs(t.clientX - trainX) > Math.abs(t.clientY - trainY)) e.preventDefault();
-  }, { passive: false });
-  trainHit.addEventListener('pointerup', function (e) {
-    if (trainX === null) return;
-    var dx = e.clientX - trainX, dy = e.clientY - trainY;
-    trainRelease();
-    if (dx <= -120 && Math.abs(dy) < -dx) openAdmLogin();
-  });
   $('code').addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); submitCode(); } });
 
   /* ---------- 로그인: 사번 + 개인 코드, 또는 배포용 아이디 ---------- */
@@ -146,13 +99,15 @@
     $('meName').textContent = g ? '외부 참석자' : ((staff.disp ? staff.disp + ' ' : '') + staff.name + ' 님').trim();
     if (!g && staff.admin) { var ma = document.createElement('span'); ma.className = 'meAdm'; ma.textContent = '관리자'; $('meName').appendChild(ma); }
     $('chgCard').classList.toggle('hidden', g);
-    $('puOpenRow').classList.toggle('hidden', g);   // PDF 서명지 만들기: 직원만
+    admCards();                                     // 새 서명지 열기: 직원 모두, 배포용 아이디·개인 코드 관리: 관리자
     if (!edus.length) $('edus').innerHTML = '<div class="hint">불러오는 중…</div>';
     show('s1');
   }
   function logout(text) {
     if (staff && staff.token) google.script.run.staffLogout(staff.token);
-    if (admTok && !(typeof DIALOG !== 'undefined' && DIALOG)) { google.script.run.adminLogout(admTok); admTok = null; }   // 관리자 접속 표시도 서버에서 지움
+    if (admTok) google.script.run.adminLogout(admTok);   // 관리자 접속 표시도 서버에서 지움
+    admTok = null; admData = null; admMe = null; admExp = {}; admOrder = {}; admOverHide(); $('nDept').innerHTML = '';
+    ['newCard', 'gstCard', 'pcCard'].forEach(function (id) { $(id).classList.remove('open'); });
     setStaff(null); edus = []; renderEdus(); resetAll();
     $('lgPin').value = savedPin(); $('lgCode').value = '';
     if (text) msg($('lgMsg'), text, '#c0392b');

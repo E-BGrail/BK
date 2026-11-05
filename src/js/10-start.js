@@ -1,9 +1,9 @@
   /* ---------- 개인 코드 관리 ---------- */
-  $('gstHead').onclick = function () { $('gstCard').classList.toggle('open'); };
+  $('gstHead').onclick = function () { if ($('gstCard').classList.toggle('open')) admEnsure(function () {}, $('gstMsg')); };   // 지금 아이디는 펼칠 때 받음
   $('gstSave').onclick = function () {
     $('gstSave').disabled = true;
     admCall('adminSetGuest', [{ id: $('gstId').value.trim() }], function (d) {
-      $('gstSave').disabled = false; renderAdmin(d); msg($('gstMsg'), d.note, '#12833b'); msg($('aMsg'), '');
+      var note = d.note; $('gstSave').disabled = false; renderAdmin(d, true); msg($('gstMsg'), note, '#12833b'); msg($('msg1'), '');
     }, $('gstMsg'), function () { $('gstSave').disabled = false; });
   };
   $('pcHead').onclick = function () { $('pcCard').classList.toggle('open'); };
@@ -28,13 +28,6 @@
   };
   $('pcPin').addEventListener('input', pcDisarm);
 
-  $('aLogout').onclick = function () {
-    if (DIALOG) { google.script.run.withSuccessHandler(function () { google.script.host.close(); }).withFailureHandler(function () { google.script.host.close(); }).adminLogout(admTok); return; }
-    admSeq++; if (admTok) google.script.run.adminLogout(admTok);
-    admTok = null; admData = null; admExp = {}; admOpen = {}; admOrder = {};
-    resetAll();
-  };
-
   /* ---------- 휴대폰 키보드: 팝업을 보이는 영역 안에 두고, 입력 칸이 가리지 않게 ---------- */
   (function () {
     var v = window.visualViewport, root = document.documentElement;
@@ -52,12 +45,8 @@
   })();
 
   /* ---------- 시작 ---------- */
-  var DIALOG = !!(typeof INIT !== 'undefined' && INIT && INIT.dialog);
-  if (DIALOG) {                     // 시트 메뉴 '3. 관리자 페이지 열기' 창: 바로 관리자 화면
-    admTok = INIT.admin.token; renderAdmin(INIT.admin.data); INIT = null;
-    $('aLogout').textContent = '닫기';
-    show('sa');
-  } else {
+  var DIALOG = false;               // 예전 시트 메뉴 '관리자 페이지' 창 (없앰)
+  {
     var DIRECT = typeof INIT !== 'undefined' && INIT && INIT.direct;     // 환불 등록 QR(주소?e=…)로 들어온 경우
     var NOQR = typeof INIT !== 'undefined' && INIT && INIT.noQr;         // 환불 주소에 건 번호가 없는 경우
     var enterNew = DIRECT && INIT.enter || '', enterLeft = DIRECT && INIT.enterLeft || 0, initErr = DIRECT && INIT.error || '', qrOld = DIRECT && INIT.qrOld;

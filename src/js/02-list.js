@@ -185,20 +185,25 @@
       put(e, b);
     });
   }
-  /* ---------- 관리자: 카드 밀기 → 마감 / 다시 열기·삭제 (마감·삭제는 두 번 눌러 실행) ---------- */
+  /* ---------- 관리자: 카드 밀기 → 마감 / 다시 열기·삭제 (마감·삭제는 두 번 눌러 실행), 정보 수정·내보내기 ---------- */
   function eswWrap(e, el) {
     var w = document.createElement('div'); w.className = 'esw';
     var act = document.createElement('div'); act.className = 'eswAct';
     var closed = e.open === false;
     w.style.setProperty('--sw', '-88px');
-    // 왼쪽으로 밀기: 진행 중 [마감], 마감 탭 [다시 열기]. 오른쪽으로 밀기: 마감 탭 [삭제], 진행 중 환불 등록 [5분 연장]
+    // 관리자 (PDF 서명지 말고): 왼쪽으로 밀기 → 위 [마감]·마감 탭 [다시 열기], 아래 [정보 수정]
+    //   오른쪽으로 밀기 → 위 마감 탭 [삭제]·진행 중 환불 등록 [5분 연장], 아래 [내보내기]
+    // PDF 서명지: 완료되면 [PDF 받기], 올린 사람·관리자는 [삭제]
+    act.className = 'eswAct' + (e.pdfSign ? '' : ' stack');
     act.innerHTML = e.pdfSign ? (closed ? '<button type="button" class="pdfdl">PDF<br>받기</button>' : '') :
-      closed ? '<button type="button" class="reopen">다시 열기</button>' : '<button type="button" class="close">마감</button>';
+      (closed ? '<button type="button" class="reopen">다시 열기</button>' : '<button type="button" class="close">마감</button>') + '<button type="button" class="info">정보<br>수정</button>';
     var f = document.createElement('div'); f.className = 'eswFront'; f.appendChild(el);
     w.appendChild(act);
-    if (e.pdfSign ? e.pdfSign.canDel : closed || e.refund) {
-      var actL = document.createElement('div'); actL.className = 'eswAct eswActL';
-      actL.innerHTML = closed || e.pdfSign ? '<button type="button" class="del">삭제</button>' : '<button type="button" class="ext">5분<br>연장</button>';
+    var lh = e.pdfSign ? (e.pdfSign.canDel ? '<button type="button" class="del">삭제</button>' : '') :
+      (closed ? '<button type="button" class="del">삭제</button>' : e.refund ? '<button type="button" class="ext">5분<br>연장</button>' : '') + '<button type="button" class="exp">내보내기</button>';
+    if (lh) {
+      var actL = document.createElement('div'); actL.className = 'eswAct eswActL' + (e.pdfSign ? '' : ' stack');
+      actL.innerHTML = lh;
       w.appendChild(actL);
     }
     w.appendChild(f);
@@ -218,6 +223,12 @@
   function eswDo(e, b) {
     if (eswBusy) return;
     if (b.classList.contains('pdfdl')) { eswArm(null, false); eswClose(); pdfDownload(e); return; }   // PDF 서명지: 서명된 PDF 받기
+    if (b.classList.contains('info') || b.classList.contains('exp')) {   // 관리자: 서명지 관리 창 (관리자 정보는 처음 누를 때 받음)
+      var md = b.classList.contains('exp') ? 'exp' : 'info';
+      eswArm(null, false); eswClose();
+      admEnsure(function () { admOverOpen(e.id, md); });
+      return;
+    }
     var k = b.classList.contains('del') ? 'del' : b.classList.contains('close') ? 'close' : b.classList.contains('ext') ? 'ext' : 'reopen';
     if (k === 'ext') {                                // 5분 연장: 한 번 누르면 바로 (되돌릴 위험 없음)
       eswArm(null, false); eswBusy = true;
@@ -239,8 +250,8 @@
   function eswClose(except) { [].forEach.call(document.querySelectorAll('#edus .esw.open, #edus .esw.openR'), function (x) { if (x !== except) x.classList.remove('open', 'openR'); }); }
   (function () {                                     // 밀기: 손가락·마우스 모두. 민 직후의 누르기와 열린 카드 누르기는 닫기만
     var box = $('edus'), S = null, at = 0;
-    var width = function (w) { return w.querySelectorAll('.eswAct:not(.eswActL) button').length * 88; };   // 왼쪽으로 밀 때 (오른쪽 버튼)
-    var widthL = function (w) { return w.querySelectorAll('.eswActL button').length * 88; };             // 오른쪽으로 밀 때 (왼쪽 버튼, 환불 [5분 연장])
+    var width = function (w) { return w.querySelector('.eswAct:not(.eswActL) button') ? 88 : 0; };   // 왼쪽으로 밀 때 (오른쪽 버튼, 위아래로 쌓음)
+    var widthL = function (w) { return w.querySelector('.eswActL button') ? 88 : 0; };              // 오른쪽으로 밀 때 (왼쪽 버튼)
     box.addEventListener('pointerdown', function (ev) {
       var w = ev.target.closest('.esw');
       if (!w || ev.target.closest('.eswAct')) return;
