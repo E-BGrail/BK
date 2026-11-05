@@ -1182,7 +1182,7 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
     var list = isOpen ? opens : closes;
     if (!list.length) { box.innerHTML = '<div class="hint" style="margin-top:8px">' + (isOpen ? '현재 진행 중인 서명지가 없습니다.' : '마감된 서명지가 없습니다.') + '</div>'; }
     var adm = !!(staff && staff.admin && !staff.guest);
-    if (adm && list.length) { var hn = document.createElement('div'); hn.className = 'eswHint'; hn.textContent = isOpen ? '관리자: 카드를 왼쪽으로 밀면 [마감]' + (list.some(function (e) { return e.refund; }) ? ', 환불 카드를 오른쪽으로 밀면 [5분 연장]' : '') : '관리자: 카드를 왼쪽으로 밀면 [다시 열기], 오른쪽으로 밀면 [삭제]'; box.appendChild(hn); }
+    if (adm && list.length) { var hn = document.createElement('div'); hn.className = 'eswHint'; hn.textContent = '카드를 옆으로 밀어 보세요'; box.appendChild(hn); }
     var put = function (e, el) { box.appendChild(adm ? eswWrap(e, el) : el); };
     list.forEach(function (e) {
       if (e.refund) { put(e, rfItem(e)); return; }
