@@ -6,7 +6,7 @@
     msg($('msg2'), '');
   }
   /** 서명 화면 [뒤로]: 본인 확인 없는 서명지는 입력 화면, 직원은 서명지 목록 */
-  function signBack() { if (edu && edu.guest) show('sp'); else resetAll(); }
+  function signBack() { if (edu && edu.guest) show('sp'); else if (edu && edu.pdf && PV.e && PV.e.id === edu.id) show('sv'); else resetAll(); }   // PDF 서명지: 미리보기로
   /* 본인 확인 없는 교육: 양식에 있는 칸만 보여 줌 (성명은 항상, 임무·역할·비고는 선택) */
   function gf() { return (edu && edu.guest && edu.fields) || {}; }
   function firstGuestField() {

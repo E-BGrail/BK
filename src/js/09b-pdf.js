@@ -353,12 +353,63 @@
     if (closed && e.pdfDl) { var dl = document.createElement('span'); dl.className = 'pdfDl'; dl.textContent = '✓ PDF 받음 · ' + (e.pdfDl.n || '') + ' ' + (e.pdfDl.at || ''); nm.parentNode.appendChild(dl); }
     var mine = ps.me > -1;
     b.querySelector('.badge').textContent = closed ? '서명 완료' : mine ? (ps.signed ? '재서명' : '서명') : '진행 중';
-    b.onclick = function () {
-      if (!closed && mine) { pdfSignStart(e); return; }
-      msg($('msg1'), closed ? '카드를 왼쪽으로 밀면 서명된 PDF를 받을 수 있습니다.' : '모든 서명자가 서명하면 PDF를 받을 수 있습니다.', '#324eb3');
-    };
+    b.onclick = function () { pdfView(e); };          // 누르면 문서 미리보기 (서명자는 그 화면에서 [서명하기])
     return b;
   }
+  /* ---------- 미리보기 (sv): 문서만 (다른 사람 서명은 안 보임), 내 서명란은 빨간 칸 ---------- */
+  var PV = { e: null, seq: 0, last: null };          // last: 마지막으로 받은 문서 { id, d } (다시 열 때 서버를 안 부름)
+  function pdfView(e) {
+    var ps = e.pdfSign || {}, seq = ++PV.seq, canSign = e.open !== false && ps.me > -1;
+    PV.e = e;
+    $('pvTitle').textContent = e.title;
+    $('pvInfo').textContent = [ps.owner ? '올린 사람 ' + ps.owner : '', e.date].filter(Boolean).join(' · ') +
+      (ps.names && ps.names.length ? '\n서명자: ' + ps.names.map(function (p) { return p.n + (p.ok ? ' ✔' : ''); }).join(' · ') : '');
+    $('pvSign').classList.toggle('hidden', !canSign); $('pvSign').textContent = ps.signed ? '다시 서명하기' : '서명하기';
+    $('pvPages').innerHTML = ''; msg($('pvMsg'), '문서를 불러오는 중…', '#6b7686');
+    show('sv');
+    var got = PV.last && PV.last.id === e.id ? Promise.resolve(PV.last.d) : new Promise(function (ok, no) {
+      google.script.run.withSuccessHandler(ok).withFailureHandler(no).pdfView(staff && staff.token || '', e.id);
+    });
+    got.then(function (d) {
+      PV.last = { id: e.id, d: d };
+      return pdfJs().then(function (lib) {
+        return lib.getDocument({ data: b64Bytes(d.pdf), cMapUrl: PDFJS_BASE + 'cmaps/', cMapPacked: true, standardFontDataUrl: PDFJS_BASE + 'standard_fonts/' }).promise;
+      }).then(function (doc) { if (seq === PV.seq) return pvRender(doc, d.mine, seq); });
+    }).then(function () {
+      if (seq !== PV.seq) return;
+      msg($('pvMsg'), canSign ? '빨간 칸이 내 서명이 들어갈 자리입니다. 두 손가락으로 벌려 크게 볼 수 있습니다.' : '', '#324eb3');
+    }).catch(function (x) {
+      if (seq !== PV.seq) return;
+      if (/로그인이 필요/.test(errText(x))) { logout(errText(x)); return; }
+      msg($('pvMsg'), errText(x), '#c0392b');
+    });
+  }
+  function pvRender(doc, mine, seq) {
+    var box = $('pvPages'), cw = Math.max(240, box.clientWidth || 340), dpr = Math.min(2, window.devicePixelRatio || 1), chain = Promise.resolve();
+    for (var i = 1; i <= doc.numPages; i++) (function (n) {
+      chain = chain.then(function () { return seq === PV.seq && doc.getPage(n); }).then(function (pg) {
+        if (!pg || seq !== PV.seq) return;
+        var vp1 = pg.getViewport({ scale: 1 }), vp = pg.getViewport({ scale: cw * dpr / vp1.width });
+        var wrap = document.createElement('div'), cv2 = document.createElement('canvas'), layer = document.createElement('div');
+        wrap.className = 'puPg'; layer.className = 'puLayer'; wrap.style.aspectRatio = vp1.width + ' / ' + vp1.height;
+        cv2.width = Math.round(vp.width); cv2.height = Math.round(vp.height);
+        wrap.appendChild(cv2); wrap.appendChild(layer);
+        var no = document.createElement('div'); no.className = 'puNo'; no.textContent = n + ' / ' + doc.numPages + '쪽'; wrap.appendChild(no);
+        if (mine && mine.p === n - 1) {
+          var a = vp1.convertToViewportPoint(mine.x, mine.y), b = vp1.convertToViewportPoint(mine.x + mine.w, mine.y + mine.h), d = document.createElement('div');
+          d.className = 'puBox'; d.style.left = Math.min(a[0], b[0]) / vp1.width * 100 + '%'; d.style.top = Math.min(a[1], b[1]) / vp1.height * 100 + '%';
+          d.style.width = Math.abs(a[0] - b[0]) / vp1.width * 100 + '%'; d.style.height = Math.abs(a[1] - b[1]) / vp1.height * 100 + '%';
+          var lb = document.createElement('span'); lb.textContent = '내 서명'; d.appendChild(lb); layer.appendChild(d);
+        }
+        box.appendChild(wrap);
+        return pg.render({ canvasContext: cv2.getContext('2d'), viewport: vp }).promise;
+      });
+    })(i);
+    return chain;
+  }
+  $('pvBack').onclick = function () { PV.seq++; resetAll(); };
+  $('pvSign').onclick = function () { if (PV.e) pdfSignStart(PV.e); };
+
   function pdfSignStart(e) {
     var ps = e.pdfSign || {};
     edu = { id: e.id, title: e.title, date: e.date, pdf: true }; code = '';

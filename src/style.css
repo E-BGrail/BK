@@ -418,3 +418,4 @@
   .puBox.extra { border-color:#9aa3af; background:rgba(154,163,175,.15); } .puBox.extra span { background:#9aa3af; }
   .puNo { position:absolute; right:4px; bottom:4px; font-size:11px; color:#fff; background:rgba(0,0,0,.45); border-radius:4px; padding:0 5px; }
   .puCount { font-size:14px; font-weight:700; margin-bottom:8px; }
+  .pvBar { position:sticky; bottom:8px; z-index:5; box-shadow:0 -2px 12px rgba(0,0,0,.08); }

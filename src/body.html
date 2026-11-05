@@ -200,6 +200,19 @@
     </div>
   </section>
 
+  <!-- PDF 서명지 미리보기 -->
+  <section id="sv" class="hidden">
+    <div class="card">
+      <div><span class="pdfTag">PDF 서명</span><b id="pvTitle"></b></div>
+      <div class="hint" id="pvInfo" style="white-space:pre-line;margin-top:4px"></div>
+      <div class="puPages" id="pvPages"></div>
+      <div class="msg" id="pvMsg"></div>
+    </div>
+    <div class="card pvBar">
+      <div class="row"><button class="btn gray" id="pvBack" type="button">뒤로</button><button class="btn pri hidden" id="pvSign" type="button">서명하기</button></div>
+    </div>
+  </section>
+
   <!-- 4단계: 완료 -->
   <section id="s3" class="hidden">
     <div class="card center">
