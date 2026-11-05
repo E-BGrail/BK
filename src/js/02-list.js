@@ -195,12 +195,12 @@
     //   오른쪽으로 밀기 → 위 마감 탭 [삭제]·진행 중 환불 등록 [5분 연장], 아래 [내보내기]
     // PDF 서명지: 완료되면 [PDF 받기], 올린 사람·관리자는 [삭제]
     act.className = 'eswAct' + (e.pdfSign ? '' : ' stack');
-    act.innerHTML = e.pdfSign ? (closed ? '<button type="button" class="pdfdl">PDF<br>받기</button>' : '') :
-      (closed ? '<button type="button" class="reopen">다시 열기</button>' : '<button type="button" class="close">마감</button>') + '<button type="button" class="info">정보<br>수정</button>';
+    act.innerHTML = e.pdfSign ? (closed ? eswBtn('pdfdl', 'PDF<br>받기') : '') :
+      (closed ? eswBtn('reopen', '다시<br>열기') : eswBtn('close', '마감')) + eswBtn('info', '정보<br>수정');
     var f = document.createElement('div'); f.className = 'eswFront'; f.appendChild(el);
     w.appendChild(act);
-    var lh = e.pdfSign ? (e.pdfSign.canDel ? '<button type="button" class="del">삭제</button>' : '') :
-      (closed ? '<button type="button" class="del">삭제</button>' : e.refund ? '<button type="button" class="ext">5분<br>연장</button>' : '') + '<button type="button" class="exp">내보내기</button>';
+    var lh = e.pdfSign ? (e.pdfSign.canDel ? eswBtn('del', '삭제') : '') :
+      (closed ? eswBtn('del', '삭제') : e.refund ? eswBtn('ext', '5분<br>연장') : '') + eswBtn('exp', '내보<br>내기');
     if (lh) {
       var actL = document.createElement('div'); actL.className = 'eswAct eswActL' + (e.pdfSign ? '' : ' stack');
       actL.innerHTML = lh;
@@ -212,12 +212,27 @@
     });
     return w;
   }
+  // 카드 밀기 버튼: 아이콘(선 그림) + 글자
+  var ESW_IC = {
+    close: '<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/>',
+    reopen: '<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 7.5-2"/>',
+    info: '<circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/>',
+    exp: '<path d="M12 4v11M7 10l5 5 5-5M5 20h14"/>',
+    pdfdl: '<path d="M12 4v11M7 10l5 5 5-5M5 20h14"/>',
+    ext: '<circle cx="12" cy="13" r="8"/><path d="M12 9v4l2 2M9 2h6"/>',
+    del: '<path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/>'
+  };
+  function eswBtn(k, label) {
+    return '<button type="button" class="' + k + '"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+      ESW_IC[k] + '</svg><span>' + label + '</span></button>';
+  }
   var eswT = null, eswBusy = false;
   function eswArm(b, on, text) {
     clearTimeout(eswT);
-    [].forEach.call(document.querySelectorAll('.eswAct button.armed'), function (x) { x.classList.remove('armed'); x.textContent = x.getAttribute('data-t'); });
+    [].forEach.call(document.querySelectorAll('.eswAct button.armed'), function (x) { x.classList.remove('armed'); x.querySelector('span').innerHTML = x.getAttribute('data-t'); });
     if (!on) return;
-    b.setAttribute('data-t', b.textContent); b.classList.add('armed'); b.textContent = text;
+    var sp = b.querySelector('span');
+    b.setAttribute('data-t', sp.innerHTML); b.classList.add('armed'); sp.textContent = text;
     eswT = setTimeout(function () { eswArm(null, false); }, 4000);
   }
   function eswDo(e, b) {
