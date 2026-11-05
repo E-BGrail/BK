@@ -136,27 +136,28 @@
   .appSw .sw.on { background:var(--pri); color:#fff; box-shadow:0 1px 4px rgba(50,78,179,.35); }
   .appSw:not(.go) .sw:not(.on):active { background:#e3e7ef; }
   header .brand img { max-width:130px; height:26px; }
-  /* 업무차량관리 첫 화면: 차량 카드 [주행거리 촬영] (차량 관리 때는 [전표 등록][운행 기록], 카드를 왼쪽으로 밀면 [차량 삭제]) */
+  /* 업무차량관리 첫 화면: 차량 카드 [주행거리 촬영]. 카드를 왼쪽으로 밀면 [운행 기록]·[전표 등록], 오른쪽으로 밀면 [차량 삭제]. 목록 아래 [차량 등록] 박스 */
   .sbtn:disabled { opacity:.5; }
   .carBtns { flex:none; display:flex; flex-direction:column; gap:6px; }
   .carHead { display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:12px; } .carHead h2 { margin:0; }
-  .carAddBtn { flex:none; height:40px; padding:0 14px; border-radius:12px; border:1px solid #c9d0ee; background:#eef1fb; color:var(--pri); font-size:14px; font-weight:800; }
   .carPanel { margin-bottom:12px; padding:12px; border:1px solid var(--line); border-radius:12px; font-size:14px; }
   .carPanel input { width:100%; font-size:17px; padding:11px 12px; border:1px solid var(--line); border-radius:10px; min-width:0; margin-top:8px; }
   .carAddRow { display:flex; gap:8px; } .carAddRow input { flex:1; width:auto; margin-top:0; }
-  #carAddOk { flex:none; width:84px; padding:0; font-size:15px; } #carList2.manage .carBtns { width:84px; }   /* 등록·삭제 버튼 폭 같게 */
+  #carAddOk { flex:none; width:84px; padding:0; font-size:15px; }
   .carDelRow { display:flex; gap:8px; } .carDelRow input { flex:1; }
   .carPanelBtns { display:flex; gap:8px; margin-top:8px; } .carPanelBtns .btn { flex:1; padding:12px; font-size:15px; }
   .carPanel .btn.gray { background:#e4e7ec; color:var(--text); } .carPanel .btn.del { background:#b42318; color:#fff; }
-  .carDel { height:44px; padding:0 12px; border:0; border-radius:12px; background:#b42318; color:#fff; font-size:14px; font-weight:800; }
-  #carList2:not(.manage) .carDel, #carList2:not(.manage) .carRc, #carList2:not(.manage) a.camBtn.sub { display:none; } #carList2.manage a.camBtn.big { display:none; }   /* 차량 관리: 주행거리 촬영 자리에 전표 등록·운행 기록 */
-  .carSw { position:relative; border-radius:12px; overflow:hidden; }   /* 차량 관리: 카드를 왼쪽으로 밀면 뒤에 있던 [차량 삭제]가 보임 */
-  .carSw .carDel { position:absolute; top:0; right:0; bottom:0; width:96px; height:auto; border-radius:0; visibility:hidden; }
-  .carSw.open .carDel, .carSw.drag .carDel { visibility:visible; }   /* 닫힌 카드는 둥근 모서리 뒤로 빨간색이 비치지 않게 */
+  .carSw { position:relative; border-radius:12px; overflow:hidden; }   /* 카드 뒤에 버튼: 왼쪽으로 밀면 오른쪽 [운행 기록]·[전표 등록], 오른쪽으로 밀면 왼쪽 [차량 삭제] */
+  .carSw .carAct { position:absolute; top:0; bottom:0; width:96px; display:flex; flex-direction:column; visibility:hidden; }
+  .carSw .carActR { right:0; } .carSw .carActL { left:0; }
+  .carSw.open .carActR, .carSw.openR .carActL, .carSw.drag .carAct { visibility:visible; }   /* 닫힌 카드는 둥근 모서리 뒤로 색이 비치지 않게 */
+  .carSw.open .carActL, .carSw.openR .carActR { visibility:hidden; }
+  .carAct > * { flex:1; display:flex; align-items:center; justify-content:center; border:0; border-radius:0; color:#fff; font-size:14px; font-weight:800; font-family:inherit; text-decoration:none; padding:0 6px; text-align:center; }
+  .carAct > * + * { border-top:1px solid rgba(255,255,255,.55); }
+  .carAct .carDel { background:#b42318; } .carAct .carRec { background:var(--pri); } .carAct .carRc { background:#2f6f8f; }
   .carSw .carItem { position:relative; background:#fff; transition:transform .2s ease-out; touch-action:pan-y; }
-  .carSw.open .carItem { transform:translateX(-96px); }
+  .carSw.open .carItem { transform:translateX(-96px); } .carSw.openR .carItem { transform:translateX(96px); }
   .carHint { margin-top:8px; font-size:13px; color:var(--sub); }
-  .carRc { height:40px; padding:0; border-radius:12px; border:1px solid #c9d0ee; background:#eef1fb; color:var(--pri); font-size:14px; font-weight:800; }
   #crcTitle { display:block; font-size:17px; }
   .crcList { display:flex; flex-direction:column; gap:6px; margin-top:8px; max-height:240px; overflow-y:auto; }
   .crcRow { text-align:left; padding:10px; border:1px solid var(--line); border-radius:10px; background:#fff; font-size:14px; color:var(--text); }
@@ -166,11 +167,9 @@
   .rcBtns { display:flex; flex-direction:column; gap:6px; flex:none; } .rcBtns .sbtn { justify-content:center; } .sbtn.alt { background:#e4e7ec; color:var(--text); }
   #crcThumb { display:block; max-width:100%; max-height:180px; margin:8px auto 0; border-radius:8px; }
   .recTbl td.rcCell { cursor:pointer; }
-  .carAddBtn.on { background:var(--pri); color:#fff; border-color:var(--pri); }
   .carModel { margin-left:6px; font-size:14px; font-weight:600; color:var(--sub); }
   .carList a.camBtn { display:flex; flex:none; justify-content:center; padding:0 12px; border:0; font-size:14px; color:#fff; }
   .carList a.camBtn.big { flex-direction:column; justify-content:center; gap:4px; width:116px; height:90px; padding:0 8px; font-size:15px; }   /* 주행거리 촬영: 두 줄 높이 */
-  .carList a.camBtn.sub { background:#eef1fb; color:var(--pri); box-shadow:none; border:1px solid #c9d0ee; height:40px; }
   .camBtn { flex:none; display:flex; align-items:center; gap:6px; height:44px; padding:0 14px; border-radius:12px; text-decoration:none;
     background:linear-gradient(180deg, #3b58c0, var(--pri)); color:#fff; font-size:14px; font-weight:800; box-shadow:0 2px 6px rgba(50,78,179,.3); }
   /* 운행기록 페이지 */
@@ -347,12 +346,8 @@
 <section id="home" class="hidden">
   <main>
     <div class="card">
-      <div class="carHead"><h2>차량 목록</h2><button type="button" class="carAddBtn" id="carAddBtn">차량 관리</button></div>
-      <div class="carPanel hidden" id="carAddBox">
-        <div class="carAddRow"><input type="text" id="carNo" placeholder="예: 12가1234 스타리아" autocomplete="off" maxlength="40"><button type="button" class="btn pri" id="carAddOk">등록</button></div>
-        <div class="msg" id="carAddMsg"></div>
-        <div class="carHint">차량 삭제: 차량 카드를 왼쪽으로 밀기</div>
-      </div>
+      <div class="carHead"><h2>차량 목록</h2></div>
+      <div class="carHint" style="margin:-6px 0 10px">카드 밀기: 왼쪽 운행 기록·전표 등록, 오른쪽 차량 삭제</div>
       <div class="carPanel hidden" id="carDelBox">
         <b id="carDelNo"></b> 차량을 삭제합니다. 운행 기록은 남습니다. 관리자만 삭제할 수 있습니다.
         <div class="carDelRow"><input type="tel" id="carDelPin" placeholder="관리자 사번" inputmode="numeric" maxlength="20" autocomplete="off"><input type="text" id="carDelPw" class="secret" placeholder="개인 코드 6자리" inputmode="numeric" maxlength="6" autocomplete="off"></div>
@@ -374,6 +369,11 @@
       </div>
       <div class="msg" id="carNote"></div>
       <div class="carList" id="carList2"><div style="padding:14px;color:var(--sub);font-size:14px">불러오는 중…</div></div>
+    </div>
+    <div class="card" id="carAddBox">
+      <div class="carHead"><h2>차량 등록</h2></div>
+      <div class="carAddRow"><input type="text" id="carNo" placeholder="예: 12가1234 스타리아" autocomplete="off" maxlength="40"><button type="button" class="btn pri" id="carAddOk">등록</button></div>
+      <div class="msg" id="carAddMsg"></div>
     </div>
   </main>
 </section>
@@ -617,30 +617,28 @@ function showHome() {
   cachedGet('list', '', function (d) {
     $('carList2').innerHTML = (d.cars || []).map(function (c) {
       var sub = c.last ? fmt(c.last.km) + ' km' : '운행 기록 없음';      // 주행거리만 (운전자·날짜·시각은 운행 기록에서)
-      return '<div class="carSw"><button type="button" class="carDel" data-car="' + esc(c.no) + '"' + (c.run ? ' data-run="1"' : '') + '>차량 삭제</button>' +
+      return '<div class="carSw"><div class="carAct carActL"><button type="button" class="carDel" data-car="' + esc(c.no) + '"' + (c.run ? ' data-run="1"' : '') + '>차량<br>삭제</button></div>' +
+        '<div class="carAct carActR"><a class="carRec" href="?rec=' + encodeURIComponent(c.no) + '" aria-label="' + esc(c.no) + ' 운행 기록">운행<br>기록</a>' +
+        '<button type="button" class="carRc" data-car="' + esc(c.no) + '" data-model="' + esc(c.model || '') + '">전표<br>등록</button></div>' +
         '<div class="carItem card" style="margin:0;box-shadow:none;border:1px solid var(--line)"><span class="ci"><b>' + esc(c.no) + (c.model ? '<span class="carModel">' + esc(c.model) + '</span>' : '') + '</b><small>' + stateTag(c.run) + sub + '</small></span>' +
         '<span class="carBtns"><a class="camBtn big" href="?car=' + encodeURIComponent(c.no) + '" aria-label="' + esc(c.no) + ' 주행거리 촬영">' +
-        '<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>주행거리 촬영</a>' +
-        '<button type="button" class="carRc" data-car="' + esc(c.no) + '" data-model="' + esc(c.model || '') + '">전표 등록</button>' +
-        '<a class="camBtn sub" href="?rec=' + encodeURIComponent(c.no) + '" aria-label="' + esc(c.no) + ' 운행 기록">운행 기록</a></span></div></div>';
+        '<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>주행거리 촬영</a></span></div></div>';
     }).join('') || '<div style="padding:14px;color:var(--sub);font-size:14px">등록된 차량이 없습니다.</div>';
   }, function (e) { $('carList2').innerHTML = '<div class="msg">' + esc(errText(e)) + '</div>'; });
 }
 
 /* ---------- 차량 등록(누구나) · 삭제(관리자 사번 + 개인 코드) ---------- */
-function carPanel(id) { ['carAddBox', 'carDelBox', 'carRcBox'].forEach(function (x) { $(x).classList.toggle('hidden', x !== id); }); }
-/** 관리 모드: 등록 칸이 열리고, 카드의 주행거리 촬영 자리에 전표 등록·운행 기록 (카드를 왼쪽으로 밀면 차량 삭제) */
-function carManage(on) {
-  carSwClose();
-  $('carList2').classList.toggle('manage', on); $('carAddBtn').classList.toggle('on', on);
+/** 목록 위 패널(차량 삭제 확인·전표 등록) 하나만 보이기. 차량 등록 박스는 목록 아래에 늘 있음 */
+function carPanel(id) { ['carDelBox', 'carRcBox'].forEach(function (x) { $(x).classList.toggle('hidden', x !== id); }); }
+/** 패널 닫고 입력칸 비우기 */
+function carReset() {
+  carSwClose(); carPanel('');
   $('carNote').textContent = ''; $('carNo').value = ''; $('carAddMsg').textContent = ''; $('carDelPw').value = '';
-  carPanel(on ? 'carAddBox' : '');
 }
 function carDone(d) {                                  // 서버가 돌려준 최신 목록으로 저장본을 바꾸고 다시 그림
   try { localStorage.setItem('bglCar:list:', JSON.stringify(d)); } catch (x) {}
-  carManage(false); showHome();
+  carReset(); showHome();
 }
-$('carAddBtn').onclick = function () { var on = !$('carList2').classList.contains('manage'); carManage(on); if (on) $('carNo').focus(); };
 $('carAddOk').onclick = function () {
   var m = /^\s*((?:[가-힣]{2})?\d{2,3}\s*[가-힣]\s*\d{4})\s*(.*?)\s*$/.exec($('carNo').value);   // 한 칸에 '번호 차종' (띄어쓰기 없어도 됨)
   if (!m) { $('carAddMsg').textContent = '차량번호를 바르게 입력하세요. (예: 12가1234 스타리아)'; $('carNo').focus(); return; }
@@ -650,20 +648,20 @@ $('carAddOk').onclick = function () {
   call('carAdd', { car: no, model: model }).then(function (d) { $('carAddOk').disabled = false; carDone(d); },
     function (e) { $('carAddOk').disabled = false; $('carAddMsg').textContent = errText(e); });
 };
-/* 차량 관리: 카드를 왼쪽으로 밀면 [차량 삭제] (한 번에 한 카드). 민 직후의 누르기와, 열린 카드를 누르면 닫기만 */
+/* 차량 카드 밀기: 왼쪽 → [운행 기록]·[전표 등록], 오른쪽 → [차량 삭제] (한 번에 한 카드). 민 직후의 누르기와, 열린 카드를 누르면 닫기만 */
 var SW = null, swAt = 0;
-function carSwClose(except) { [].forEach.call(document.querySelectorAll('#carList2 .carSw.open'), function (x) { if (x !== except) x.classList.remove('open'); }); }
+function carSwClose(except) { [].forEach.call(document.querySelectorAll('#carList2 .carSw.open, #carList2 .carSw.openR'), function (x) { if (x !== except) x.classList.remove('open', 'openR'); }); }
 $('carList2').addEventListener('pointerdown', function (e) {
   var c = e.target.closest('.carSw');
-  if (!c || !$('carList2').classList.contains('manage') || e.target.closest('.carDel')) return;
-  SW = { c: c, it: c.querySelector('.carItem'), x: e.clientX, y: e.clientY, on: false, open: c.classList.contains('open'), dx: 0 };
+  if (!c || e.target.closest('.carAct')) return;
+  SW = { c: c, it: c.querySelector('.carItem'), x: e.clientX, y: e.clientY, on: false, start: c.classList.contains('open') ? -96 : c.classList.contains('openR') ? 96 : 0, dx: 0 };
 });
 $('carList2').addEventListener('pointermove', function (e) {
   if (!SW) return;
   var dx = e.clientX - SW.x, dy = e.clientY - SW.y;
   if (!SW.on) { if (Math.abs(dy) > 12 && Math.abs(dy) > Math.abs(dx)) { SW = null; return; } if (Math.abs(dx) < 10) return; SW.on = true; carSwClose(SW.c); SW.c.classList.add('drag'); }
   SW.dx = dx; SW.it.style.transition = 'none';
-  SW.it.style.transform = 'translateX(' + Math.max(-96, Math.min(0, (SW.open ? -96 : 0) + dx)) + 'px)';
+  SW.it.style.transform = 'translateX(' + Math.max(-96, Math.min(96, SW.start + dx)) + 'px)';
 });
 function swEnd() {
   if (!SW) return;
@@ -671,7 +669,8 @@ function swEnd() {
   if (!s.on) return;
   s.it.style.transition = ''; s.it.style.transform = '';
   setTimeout(function () { s.c.classList.remove('drag'); }, 250);
-  s.c.classList.toggle('open', s.open ? s.dx < 30 : s.dx < -40);
+  var pos = Math.max(-96, Math.min(96, s.start + s.dx));
+  s.c.classList.toggle('open', pos < -40); s.c.classList.toggle('openR', pos > 40);
   swAt = Date.now();
 }
 $('carList2').addEventListener('pointerup', swEnd);
@@ -679,7 +678,7 @@ $('carList2').addEventListener('pointercancel', swEnd);
 $('carList2').addEventListener('touchmove', function (e) { if (SW && SW.on) e.preventDefault(); }, { passive: false });   // 옆으로 미는 중에는 페이지 스크롤 막음
 $('carList2').addEventListener('click', function (e) {
   var c = e.target.closest('.carSw');
-  if (Date.now() - swAt < 350 || (c && c.classList.contains('open') && !e.target.closest('.carDel'))) {
+  if (Date.now() - swAt < 350 || (c && (c.classList.contains('open') || c.classList.contains('openR')) && !e.target.closest('.carAct'))) {
     e.preventDefault(); e.stopPropagation(); if (Date.now() - swAt >= 350) carSwClose(); return;
   }
 }, true);
@@ -692,7 +691,7 @@ $('carList2').addEventListener('click', function (e) {
   if (!$('carDelPin').value) $('carDelPin').value = loadMe();
   carPanel('carDelBox'); $($('carDelPin').value ? 'carDelPw' : 'carDelPin').focus();
 });
-$('carDelNoBtn').onclick = function () { $('carDelPw').value = ''; carPanel('carAddBox'); };
+$('carDelNoBtn').onclick = function () { $('carDelPw').value = ''; carPanel(''); };
 $('carDelOk').onclick = function () {
   var pin = $('carDelPin').value.trim(), pw = $('carDelPw').value.trim();
   if (!pin) { $('carDelMsg').textContent = '관리자 사번을 입력하세요.'; $('carDelPin').focus(); return; }
@@ -702,7 +701,7 @@ $('carDelOk').onclick = function () {
     function (e) { $('carDelOk').disabled = false; $('carDelMsg').textContent = errText(e); });
 };
 
-/* ---------- 전표 등록 (차량 관리): 운행 고르기 → 촬영 → 이름·개인 코드 (이 휴대폰에 저장된 값으로 채움) ---------- */
+/* ---------- 전표 등록 (차량 카드를 왼쪽으로 밀기): 운행 고르기 → 촬영 → 이름·개인 코드 (이 휴대폰에 저장된 값으로 채움) ---------- */
 var CRC = { car: '', id: '', img: '' };
 function crcSync() {
   $('crcForm').classList.toggle('hidden', !CRC.id);
@@ -712,6 +711,7 @@ function crcSync() {
 }
 $('carList2').addEventListener('click', function (e) {
   var b = e.target.closest('.carRc'); if (!b) return;
+  carSwClose();
   CRC = { car: b.getAttribute('data-car'), id: '', img: '' };
   $('crcTitle').textContent = carLabel(CRC.car, b.getAttribute('data-model')) + ' 기록 선택';
   $('crcPin').value = loadMe(); $('crcPc').value = '';     // 사번만 자동 완성, 코드는 직접 입력
@@ -745,7 +745,7 @@ function crcFileChange() {
 }
 $('crcFile').addEventListener('change', crcFileChange);
 $('crcFile2').addEventListener('change', crcFileChange);
-$('crcNo').onclick = function () { CRC = { car: '', id: '', img: '' }; carPanel('carAddBox'); };
+$('crcNo').onclick = function () { CRC = { car: '', id: '', img: '' }; carPanel(''); };
 $('crcOk').onclick = function () {
   var pc = $('crcPc').value.trim(), pin = $('crcPin').value.trim();
   if (!pin || !pc) { $('crcMsg').textContent = '사번과 개인 코드를 입력하세요.'; return; }
@@ -756,7 +756,7 @@ $('crcOk').onclick = function () {
     if (r.needCode) { $('crcMsg').textContent = '코드를 입력해 주세요.'; $('crcPc').focus(); return; }
     saveMe(pin);
     var car = CRC.car; CRC = { car: '', id: '', img: '' };
-    carManage(false); $('carNote').style.color = 'var(--ok)'; $('carNote').textContent = car + ' 전표를 등록했습니다.';
+    carReset(); $('carNote').style.color = 'var(--ok)'; $('carNote').textContent = car + ' 전표를 등록했습니다.';
   }, function (e) { $('crcOk').disabled = false; $('crcMsg').textContent = errText(e); });
 };
 
@@ -1379,7 +1379,7 @@ function syncEnd() {
   $('routeEtc').classList.toggle('hidden', S.route !== '기타');
   $('rcBox').classList.toggle('hidden', S.reason !== '주유');
   $('rcThumb').classList.toggle('hidden', !S.receipt); if (S.receipt) $('rcThumb').src = S.receipt;
-  $('rcText').textContent = S.receipt ? '등록됨 · 바꾸려면 버튼을 누르세요' : '지금 등록하거나, 나중에 차량 관리의 전표 등록에서 등록할 수 있습니다';
+  $('rcText').textContent = S.receipt ? '등록됨 · 바꾸려면 버튼을 누르세요' : '지금 등록하거나, 나중에 차량 목록에서 카드를 왼쪽으로 밀어 [전표 등록]으로 등록할 수 있습니다';
   $('rcBtn').firstChild.nodeValue = S.receipt ? '다시 촬영' : '전표 촬영';
 }
 /** 신용카드 전표: 흑백, 셀 한도 안으로 줄여서 */
@@ -1428,7 +1428,7 @@ function submit() {
     if (Number(p.km) < Number(p.startKm)) { msg('하차 km가 탑승 km보다 작습니다.'); $('km').focus(); return; }
     if (S.reason === '기타' && !p.reasonEtc.trim()) { msg('운행목적을 입력하세요.'); $('reasonEtc').focus(); return; }
     if (S.route === '기타' && !p.routeEtc.trim()) { msg('행선지를 입력하세요.'); $('routeEtc').focus(); return; }
-    if (S.reason === '주유' && !S.receipt && !confirm('전표 없이 운행을 종료할까요? 전표는 나중에 차량 관리의 전표 등록에서 등록할 수 있습니다.')) return;
+    if (S.reason === '주유' && !S.receipt && !confirm('전표 없이 운행을 종료할까요? 전표는 나중에 차량 목록에서 카드를 왼쪽으로 밀어 [전표 등록]으로 등록할 수 있습니다.')) return;
   }
   S.km = p.km; S.km0 = p.startKm || null;
   msg(''); busy(true);
