@@ -148,13 +148,14 @@
   .carPanelBtns { display:flex; gap:8px; margin-top:8px; } .carPanelBtns .btn { flex:1; padding:12px; font-size:15px; }
   .carPanel .btn.gray { background:#e4e7ec; color:var(--text); } .carPanel .btn.del { background:#b42318; color:#fff; }
   .carSw { position:relative; border-radius:12px; overflow:hidden; }   /* 카드 뒤에 버튼: 왼쪽으로 밀면 오른쪽 [운행 기록]·[전표 등록], 오른쪽으로 밀면 왼쪽 [차량 삭제] */
-  .carSw .carAct { position:absolute; top:0; bottom:0; width:96px; display:flex; flex-direction:column; visibility:hidden; }
-  .carSw .carActR { right:0; } .carSw .carActL { left:0; }
+  .carSw .carAct { position:absolute; top:0; bottom:0; width:96px; display:flex; flex-direction:column; gap:6px; visibility:hidden; }   /* e-싸인 카드와 같은 모양: 카드와 8px 떨어진 둥근 따로 버튼 + 아이콘 */
+  .carSw .carActR { right:0; padding-left:8px; } .carSw .carActL { left:0; padding-right:8px; }
   .carSw.open .carActR, .carSw.openR .carActL, .carSw.drag .carAct { visibility:visible; }   /* 닫힌 카드는 둥근 모서리 뒤로 색이 비치지 않게 */
   .carSw.open .carActL, .carSw.openR .carActR { visibility:hidden; }
-  .carAct > * { flex:1; display:flex; align-items:center; justify-content:center; border:0; border-radius:0; color:#fff; font-size:14px; font-weight:800; font-family:inherit; text-decoration:none; padding:0 6px; text-align:center; }
-  .carAct > * + * { border-top:1px solid rgba(255,255,255,.55); }
-  .carAct .carDel { background:#b42318; } .carAct .carRec { background:var(--pri); } .carAct .carRc { background:#2f6f8f; }
+  .carAct > * { flex:1; min-height:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px; border:0; border-radius:12px; color:#fff; font-size:13px; font-weight:800; font-family:inherit; line-height:1.2; text-decoration:none; padding:4px; text-align:center; }
+  .carAct > * svg { width:18px; height:18px; flex:none; }
+  .carActR > * { flex-direction:row; gap:4px; } .carActR > * svg { width:15px; height:15px; }   /* 위아래 두 버튼: 아이콘 옆에 글자 */
+  .carAct .carDel { background:#b42318; } .carAct .carRec { background:var(--pri); } .carAct .carRc { background:#4a66c9; }
   .carSw .carItem { position:relative; background:#fff; transition:transform .2s ease-out; touch-action:pan-y; }
   .carSw.open .carItem { transform:translateX(-96px); } .carSw.openR .carItem { transform:translateX(96px); }
   .carHint { margin-top:8px; font-size:13px; color:var(--sub); }
@@ -611,15 +612,22 @@ function cachedGet(fn, car, draw, fail) {
 }
 function stateTag(run) { return run ? '<span class="tag run">운행 중</span>' : '<span class="tag idle">대기 중</span>'; }
 /* ---------- 업무차량관리 첫 화면: 차량 목록 (카드마다 주행거리 촬영 · 운행 기록) ---------- */
+// 카드 밀기 버튼 아이콘 (선 그림, e-싸인 카드와 같은 모양)
+var CAR_IC = {
+  del: '<path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/>',
+  rec: '<rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 8h6M9 12h6M9 16h4"/>',
+  rc: '<path d="M6 3h12v18l-3-2-3 2-3-2-3 2zM9 8h6M9 12h6"/>'
+};
+function carIc(k) { return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + CAR_IC[k] + '</svg>'; }
 function showHome() {
   show('home');
   $('bandTitle').textContent = '업무차량관리'; $('bandCar').textContent = '';
   cachedGet('list', '', function (d) {
     $('carList2').innerHTML = (d.cars || []).map(function (c) {
       var sub = c.last ? fmt(c.last.km) + ' km' : '운행 기록 없음';      // 주행거리만 (운전자·날짜·시각은 운행 기록에서)
-      return '<div class="carSw"><div class="carAct carActL"><button type="button" class="carDel" data-car="' + esc(c.no) + '"' + (c.run ? ' data-run="1"' : '') + '>차량<br>삭제</button></div>' +
-        '<div class="carAct carActR"><a class="carRec" href="?rec=' + encodeURIComponent(c.no) + '" aria-label="' + esc(c.no) + ' 운행 기록">운행<br>기록</a>' +
-        '<button type="button" class="carRc" data-car="' + esc(c.no) + '" data-model="' + esc(c.model || '') + '">전표<br>등록</button></div>' +
+      return '<div class="carSw"><div class="carAct carActL"><button type="button" class="carDel" data-car="' + esc(c.no) + '"' + (c.run ? ' data-run="1"' : '') + '>' + carIc('del') + '<span>차량<br>삭제</span></button></div>' +
+        '<div class="carAct carActR"><a class="carRec" href="?rec=' + encodeURIComponent(c.no) + '" aria-label="' + esc(c.no) + ' 운행 기록">' + carIc('rec') + '<span>운행<br>기록</span></a>' +
+        '<button type="button" class="carRc" data-car="' + esc(c.no) + '" data-model="' + esc(c.model || '') + '">' + carIc('rc') + '<span>전표<br>등록</span></button></div>' +
         '<div class="carItem card" style="margin:0;box-shadow:none;border:1px solid var(--line)"><span class="ci"><b>' + esc(c.no) + (c.model ? '<span class="carModel">' + esc(c.model) + '</span>' : '') + '</b><small>' + stateTag(c.run) + sub + '</small></span>' +
         '<span class="carBtns"><a class="camBtn big" href="?car=' + encodeURIComponent(c.no) + '" aria-label="' + esc(c.no) + ' 주행거리 촬영">' +
         '<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>주행거리 촬영</a></span></div></div>';
