@@ -168,6 +168,7 @@
       }
       if (r.needCode) { msg($('lgMsg'), '코드를 입력해 주세요', '#c0392b'); $('lgCode').focus(); return; }
       if (!r.guest) { try { localStorage.setItem('bglPin', pin); } catch (x) {} }   // 함께 쓰는 아이디는 기억하지 않음
+      if (r.dev) { try { localStorage.setItem('bglDev', r.dev); } catch (x) {} }    // 기기 열쇠: 이 휴대폰으로 로그인한 적 있음 (업무차량 QR 운행 시작에 필요, 로그아웃해도 남김)
       $('lgCode').value = '';
       var ttl = Number(r.ttl) || 1200;                    // 마지막 동작 후 이 시간(초)이면 자동 로그아웃 (서버와 같게)
       lastAct = lastPing = lastSave = Date.now(); try { sessionStorage.setItem(ACT_KEY, String(lastAct)); } catch (x) {}
@@ -177,7 +178,7 @@
       if (r.init) loadInit(r.init); else refreshInit();
     }).withFailureHandler(function (e) {
       $('lgOk').disabled = false; $('lgCode').value = ''; msg($('lgMsg'), errText(e), '#c0392b');
-    }).staffLogin({ pin: pin, pcode: pc });
+    }).staffLogin({ pin: pin, pcode: pc, dev: (function () { try { return localStorage.getItem('bglDev') || ''; } catch (x) { return ''; } })() });
   }
   $('lgOk').onclick = lgSubmit;
   $('lgPin').value = savedPin();
