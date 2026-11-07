@@ -120,7 +120,7 @@
   function enterList() {
     var g = !!(staff && staff.guest);
     $('meName').textContent = g ? '외부 참석자' : ((staff.disp ? staff.disp + ' ' : '') + staff.name + ' 님').trim();
-    if (!g && staff.admin) { var ma = document.createElement('span'); ma.className = 'meAdm' + (staff.master ? ' mst' : ''); ma.textContent = staff.master ? '마스터' : '관리자'; $('meName').appendChild(ma); }
+    if (!g && staff.admin) { var ma = document.createElement('span'); ma.className = 'meAdm' + (staff.master ? ' mst' : ''); ma.textContent = staff.master ? '선임관리자' : '관리자'; $('meName').appendChild(ma); }
     $('chgCard').classList.toggle('hidden', g);
     admCards();                                     // 새 서명지 열기: 직원 모두, 배포용 아이디·개인 코드 관리: 관리자
     if (!edus.length) $('edus').innerHTML = '<div class="hint">불러오는 중…</div>';

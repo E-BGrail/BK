@@ -538,7 +538,7 @@
       </div>
       <div class="msg" id="lgMsg"></div>
       <div class="row"><button class="btn pri" id="lgOk" type="button">로그인</button></div>
-      <div class="hint" id="lgHintStaff">처음이면 사번만 입력하고 [로그인]을 눌러 사내 메일 인증으로 직원 등록하세요.<br>개인 코드 분실시 마스터에게 문의하세요.<br>외부 참석자는 담당자에게 받은 아이디와 코드를 입력하세요.</div>
+      <div class="hint" id="lgHintStaff">처음이면 사번만 입력하고 [로그인]을 눌러 사내 메일 인증으로 직원 등록하세요.<br>개인 코드 분실시 선임관리자에게 문의하세요.<br>외부 참석자는 담당자에게 받은 아이디와 코드를 입력하세요.</div>
     </div>
   </section>
 
@@ -585,7 +585,7 @@
     <div class="card" id="chgCard">
       <div class="nhead" id="chgHead"><b>개인정보 변경</b></div>
       <div class="ebody">
-        <div class="note">개인정보 등록 시 사용한 본인 메일로 인증 코드를 보냅니다. 코드를 확인 후 입력하면 개인정보 변경이 가능합니다. 사번과 개인 코드, 메일은 바꿀 수 없습니다. 개인 코드 분실 시 마스터에게 문의 바랍니다.</div>
+        <div class="note">개인정보 등록 시 사용한 본인 메일로 인증 코드를 보냅니다. 코드를 확인 후 입력하면 개인정보 변경이 가능합니다. 사번과 개인 코드, 메일은 바꿀 수 없습니다. 개인 코드 분실 시 선임관리자에게 문의 바랍니다.</div>
         <div class="row"><button class="btn gray" id="chgMailSend" type="button">메일로 인증 코드 받기</button></div>
         <div class="codeRow hidden" id="chgCodeRow">
           <div style="flex:1"><input type="tel" id="chgMailCode" placeholder="인증 코드 6자리" autocomplete="one-time-code" inputmode="numeric" pattern="[0-9]*" maxlength="6"></div>
@@ -1809,7 +1809,7 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
   function enterList() {
     var g = !!(staff && staff.guest);
     $('meName').textContent = g ? '외부 참석자' : ((staff.disp ? staff.disp + ' ' : '') + staff.name + ' 님').trim();
-    if (!g && staff.admin) { var ma = document.createElement('span'); ma.className = 'meAdm' + (staff.master ? ' mst' : ''); ma.textContent = staff.master ? '마스터' : '관리자'; $('meName').appendChild(ma); }
+    if (!g && staff.admin) { var ma = document.createElement('span'); ma.className = 'meAdm' + (staff.master ? ' mst' : ''); ma.textContent = staff.master ? '선임관리자' : '관리자'; $('meName').appendChild(ma); }
     $('chgCard').classList.toggle('hidden', g);
     admCards();                                     // 새 서명지 열기: 직원 모두, 배포용 아이디·개인 코드 관리: 관리자
     if (!edus.length) $('edus').innerHTML = '<div class="hint">불러오는 중…</div>';
@@ -3200,7 +3200,7 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
     if (prev && (list.indexOf(prev) > -1 || (prev === PDF_TPL && had))) sel.value = prev;   // 처음 양식을 받으면 첫 양식
     nTplUi();
   }
-  /** 서명지 목록 화면에 들어올 때: 새 서명지 열기(직원 모두)·배포용 아이디(관리자)·개인 코드 관리(마스터만) */
+  /** 서명지 목록 화면에 들어올 때: 새 서명지 열기(직원 모두)·배포용 아이디(관리자)·개인 코드 관리(선임관리자만) */
   function admCards() {
     var g = !!(staff && staff.guest), adm = isAdm();
     $('newCard').classList.toggle('hidden', g || !(staff && staff.token));
