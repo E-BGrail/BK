@@ -147,7 +147,7 @@
    * → 뒤로가기를 누를 때마다 한 단계씩 앞 화면으로 (팝업은 닫힘). 버튼으로 앞 화면에 가면 쌓아 둔 칸을 그만큼 되돌림.
    * 기록 칸은 화면을 넘어갈 때(누른 순간) 넣어 둠: 뒤로가기 처리 중에 다시 넣으면 휴대폰 크롬이 다음 뒤로가기 때 건너뜀.
    * 환불 등록: 교육 목록에서 들어왔으면 뒤로가기 → 첫 화면, 고객용 QR로 바로 들어왔으면 기록을 넣지 않음 (브라우저 기본 동작) */
-  var POPS = ['qrOver', 'codeOver', 'regOver', 'skView', 'admOver'];
+  var POPS = ['qrOver', 'codeOver', 'regOver', 'skView', 'admOver', 'stPrevOver'];
   var NAV = { n: 0, skip: 0, t: null, q: false };   // n: 지금 쌓아 둔 칸 수, skip: 우리가 되돌려서 올 popstate 수
   function anyPop() { return POPS.some(function (id) { return !$(id).classList.contains('hidden'); }); }
   function navDepth() {                    // 지금 화면이 원하는 칸 수
@@ -195,6 +195,7 @@
       if (!$('regOver').classList.contains('hidden')) $('regOver').classList.add('hidden');
       if (!$('skView').classList.contains('hidden')) lvClose();
       if (!$('admOver').classList.contains('hidden')) admOverHide();
+      if (!$('stPrevOver').classList.contains('hidden')) pvClose();
     } else screenBack();                   // 뒤로가기 → 이전 화면
     navApply();
   }
