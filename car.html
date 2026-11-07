@@ -112,10 +112,6 @@
   .chips button { height:46px; border-radius:12px; border:1px solid #c9d0ee; background:#fff; color:var(--pri2); font-size:14px; padding:0 2px; line-height:1.15; word-break:keep-all; }
   .chips button.on { background:var(--pri); border-color:var(--pri); color:#fff; font-weight:800; }
   .sec { margin-top:14px; }
-  .rc { margin-top:12px; display:flex; align-items:center; gap:10px; padding:10px 12px; border:1px dashed var(--pri); border-radius:12px; background:#f3f6fd; }
-  .rc img { width:54px; height:54px; object-fit:cover; border-radius:8px; background:#ddd; }
-  .rc .t { flex:1; display:flex; flex-direction:column; font-size:14px; font-weight:700; }
-  .rc .t small { font-size:12px; font-weight:400; color:var(--sub); }
   .sbtn { height:44px; padding:0 14px; border:0; border-radius:10px; background:var(--pri); color:#fff; font-size:14px; font-weight:700; display:inline-flex; align-items:center; }
   .btn { width:100%; font-size:17px; padding:15px; border:0; border-radius:12px; font-weight:700; }
   .pri { background:linear-gradient(180deg, #3b58c0, var(--pri)); color:#fff; box-shadow:0 2px 6px rgba(50,78,179,.3); }
@@ -166,8 +162,10 @@
   .crcShot { display:block; width:100%; margin-top:8px; padding:12px; font-size:15px; text-align:center; background:#e4e7ec; color:var(--text); }
   .crcShots { display:flex; gap:8px; } .crcShots .crcShot { flex:1; min-width:0; }
   .rcBtns { display:flex; flex-direction:column; gap:6px; flex:none; } .rcBtns .sbtn { justify-content:center; } .sbtn.alt { background:#e4e7ec; color:var(--text); }
+  .crcPdf { display:flex; gap:8px; margin-top:8px; } .crcPdf select { flex:1; min-width:0; height:38px; border:1px solid var(--line); border-radius:8px; padding:0 8px; font-size:15px; background:#fff; color:var(--text); }
+  .crcGrid { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:8px; } .crcGrid label { display:flex; flex-direction:column; gap:4px; font-size:13px; font-weight:700; color:var(--sub); }
+  .crcGrid select, .crcGrid input { width:100%; height:44px; margin-top:0; font-size:16px; padding:0 10px; border:1px solid var(--line); border-radius:10px; background:#fff; color:var(--text); }
   #crcThumb { display:block; max-width:100%; max-height:180px; margin:8px auto 0; border-radius:8px; }
-  .recTbl td.rcCell { cursor:pointer; }
   .carModel { margin-left:6px; font-size:14px; font-weight:600; color:var(--sub); }
   .carList a.camBtn { display:flex; flex:none; justify-content:center; padding:0 12px; border:0; font-size:14px; color:#fff; }
   .carList a.camBtn.big { flex-direction:column; justify-content:center; gap:4px; width:116px; height:90px; padding:0 8px; font-size:15px; }   /* 주행거리 촬영: 두 줄 높이 */
@@ -193,11 +191,6 @@
   .recTbl tbody tr:last-child td { border-bottom:0; }
   .recTbl .n { text-align:right; font-variant-numeric:tabular-nums; } .recTbl .n b { color:var(--pri2); }
   .recTbl .c { text-align:center; }
-  .recTbl button.rcv { height:28px; padding:0 10px; border-radius:7px; border:1px solid #f0c48a; color:#9a5b00; background:#fff8ec; font-size:12px; font-weight:700; }
-  /* 전표 창 */
-  .rcOver { position:fixed; inset:0; z-index:45; background:rgba(0,0,0,.88); display:flex; flex-direction:column; align-items:center; justify-content:center; padding:16px; gap:10px; }
-  .rcOver img { max-width:100%; max-height:84vh; border-radius:8px; background:#fff; }
-  .rcOver p { margin:0; color:#fff; font-size:14px; text-align:center; }
   .carList { display:flex; flex-direction:column; gap:8px; margin-top:10px; }
   .carItem { display:flex !important; align-items:center; justify-content:space-between; gap:10px; }
   .carItem .ci { display:flex; flex-direction:column; gap:3px; min-width:0; }
@@ -320,12 +313,6 @@
           <input type="text" id="routeEtc" class="hidden" placeholder="행선지 입력" maxlength="30" style="margin-top:8px" aria-label="기타 행선지"></div>
         <div class="sec"><span class="lbl">운행목적<small>이 차량에서 자주 쓰는 항목 자동 선택</small></span><div class="chips" id="reasons" role="group" aria-label="운행목적"></div>
           <input type="text" id="reasonEtc" class="hidden" placeholder="운행목적 입력" maxlength="30" style="margin-top:8px" aria-label="기타 운행목적"></div>
-        <div class="rc hidden" id="rcBox">
-          <img id="rcThumb" class="hidden" alt="신용카드 전표">
-          <div class="t">신용카드 전표<small id="rcText"></small></div>
-          <div class="rcBtns"><label class="sbtn" id="rcBtn">전표 촬영<input type="file" id="rcFile" accept="image/*" capture="environment" hidden></label>
-            <label class="sbtn alt">사진 선택<input type="file" id="rcFile2" accept="image/*" hidden></label></div>
-        </div>
         <div class="sec"><span class="lbl"><label for="memo">특이사항</label><small>차량 관련 내용이 있으면 입력 (선택)</small></span>
           <input type="text" id="memo" placeholder="예: 타이어 공기압 경고등 켜짐" maxlength="100" autocomplete="off"></div>
       </div>
@@ -363,7 +350,15 @@
       <div class="carPanel hidden" id="carRcBox">
         <b id="crcTitle"></b>
         <div class="crcList" id="crcList"></div>
+        <div class="crcPdf"><select id="crcMonth" aria-label="관리일지 월"></select><button type="button" class="sbtn" id="crcPdf">관리일지 PDF</button></div>
         <div class="hidden" id="crcForm">
+          <div class="crcGrid">
+            <label>구분<select id="crcKind"><option>주유</option><option>수리</option><option>기타</option></select></label>
+            <label>계기판 km<input type="text" id="crcKm" inputmode="numeric" maxlength="9" autocomplete="off"></label>
+            <label>세부내용<input type="text" id="crcDetail" placeholder="예: 20.5L" maxlength="40" autocomplete="off"></label>
+            <label>금액(원)<input type="text" id="crcAmt" inputmode="numeric" maxlength="10" autocomplete="off"></label>
+          </div>
+          <input type="text" id="crcNote" placeholder="비고 (선택)" maxlength="40" autocomplete="off">
           <img id="crcThumb" class="hidden" alt="전표 사진">
           <div class="crcShots"><label class="btn gray crcShot" id="crcShot">전표 촬영<input type="file" id="crcFile" accept="image/*" capture="environment" hidden></label>
             <label class="btn gray crcShot">사진 선택<input type="file" id="crcFile2" accept="image/*" hidden></label></div>
@@ -384,7 +379,7 @@
   </main>
 </section>
 
-<!-- ===== 운행기록 (차량별 보기 · 수정 · 전표 · 엑셀) ===== -->
+<!-- ===== 운행기록 (차량별 보기 · 엑셀 · 운행일지 PDF) ===== -->
 <section id="rec" class="hidden">
   <main>
     <div class="card">
@@ -393,6 +388,7 @@
         <select id="rMonth" aria-label="조회 월"></select>
         <button class="mBtn" id="rNext" type="button" aria-label="다음 달">▶</button>
         <button class="sbtn" id="rXlsx" type="button">엑셀</button>
+        <button class="sbtn" id="rPdf" type="button">PDF</button>
       </div>
     </div>
     <div class="card">
@@ -401,12 +397,6 @@
   </main>
 </section>
 
-<!-- 주유 전표 보기 -->
-<div class="rcOver hidden" id="rcOver" role="dialog" aria-label="주유 전표">
-  <img id="rcBig" alt="주유 신용카드 전표">
-  <p id="rcCap"></p>
-  <p style="font-size:12px;opacity:.7">아무 곳이나 누르면 닫힙니다</p>
-</div>
 
 <!-- ===== 차량 선택 / 오류 ===== -->
 <section id="need" class="hidden">
@@ -441,7 +431,7 @@
 var API = 'https://script.google.com/macros/s/AKfycbwjudREVuPqSxXknvG5XClW_tQKbD-4wkCJkyeZt0KKY-spuDCymTt9O5j_6L28Z9QK/exec';
 /* ▲▲▲ */
 var INIT = {};
-var S = { mode: 'start', km: '', kmImg: '', receipt: '', reason: '', route: '', busy: false };
+var S = { mode: 'start', km: '', kmImg: '', reason: '', route: '', busy: false };
 var ME_KEY = 'bglPin';     // 이 휴대폰에서 마지막으로 쓴 사번 (e-싸인 로그인과 같은 칸)
 var $ = function (id) { return document.getElementById(id); };
 function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
@@ -742,8 +732,9 @@ $('carDelOk').onclick = function () {
     function (e) { $('carDelOk').disabled = false; $('carDelMsg').textContent = errText(e); });
 };
 
-/* ---------- 전표 등록 (차량 카드를 왼쪽으로 밀기): 운행 고르기 → 촬영 → 이름·개인 코드 (이 휴대폰에 저장된 값으로 채움) ---------- */
-var CRC = { car: '', id: '', img: '' };
+/* ---------- 전표 등록 (차량 카드를 왼쪽으로 밀기): 운행 고르기 → 관리일지 칸(구분·계기판 km·세부내용·금액·비고) → 촬영 → 사번·개인 코드
+ * 등록하면 차량관리일지(별지 제3호)에 한 줄. 위 [관리일지 PDF]: 고른 달의 차량관리일지 ---------- */
+var CRC = { car: '', id: '', img: '', rows: [] };
 function crcSync() {
   $('crcForm').classList.toggle('hidden', !CRC.id);
   $('crcThumb').classList.toggle('hidden', !CRC.img); if (CRC.img) $('crcThumb').src = CRC.img;
@@ -753,7 +744,9 @@ function crcSync() {
 $('carList2').addEventListener('click', function (e) {
   var b = e.target.closest('.carRc'); if (!b) return;
   carSwClose();
-  CRC = { car: b.getAttribute('data-car'), id: '', img: '' };
+  CRC = { car: b.getAttribute('data-car'), id: '', img: '', rows: [] };
+  ['crcKm', 'crcDetail', 'crcAmt', 'crcNote'].forEach(function (id) { $(id).value = ''; }); $('crcKind').value = '주유';
+  $('crcMonth').innerHTML = monthOpts([]); $('crcPdf').disabled = false;
   $('crcTitle').textContent = carLabel(CRC.car, b.getAttribute('data-model')) + ' 기록 선택';
   $('crcPin').value = loadMe(); $('crcPc').value = '';     // 사번만 자동 완성, 코드는 직접 입력
   $('crcMsg').textContent = ''; $('carNote').textContent = ''; $('crcList').textContent = '운행 기록을 불러오는 중…';
@@ -761,16 +754,20 @@ $('carList2').addEventListener('click', function (e) {
   var car = CRC.car;
   apiGet('recs', car).then(function (d) {
     if (CRC.car !== car) return;
-    var rows = (d.rows || []).filter(function (r) { return r.reason === '주유'; }).slice(0, 10);   // 주유 운행만
+    var rows = (d.rows || []).slice(0, 15);   // 최근 운행 (주유 운행은 표시)
+    CRC.rows = rows; $('crcMonth').innerHTML = monthOpts(d.rows || []);
     $('crcList').innerHTML = rows.map(function (r) {
-      return '<button type="button" class="crcRow" data-id="' + esc(r.id) + '">' + esc(r.date + ' ' + r.time + ' · ' + r.driver + ' · ' + r.route) + (r.receipt ? '<em>전표 있음</em>' : '') + '</button>';
-    }).join('') || '주유 운행 기록이 없습니다.';
+      return '<button type="button" class="crcRow" data-id="' + esc(r.id) + '">' + esc(r.date + ' ' + r.time + ' · ' + r.driver + ' · ' + r.reason) + (r.receipt ? '<em>전표 있음</em>' : '') + '</button>';
+    }).join('') || '운행 기록이 없습니다.';
   }, function (e) { $('crcList').textContent = errText(e); });
 });
 $('crcList').addEventListener('click', function (e) {
   var b = e.target.closest('.crcRow'); if (!b) return;
   [].forEach.call($('crcList').children, function (x) { x.classList.toggle('on', x === b); });
-  CRC.id = b.getAttribute('data-id'); crcSync();
+  CRC.id = b.getAttribute('data-id');
+  var r = CRC.rows.filter(function (x) { return x.id === CRC.id; })[0];
+  if (r) { $('crcKm').value = r.endKm === '' || r.endKm == null ? '' : String(r.endKm); $('crcKind').value = r.reason === '주유' ? '주유' : $('crcKind').value; }
+  crcSync();
 });
 function crcFileChange() {
   var f = this.files && this.files[0]; this.value = '';
@@ -786,22 +783,26 @@ function crcFileChange() {
 }
 $('crcFile').addEventListener('change', crcFileChange);
 $('crcFile2').addEventListener('change', crcFileChange);
-$('crcNo').onclick = function () { CRC = { car: '', id: '', img: '' }; carPanel(''); };
+$('crcNo').onclick = function () { CRC = { car: '', id: '', img: '', rows: [] }; carPanel(''); };
+$('crcPdf').onclick = function () { if (CRC.car && $('crcMonth').value) getPdf('mgr', CRC.car, $('crcMonth').value, this); };
 $('crcOk').onclick = function () {
   var pc = $('crcPc').value.trim(), pin = $('crcPin').value.trim();
+  var m = { kind: $('crcKind').value, km: digits($('crcKm').value), detail: $('crcDetail').value.trim(), amount: digits($('crcAmt').value), note: $('crcNote').value.trim() };
+  if (!m.km) { $('crcMsg').textContent = '계기판 km를 입력하세요.'; $('crcKm').focus(); return; }
+  if (!m.amount) { $('crcMsg').textContent = '금액을 입력하세요.'; $('crcAmt').focus(); return; }
   if (!pin || !pc) { $('crcMsg').textContent = '사번과 개인 코드를 입력하세요.'; return; }
   $('crcOk').disabled = true; $('crcMsg').textContent = '저장 중…';
-  call('carReceiptAdd', { car: CRC.car, id: CRC.id, receipt: CRC.img, pcode: pc, pin: pin, device: device() }).then(function (r) {
+  call('carReceiptAdd', { car: CRC.car, id: CRC.id, receipt: CRC.img, pcode: pc, pin: pin, device: device(), mgr: m }).then(function (r) {
     $('crcOk').disabled = false;
     if (r.unregistered) { $('crcMsg').textContent = unregText(r); return; }
     if (r.needCode) { $('crcMsg').textContent = '코드를 입력해 주세요.'; $('crcPc').focus(); return; }
     saveMe(pin);
-    var car = CRC.car; CRC = { car: '', id: '', img: '' };
+    var car = CRC.car; CRC = { car: '', id: '', img: '', rows: [] };
     carReset(); $('carNote').style.color = 'var(--ok)'; $('carNote').textContent = car + ' 전표를 등록했습니다.';
   }, function (e) { $('crcOk').disabled = false; $('crcMsg').textContent = errText(e); });
 };
 
-/* ---------- 운행기록: 차량별 월 단위 보기 · 주유 전표 · 엑셀 ---------- */
+/* ---------- 운행기록: 차량별 월 단위 보기 · 엑셀 · 운행일지 PDF ---------- */
 var REC = { car: '', data: null, month: '', months: [] };
 function showRec(car) {
   show('rec');
@@ -828,43 +829,46 @@ function loadRec(car) {
     drawRec();
   }, function (e) { if (REC.req === car) $('rRows').innerHTML = '<div class="msg">' + esc(errText(e)) + '</div>'; });
 }
+/** 달 고르기 칸: 이번 달 + 기록이 있는 달 (최근 달이 위) */
+function monthOpts(rows) {
+  var now = new Date(), cur = now.getFullYear() + '-' + ('0' + (now.getMonth() + 1)).slice(-2), ms = [cur];
+  rows.forEach(function (r) { var m = String(r.date || '').slice(0, 7); if (m && ms.indexOf(m) < 0) ms.push(m); });
+  ms.sort().reverse();
+  return ms.map(function (m) { return '<option value="' + m + '">' + m.slice(2, 4) + '년 ' + Number(m.slice(5)) + '월</option>'; }).join('');
+}
+/** 양식 모양 PDF 받기: kind run 차량운행일지 / mgr 차량관리일지 (서버가 기준 양식 탭으로 만듦) */
+function getPdf(kind, car, month, btn) {
+  var t = btn.textContent; btn.disabled = true;
+  busyWrap(fetch(API + '?api=car&fn=pdf&kind=' + kind + '&car=' + encodeURIComponent(car) + '&month=' + encodeURIComponent(month)).then(function (x) { return x.json(); }), 'PDF 만드는 중').then(function (j) {
+    btn.disabled = false; btn.textContent = t;
+    if (!j.ok) throw new Error(j.error);
+    var bin = atob(j.data.b64), u8 = new Uint8Array(bin.length);
+    for (var i = 0; i < bin.length; i++) u8[i] = bin.charCodeAt(i);
+    var a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([u8], { type: 'application/pdf' })); a.download = j.data.name;
+    document.body.appendChild(a); a.click(); setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 4000);
+  }).catch(function (e) { btn.disabled = false; btn.textContent = t; alert(errText(e) || 'PDF를 만들지 못했습니다.'); });
+}
+$('rPdf').addEventListener('click', function () { if (REC.car && REC.month) getPdf('run', REC.car, REC.month, this); });
 function recRows() { var m = REC.month; return (REC.data ? REC.data.rows : []).filter(function (r) { return r.date.slice(0, 7) === m; }); }
 function dayText(r) { return r.date ? r.date.slice(2).replace(/-/g, '/') + '(' + r.dow + ')' : ''; }    // 2026-10-29 → 26/10/29(목)
 function drawRec() {
   var rows = recRows(), i = REC.months.indexOf(REC.month);
   $('rMonth').value = REC.month;
   $('rPrev').disabled = i >= REC.months.length - 1; $('rNext').disabled = i <= 0;
-  $('rXlsx').disabled = !rows.length;
-  // 엑셀 같은 표 (보고용 운행일지와 같은 열). [보기]는 주유 전표
-  $('rRows').innerHTML = rows.length ? '<div class="recTbl"><table><thead><tr><th>날짜</th><th>운전자</th><th>출발 km</th><th>도착 km</th><th>운행거리</th><th>행선지</th><th>운행목적</th><th>전표</th><th>특이사항</th></tr></thead><tbody>' +
+  $('rXlsx').disabled = !rows.length; $('rPdf').disabled = !rows.length;
+  // 엑셀 같은 표 (보고용 운행일지와 같은 열). 양식 모양은 [PDF]로
+  $('rRows').innerHTML = rows.length ? '<div class="recTbl"><table><thead><tr><th>날짜</th><th>운전자</th><th>출발 km</th><th>도착 km</th><th>운행거리</th><th>행선지</th><th>운행목적</th><th>특이사항</th></tr></thead><tbody>' +
     rows.map(function (r) {
       return '<tr><td>' + esc(dayText(r)) + '</td><td>' + esc(r.driver) + '</td>' +
         '<td class="n">' + fmt(r.startKm) + '</td><td class="n">' + fmt(r.endKm) + '</td><td class="n"><b>' + fmt(r.dist) + '</b></td>' +
         '<td>' + esc(r.route) + '</td><td>' + esc(r.reason) + '</td>' +
-        (r.receipt ? '<td class="c rcCell" data-rc="' + esc(r.id) + '"><button type="button" class="rcv">보기</button></td>' : '<td class="c"></td>') + '<td>' + esc(r.memo || '') + '</td></tr>';
+        '<td>' + esc(r.memo || '') + '</td></tr>';
     }).join('') + '</tbody></table></div>'
     : '<div style="padding:14px 0;color:var(--sub);font-size:14px">이 달의 운행 기록이 없습니다.</div>';
 }
 $('rMonth').addEventListener('change', function () { REC.month = this.value; drawRec(); });
 $('rPrev').addEventListener('click', function () { var i = REC.months.indexOf(REC.month); if (i < REC.months.length - 1) { REC.month = REC.months[i + 1]; drawRec(); } });
 $('rNext').addEventListener('click', function () { var i = REC.months.indexOf(REC.month); if (i > 0) { REC.month = REC.months[i - 1]; drawRec(); } });
-$('rRows').addEventListener('click', function (e) {
-  var c = e.target.closest('td[data-rc]'), r = c && (REC.data.rows || []).filter(function (x) { return x.id === c.dataset.rc; })[0];   // 전표 칸 어디를 눌러도
-  if (r) { var b = c.querySelector('button'); if (!b.disabled) openReceipt(r, b); }
-});
-
-/* 주유 전표 보기 */
-function openReceipt(r, b) {
-  var t = b.textContent; b.disabled = true; b.textContent = '불러오는 중…';
-  busyWrap(fetch(API + '?api=car&fn=receipt&id=' + encodeURIComponent(r.id) + '&car=' + encodeURIComponent(REC.car)).then(function (x) { return x.json(); }), '데이터 불러오는 중').then(function (j) {
-    b.disabled = false; b.textContent = t;
-    if (!j.ok) throw new Error(j.error);
-    $('rcBig').src = j.data.img || j.data.url;
-    $('rcCap').textContent = carLabel(REC.car, REC.model) + ' · ' + r.date + ' (' + r.dow + ') ' + r.time + ' · ' + r.driver;
-    $('rcOver').classList.remove('hidden');
-  }).catch(function (e) { b.disabled = false; b.textContent = t; alert(errText(e) || '전표를 불러오지 못했습니다.'); });
-}
-$('rcOver').addEventListener('click', function () { this.classList.add('hidden'); $('rcBig').removeAttribute('src'); });
 
 /* 엑셀 내보내기: 보고용 운행일지와 같은 열 (오래된 기록부터) */
 var XLSX_URL = 'https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js';
@@ -1418,26 +1422,7 @@ $('routes').addEventListener('click', function (e) { var b = e.target.closest('b
 function syncEnd() {
   $('reasonEtc').classList.toggle('hidden', S.reason !== '기타');
   $('routeEtc').classList.toggle('hidden', S.route !== '기타');
-  $('rcBox').classList.toggle('hidden', S.reason !== '주유');
-  $('rcThumb').classList.toggle('hidden', !S.receipt); if (S.receipt) $('rcThumb').src = S.receipt;
-  $('rcText').textContent = S.receipt ? '등록됨 · 바꾸려면 버튼을 누르세요' : '지금 등록하거나, 나중에 차량 목록에서 카드를 왼쪽으로 밀어 [전표 등록]으로 등록할 수 있습니다';
-  $('rcBtn').firstChild.nodeValue = S.receipt ? '다시 촬영' : '전표 촬영';
 }
-/** 신용카드 전표: 흑백, 셀 한도 안으로 줄여서 */
-function rcFileChange() {
-  var f = this.files && this.files[0]; this.value = '';
-  if (!f) return;
-  loadImg(f).then(function (img) {
-    var w = Math.min(900, img.naturalWidth), c = document.createElement('canvas');
-    c.width = w; c.height = Math.round(img.naturalHeight * w / img.naturalWidth);
-    c.getContext('2d').drawImage(img, 0, 0, c.width, c.height); gray(c);
-    S.receipt = toJpeg(c, 900);
-    if (!S.receipt) alert('사진이 너무 큽니다. 전표만 가까이 다시 찍어 주세요.');
-    syncEnd();
-  }).catch(function () { alert('사진을 열 수 없습니다. 다시 찍어 주세요.'); });
-}
-$('rcFile').addEventListener('change', rcFileChange);
-$('rcFile2').addEventListener('change', rcFileChange);
 
 /* ===================== 제출 ===================== */
 function msg(t) { $('msg').textContent = t || ''; }
@@ -1452,7 +1437,6 @@ function payload() {
   if (S.mode === 'end') {
     p.pin = $('nm').value.trim(); p.pcode = digits($('pc').value); p.memo = $('memo').value;
     p.id = INIT.st.run.id; p.reason = S.reason; p.reasonEtc = $('reasonEtc').value; p.route = S.route; p.routeEtc = $('routeEtc').value;
-    p.receipt = S.reason === '주유' ? S.receipt : '';
   }
   return p;
 }
@@ -1469,7 +1453,6 @@ function submit() {
     if (Number(p.km) < Number(p.startKm)) { msg('하차 km가 탑승 km보다 작습니다.'); $('km').focus(); return; }
     if (S.reason === '기타' && !p.reasonEtc.trim()) { msg('운행목적을 입력하세요.'); $('reasonEtc').focus(); return; }
     if (S.route === '기타' && !p.routeEtc.trim()) { msg('행선지를 입력하세요.'); $('routeEtc').focus(); return; }
-    if (S.reason === '주유' && !S.receipt && !confirm('전표 없이 운행을 종료할까요? 전표는 나중에 차량 목록에서 카드를 왼쪽으로 밀어 [전표 등록]으로 등록할 수 있습니다.')) return;
   }
   S.km = p.km; S.km0 = p.startKm || null;
   msg(''); busy(true);
@@ -1479,7 +1462,7 @@ function submit() {
     if (r.needCode) { msg('코드를 입력해 주세요.'); $('pc').focus(); return; }
     if (r.needLogin) { try { localStorage.removeItem('bglDev'); } catch (x) {} return showNeed('submit'); }   // 열쇠가 없거나 못 씀 (개인 코드 변경·초기화·사파리가 지움)
     if (r.running) {                                  // 이미 운행 중 → 종료부터
-      setInit(r.init); S.mode = 'end'; S.receipt = '';
+      setInit(r.init); S.mode = 'end';
       return openConfirm('이 차량은 운행 중(' + r.init.st.run.startAt + ' 시작)으로 기록돼 있습니다. 먼저 운행을 종료해 주세요. 방금 찍은 사진을 하차 사진으로 넣었습니다.');
     }
     if (r.notRunning) {                               // 그 사이 다른 사람이 종료 → 새 운행 시작으로
