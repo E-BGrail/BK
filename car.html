@@ -557,7 +557,7 @@ function isStaff() { try { var s = JSON.parse(sessionStorage.getItem('bglStaff')
 /* ===================== 시작 ===================== */
 /** QR(주소?car=차량번호)로 열리면: 카메라를 먼저 켜고, 그동안 차량 정보를 받아 옴 */
 function boot() {
-  appSwitch($('appSw'), 'car', { sign: SIGN, car: HOME, kiosk: SIGN + '#kiosk' });   // 키오스크: e-싸인 안의 키오스크 화면
+  appSwitch($('appSw'), 'car', { sign: SIGN + '#sign', car: HOME, kiosk: SIGN + '#kiosk' });   // 키오스크: e-싸인 안의 키오스크 화면
   var q = new URLSearchParams(location.search), car = q.get('car') || '';
   if (!car && !isStaff()) { location.replace(SIGN); return; }   // 차량 QR이 아니면 로그인부터
   if (q.has('rec')) return showRec(q.get('rec') || '');

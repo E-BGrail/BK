@@ -161,6 +161,7 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), { car: CAR_PAGE, sign:
   function loadState() { try { return JSON.parse(sessionStorage.getItem(KEEP) || 'null'); } catch (x) { return null; } }
   function restoreState() {
     var st = loadState() || {};
+    if (SIGN_WANT && st.s === 'sq') st.s = 's1';    // 차량관리 [e-싸인]으로 옴: 키오스크 대신 서명지 목록
     edTab = st.edTab === 'closed' ? 'closed' : 'open';
     if (st.admTok && staff && staff.admin) {   // 관리자 접속: 그대로 이어 씀 (끊겼으면 필요할 때 다시 받음)
       admTok = st.admTok; admOrder = st.admOrder || {}; admMe = st.admMe || null;
