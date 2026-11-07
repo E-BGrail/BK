@@ -1219,7 +1219,7 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), { car: CAR_PAGE, sign:
       return;
     }
     if (!staff) { show('sl'); return; }              // 로그인 전
-    refreshInit(st.s === 'sq' || KIOSK_WANT);       // DID로 열면 목록은 뒤에서 조용히 (차량관리 [DID]로 새로 열 때)
+    refreshInit(st.s === 'sq' || KIOSK_WANT || SIGN_WANT);   // 차량관리 [e-싸인]으로 와도 조용히 (목록 칸에 '불러오는 중…')       // DID로 열면 목록은 뒤에서 조용히 (차량관리 [DID]로 새로 열 때)
     if (st.skL) { enterList(); skOpen(st.skL); skLeadOpen(st.skL, st.skLi); return; }   // 팀장 내용 보기 중이었으면 그 역
     if (st.s === 'sk' && st.sk) { enterList(); skOpen(st.sk, false, st.skSt); return; }
     if (st.s === 'sq' || KIOSK_WANT) { kioskOpen(); return; }   // DID 화면이었거나 차량관리에서 [DID]로 옴
