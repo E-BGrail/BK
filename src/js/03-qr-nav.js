@@ -225,7 +225,7 @@
     renderEdus();
     if (r && r.error) { msg($('msg1'), '불러오기 실패: ' + r.error, '#c0392b'); msg($('lgMsg'), '불러오기 실패: ' + r.error, '#c0392b'); }
   }
-  /** 서명지 목록 받기. quiet: 목록이 안 보이는 화면(키오스크)이면 가운데 로딩 표시 없이 */
+  /** 서명지 목록 받기. quiet: 목록이 안 보이는 화면(DID)이면 가운데 로딩 표시 없이 */
   function refreshInit(quiet) {
     BUSY_SKIP.getInit = quiet ? 1 : 0;
     google.script.run.withSuccessHandler(loadInit).withFailureHandler(function (e) { msg($('msg1'), errText(e), '#c0392b'); }).getInit(staff && staff.token || '');

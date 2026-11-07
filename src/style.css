@@ -290,7 +290,7 @@
   #chgCard .ebody, #pcCard .ebody, #gstCard .ebody, #stCard .ebody, #smCard .ebody { display:none; } #chgCard.open .ebody, #pcCard.open .ebody, #gstCard.open .ebody, #stCard.open .ebody, #smCard.open .ebody { display:block; }
   /* 역 안내 화면 카드 (관리자) */
   .stTools { display:flex; gap:6px; align-items:center; margin:0 0 8px; } .stTools .btn { flex:none; } .stTools b { flex:1; font-size:14px; }
-  /* 키오스크: 지금 역 화면 요약 · 보낼 역 · 역 고르기 */
+  /* DID: 지금 역 화면 요약 · 보낼 역 · 역 고르기 */
   .stNow { display:flex; align-items:center; justify-content:space-between; gap:10px; border:1px solid var(--line); border-radius:12px; padding:10px 12px; margin-bottom:4px; }
   .stNow > div { min-width:0; } .stNow b { display:block; font-size:15px; } .stNow small { display:block; color:var(--sub); font-size:13px; margin-top:2px; } .stNow .btn { flex:none; }
   .stTo { display:flex; align-items:center; justify-content:space-between; gap:8px; } .stTo .btn { flex:none; }

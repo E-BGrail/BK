@@ -75,7 +75,7 @@
     code = ''; edu = null; person = null; rfEdu = null; rfDirect = false;
     $('code').value = ''; $('name').value = ''; msg($('msg1'), ''); msg($('lgMsg'), ''); $('codeOver').classList.add('hidden'); popSync(); selId = '';
     if (!staff) { show('sl'); return; }
-    enterList(); refreshInit();
+    enterList(); refreshInit(edus.length > 0);       // 목록이 이미 있으면 로딩창 없이 뒤에서 최신으로
   }
 
   /* ---------- 가로로 크게 서명: 버튼을 누르면 전체 화면 + 가로 고정 (안드로이드 크롬). 서명 화면을 떠나면 풀림 ----------

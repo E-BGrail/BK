@@ -1,4 +1,4 @@
-  /* ---------- 키오스크: 역 안내 화면 (서버 Station.js, 역 PC는 GitHub Pages의 station.html) ----------
+  /* ---------- DID: 역 안내 화면 (서버 Station.js, 역 PC는 GitHub Pages의 station.html) ----------
    * 관리자: 보낼 역(기본 전체, [역 고르기]로 일부만)·환불 등록 QR 띄우기·내리기·안내 이미지 목록·역 코드
    * 근무자: 역 코드로 우리 역 안내 이미지 목록만. 서버가 GitHub에 올리고 역 PC는 10초마다 확인 (반영 약 1분) */
   var ST_MAX = 10;
@@ -202,7 +202,7 @@
     $('stCodeBox').classList.toggle('hidden', n !== 1);
     if (n === 1) $('stCodeName').textContent = names[0];
   }
-  var ST_KEY = 'bglStInfo';           // 지난 역 정보 (이 기기, 로그아웃하면 지움): 키오스크를 열면 이것부터 그림
+  var ST_KEY = 'bglStInfo';           // 지난 역 정보 (이 기기, 로그아웃하면 지움): DID를 열면 이것부터 그림
   function stSave(d) { try { localStorage.setItem(ST_KEY, JSON.stringify(Object.assign({}, d, { note: '' }))); } catch (x) {} }
   function stSaved() { try { var d = JSON.parse(localStorage.getItem(ST_KEY) || 'null'); return d && Array.isArray(d.stations) && Array.isArray(d.refunds) ? d : null; } catch (x) { return null; } }
   function stRender(d) {
@@ -305,9 +305,9 @@
     }).catch(function (e) { msg($('smMsg'), e.message, '#c0392b'); });
   };
 
-  /* ---------- 키오스크 화면 (오른쪽 위 [키오스크]): 관리자 → [역 안내 화면], 근무자 → [우리 역 안내 이미지] ---------- */
-  var KIOSK_WANT = location.hash === '#kiosk';      // 차량관리 화면의 [키오스크]로 들어옴 (로그인 뒤 키오스크로)
-  var SIGN_WANT = location.hash === '#sign';        // 차량관리 화면의 [e-싸인]으로 들어옴 (기억된 키오스크 화면 무시하고 목록)
+  /* ---------- DID 화면 (오른쪽 위 [DID]): 관리자 → [역 안내 화면], 근무자 → [우리 역 안내 이미지] ---------- */
+  var KIOSK_WANT = location.hash === '#kiosk';      // 차량관리 화면의 [DID]로 들어옴 (로그인 뒤 DID로)
+  var SIGN_WANT = location.hash === '#sign';        // 차량관리 화면의 [e-싸인]으로 들어옴 (기억된 DID 화면 무시하고 목록)
   if (KIOSK_WANT || SIGN_WANT) try { history.replaceState(history.state, '', location.pathname + location.search); } catch (x) {}
   function kioskOpen() {
     KIOSK_WANT = false;

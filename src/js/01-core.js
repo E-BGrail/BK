@@ -25,8 +25,8 @@ function signRunner(ok, fail) {
 window.google = { script: { get run() { return signRunner(null, null); } } };
 
 function START(INIT) {
-/** 오른쪽 위 전환 버튼 [e-싸인][차량관리][키오스크]: 누른 쪽에 불이 들어오며 그 화면으로 이동
- *  키오스크는 이 화면 안의 키오스크 화면(sq), e-싸인은 서명지 목록 (urls 값이 함수면 이동 없이 그 함수) */
+/** 오른쪽 위 전환 버튼 [e-싸인][차량관리][DID]: 누른 쪽에 불이 들어오며 그 화면으로 이동
+ *  DID는 이 화면 안의 DID 화면(sq), e-싸인은 서명지 목록 (urls 값이 함수면 이동 없이 그 함수) */
 var swAllowed = false, swHere = 'sign', SWF = {};
 function swLight(k) {
   swHere = k;
@@ -124,7 +124,7 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), { car: CAR_PAGE, sign:
       el.querySelector('b').textContent = (i < at || id === 's3') ? '✓' : String(i + 1);
     });
     document.querySelector('header h1').textContent = adminScr ? '관리자' : DIRECT || NOQR ? '환불 등록' : 'e-싸인';
-    var swOn = !!(CAR_PAGE && (id === 's1' || id === 'sl' || id === 'sq') && !adminScr && !(typeof DIALOG !== 'undefined' && DIALOG));   // 로그인·서명지 목록·키오스크에서 전환 버튼
+    var swOn = !!(CAR_PAGE && (id === 's1' || id === 'sl' || id === 'sq') && !adminScr && !(typeof DIALOG !== 'undefined' && DIALOG));   // 로그인·서명지 목록·DID에서 전환 버튼
     swAllowed = !!(swOn && (id === 's1' || id === 'sq') && staff && staff.token && !staff.guest);
     swLight(id === 'sq' ? 'kiosk' : 'sign');
     $('appSw').classList.toggle('hidden', !swOn); document.querySelector('header h1').classList.toggle('hidden', swOn);
@@ -161,7 +161,7 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), { car: CAR_PAGE, sign:
   function loadState() { try { return JSON.parse(sessionStorage.getItem(KEEP) || 'null'); } catch (x) { return null; } }
   function restoreState() {
     var st = loadState() || {};
-    if (SIGN_WANT && st.s === 'sq') st.s = 's1';    // 차량관리 [e-싸인]으로 옴: 키오스크 대신 서명지 목록
+    if (SIGN_WANT && st.s === 'sq') st.s = 's1';    // 차량관리 [e-싸인]으로 옴: DID 대신 서명지 목록
     edTab = st.edTab === 'closed' ? 'closed' : 'open';
     if (st.admTok && staff && staff.admin) {   // 관리자 접속: 그대로 이어 씀 (끊겼으면 필요할 때 다시 받음)
       admTok = st.admTok; admOrder = st.admOrder || {}; admMe = st.admMe || null;
@@ -187,10 +187,10 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), { car: CAR_PAGE, sign:
       return;
     }
     if (!staff) { show('sl'); return; }              // 로그인 전
-    refreshInit(st.s === 'sq' || KIOSK_WANT);       // 키오스크로 열면 목록은 뒤에서 조용히 (차량관리 [키오스크]로 새로 열 때)
+    refreshInit(st.s === 'sq' || KIOSK_WANT);       // DID로 열면 목록은 뒤에서 조용히 (차량관리 [DID]로 새로 열 때)
     if (st.skL) { enterList(); skOpen(st.skL); skLeadOpen(st.skL, st.skLi); return; }   // 팀장 내용 보기 중이었으면 그 역
     if (st.s === 'sk' && st.sk) { enterList(); skOpen(st.sk, false, st.skSt); return; }
-    if (st.s === 'sq' || KIOSK_WANT) { kioskOpen(); return; }   // 키오스크 화면이었거나 차량관리에서 [키오스크]로 옴
+    if (st.s === 'sq' || KIOSK_WANT) { kioskOpen(); return; }   // DID 화면이었거나 차량관리에서 [DID]로 옴
     if (!st.edu || !st.code) { enterList(); return; }
     edu = st.edu; code = st.code; selId = edu.id; renderEdus();
     $('eduName').textContent = edu.title; $('eduDate').textContent = [edu.dept, edu.date].filter(Boolean).join(' · ');

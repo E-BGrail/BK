@@ -125,14 +125,14 @@
     admCards();                                     // 새 서명지 열기: 직원 모두, 배포용 아이디·개인 코드 관리: 관리자
     if (!edus.length) $('edus').innerHTML = '<div class="hint">불러오는 중…</div>';
     show('s1');
-    if (KIOSK_WANT && !g) kioskOpen();             // 차량관리의 [키오스크]로 왔으면 로그인 뒤 키오스크 화면
+    if (KIOSK_WANT && !g) kioskOpen();             // 차량관리의 [DID]로 왔으면 로그인 뒤 DID 화면
   }
   function logout(text) {
     if (staff && staff.token) google.script.run.staffLogout(staff.token);
     if (admTok) google.script.run.adminLogout(admTok);   // 관리자 접속 표시도 서버에서 지움
     admTok = null; admData = null; admMe = null; admExp = {}; admOrder = {}; admOverHide(); $('nDept').innerHTML = '';
     ['newCard', 'gstCard', 'stCard', 'smCard', 'pcCard'].forEach(function (id) { $(id).classList.remove('open'); });
-    try { localStorage.removeItem('bglStInfo'); } catch (x) {} stD = null; stPicked = false; stSel = {};   // 키오스크 역 정보 저장본
+    try { localStorage.removeItem('bglStInfo'); } catch (x) {} stD = null; stPicked = false; stSel = {};   // DID 역 정보 저장본
     setStaff(null); edus = []; renderEdus(); resetAll();
     $('lgPin').value = savedPin(); $('lgCode').value = '';
     if (text) msg($('lgMsg'), text, '#c0392b');

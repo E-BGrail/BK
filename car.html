@@ -280,7 +280,7 @@
         onerror="if(!this.dataset.alt){this.dataset.alt=1;this.src='https://www.bglrt.com/_res/default/img/sub/p00563_img05_04.png';}else{document.getElementById('brand').className='brand noimg';}">
       <span class="wm"><i>BGL</i>부산-김해경전철</span>
     </div>
-    <div class="appSw" id="appSw" role="tablist"><a class="sw" data-k="sign" href="#" role="tab" aria-selected="false">e-싸인</a><a class="sw on" data-k="car" href="?" role="tab" aria-selected="true">차량관리</a><a class="sw" data-k="kiosk" href="#" role="tab" aria-selected="false">키오스크</a></div>
+    <div class="appSw" id="appSw" role="tablist"><a class="sw" data-k="sign" href="#" role="tab" aria-selected="false">e-싸인</a><a class="sw on" data-k="car" href="?" role="tab" aria-selected="true">차량관리</a><a class="sw" data-k="kiosk" href="#" role="tab" aria-selected="false">DID</a></div>
   </header>
   <div class="band"><b id="bandTitle">운행 시작</b><span class="carChip" id="bandCar"></span></div>
 </div>
@@ -557,7 +557,7 @@ function isStaff() { try { var s = JSON.parse(sessionStorage.getItem('bglStaff')
 /* ===================== 시작 ===================== */
 /** QR(주소?car=차량번호)로 열리면: 카메라를 먼저 켜고, 그동안 차량 정보를 받아 옴 */
 function boot() {
-  appSwitch($('appSw'), 'car', { sign: SIGN + '#sign', car: HOME, kiosk: SIGN + '#kiosk' });   // 키오스크: e-싸인 안의 키오스크 화면
+  appSwitch($('appSw'), 'car', { sign: SIGN + '#sign', car: HOME, kiosk: SIGN + '#kiosk' });   // DID: e-싸인 안의 DID 화면
   var q = new URLSearchParams(location.search), car = q.get('car') || '';
   if (!car && !isStaff()) { location.replace(SIGN); return; }   // 차량 QR이 아니면 로그인부터
   if (q.has('rec')) return showRec(q.get('rec') || '');
@@ -589,7 +589,7 @@ function setInit(init) {
 }
 var HOME = location.origin + location.pathname;     // 업무차량관리 첫 화면 (주소만)
 var SIGN = HOME.replace(/[^\/]*$/, '') + 'sign.html';   // 전자서명: 같은 저장소의 sign.html (구글 웹 앱 주소로 가면 '구글 사용자가 만든 앱' 알림이 뜸)
-/** 오른쪽 위 전환 버튼 [e-싸인][차량관리][키오스크]: 누른 쪽에 불이 들어오며 그 화면으로 이동
+/** 오른쪽 위 전환 버튼 [e-싸인][차량관리][DID]: 누른 쪽에 불이 들어오며 그 화면으로 이동
  *  지금 켜진 버튼(업무차량관리)을 누르면 업무차량관리 첫 화면으로 */
 function appSwitch(sw, here, urls) {
   var gone = false, btns = sw.querySelectorAll('.sw');
