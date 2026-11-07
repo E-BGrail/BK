@@ -125,6 +125,7 @@
     admCards();                                     // 새 서명지 열기: 직원 모두, 배포용 아이디·개인 코드 관리: 관리자
     if (!edus.length) $('edus').innerHTML = '<div class="hint">불러오는 중…</div>';
     show('s1');
+    if (KIOSK_WANT && !g) kioskOpen();             // 차량관리의 [키오스크]로 왔으면 로그인 뒤 키오스크 화면
   }
   function logout(text) {
     if (staff && staff.token) google.script.run.staffLogout(staff.token);

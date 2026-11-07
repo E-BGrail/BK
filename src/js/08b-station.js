@@ -107,3 +107,17 @@
   };
   $('smClear').onclick = function () { if (confirm('이 역의 안내 이미지를 비울까요? (역 화면에는 시계만 나옵니다)')) smSend({ files: [], clear: true }); };
 
+  /* ---------- 키오스크 화면 (오른쪽 위 [키오스크]): 관리자 → [역 안내 화면], 근무자 → [우리 역 안내 이미지] ---------- */
+  var KIOSK_WANT = location.hash === '#kiosk';      // 차량관리 화면의 [키오스크]로 들어옴 (로그인 뒤 키오스크로)
+  if (KIOSK_WANT) try { history.replaceState(history.state, '', location.pathname + location.search); } catch (x) {}
+  function kioskOpen() {
+    KIOSK_WANT = false;
+    if (!staff || !staff.token || staff.guest) { enterList(); return; }
+    enterList(); show('sq');
+    var adm = isAdm();
+    if (adm && !$('stCard').classList.contains('open')) { $('stCard').classList.add('open'); stLoad(); }
+    if (!adm) $('smCard').classList.add('open');
+  }
+  SWF.kiosk = kioskOpen;
+  SWF.sign = function () { enterList(); };
+

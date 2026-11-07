@@ -8,7 +8,7 @@
     <span class="wm"><i>BGL</i>부산-김해경전철</span>
   </div>
   <h1>e-싸인</h1>
-  <div class="appSw hidden" id="appSw" role="tablist"><a class="sw on" data-k="sign" href="#" role="tab" aria-selected="true">e-싸인</a><a class="sw" data-k="car" href="#" target="_top" role="tab" aria-selected="false">업무차량관리</a></div>
+  <div class="appSw hidden" id="appSw" role="tablist"><a class="sw on" data-k="sign" href="#" role="tab" aria-selected="true">e-싸인</a><a class="sw" data-k="car" href="#" target="_top" role="tab" aria-selected="false">차량관리</a><a class="sw" data-k="kiosk" href="#" role="tab" aria-selected="false">키오스크</a></div>
 </header>
 
 <!-- 첫 화면 그림 (교육 선택 화면에서만) -->
@@ -162,6 +162,21 @@
         <div class="msg" id="gstMsg"></div>
       </div>
     </div>
+    <div class="card hidden" id="pcCard">
+      <div class="nhead" id="pcHead"><b>개인 코드 관리</b></div>
+      <div class="ebody">
+        <div class="note">코드는 암호화 돼 관리자도 볼 수 없습니다.<br>초기화하면 직원DB에서도 삭제되고, 다음 로그인 때 미등록으로 나와 메일 인증으로 다시 등록합니다.</div>
+        <div class="codeRow">
+          <div style="flex:1"><input type="tel" id="pcPin" placeholder="초기화할 직원의 사번" autocomplete="off" inputmode="numeric" pattern="[0-9]*"></div>
+          <button class="btn del sbtn" id="pcReset" style="flex:none">초기화</button>
+        </div>
+        <div class="msg" id="pcMsg"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 키오스크 (오른쪽 위 [키오스크]): 역 안내 화면 관리 (관리자) · 우리 역 안내 이미지 (근무자) -->
+  <section id="sq" class="hidden">
     <div class="card hidden" id="smCard">
       <div class="nhead" id="smHead"><b>우리 역 안내 이미지</b></div>
       <div class="ebody">
@@ -193,17 +208,6 @@
           <button class="btn pri sbtn" id="stCodeSave" style="flex:none" type="button">저장</button>
         </div>
         <div class="msg" id="stMsg"></div>
-      </div>
-    </div>
-    <div class="card hidden" id="pcCard">
-      <div class="nhead" id="pcHead"><b>개인 코드 관리</b></div>
-      <div class="ebody">
-        <div class="note">코드는 암호화 돼 관리자도 볼 수 없습니다.<br>초기화하면 직원DB에서도 삭제되고, 다음 로그인 때 미등록으로 나와 메일 인증으로 다시 등록합니다.</div>
-        <div class="codeRow">
-          <div style="flex:1"><input type="tel" id="pcPin" placeholder="초기화할 직원의 사번" autocomplete="off" inputmode="numeric" pattern="[0-9]*"></div>
-          <button class="btn del sbtn" id="pcReset" style="flex:none">초기화</button>
-        </div>
-        <div class="msg" id="pcMsg"></div>
       </div>
     </div>
   </section>

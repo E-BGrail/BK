@@ -466,7 +466,7 @@
     <span class="wm"><i>BGL</i>부산-김해경전철</span>
   </div>
   <h1>e-싸인</h1>
-  <div class="appSw hidden" id="appSw" role="tablist"><a class="sw on" data-k="sign" href="#" role="tab" aria-selected="true">e-싸인</a><a class="sw" data-k="car" href="#" target="_top" role="tab" aria-selected="false">업무차량관리</a></div>
+  <div class="appSw hidden" id="appSw" role="tablist"><a class="sw on" data-k="sign" href="#" role="tab" aria-selected="true">e-싸인</a><a class="sw" data-k="car" href="#" target="_top" role="tab" aria-selected="false">차량관리</a><a class="sw" data-k="kiosk" href="#" role="tab" aria-selected="false">키오스크</a></div>
 </header>
 
 <!-- 첫 화면 그림 (교육 선택 화면에서만) -->
@@ -620,6 +620,21 @@
         <div class="msg" id="gstMsg"></div>
       </div>
     </div>
+    <div class="card hidden" id="pcCard">
+      <div class="nhead" id="pcHead"><b>개인 코드 관리</b></div>
+      <div class="ebody">
+        <div class="note">코드는 암호화 돼 관리자도 볼 수 없습니다.<br>초기화하면 직원DB에서도 삭제되고, 다음 로그인 때 미등록으로 나와 메일 인증으로 다시 등록합니다.</div>
+        <div class="codeRow">
+          <div style="flex:1"><input type="tel" id="pcPin" placeholder="초기화할 직원의 사번" autocomplete="off" inputmode="numeric" pattern="[0-9]*"></div>
+          <button class="btn del sbtn" id="pcReset" style="flex:none">초기화</button>
+        </div>
+        <div class="msg" id="pcMsg"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 키오스크 (오른쪽 위 [키오스크]): 역 안내 화면 관리 (관리자) · 우리 역 안내 이미지 (근무자) -->
+  <section id="sq" class="hidden">
     <div class="card hidden" id="smCard">
       <div class="nhead" id="smHead"><b>우리 역 안내 이미지</b></div>
       <div class="ebody">
@@ -651,17 +666,6 @@
           <button class="btn pri sbtn" id="stCodeSave" style="flex:none" type="button">저장</button>
         </div>
         <div class="msg" id="stMsg"></div>
-      </div>
-    </div>
-    <div class="card hidden" id="pcCard">
-      <div class="nhead" id="pcHead"><b>개인 코드 관리</b></div>
-      <div class="ebody">
-        <div class="note">코드는 암호화 돼 관리자도 볼 수 없습니다.<br>초기화하면 직원DB에서도 삭제되고, 다음 로그인 때 미등록으로 나와 메일 인증으로 다시 등록합니다.</div>
-        <div class="codeRow">
-          <div style="flex:1"><input type="tel" id="pcPin" placeholder="초기화할 직원의 사번" autocomplete="off" inputmode="numeric" pattern="[0-9]*"></div>
-          <button class="btn del sbtn" id="pcReset" style="flex:none">초기화</button>
-        </div>
-        <div class="msg" id="pcMsg"></div>
       </div>
     </div>
   </section>
@@ -1002,27 +1006,33 @@ function signRunner(ok, fail) {
 window.google = { script: { get run() { return signRunner(null, null); } } };
 
 function START(INIT) {
-/** 오른쪽 위 전환 버튼 [전자서명][업무차량관리]: 누른 쪽에 불이 들어오며 그 화면으로 이동 */
-var swAllowed = false;
-function appSwitch(sw, here, urls) {
+/** 오른쪽 위 전환 버튼 [e-싸인][차량관리][키오스크]: 누른 쪽에 불이 들어오며 그 화면으로 이동
+ *  키오스크는 이 화면 안의 키오스크 화면(sq), e-싸인은 서명지 목록 (urls 값이 함수면 이동 없이 그 함수) */
+var swAllowed = false, swHere = 'sign', SWF = {};
+function swLight(k) {
+  swHere = k;
+  [].forEach.call(document.querySelectorAll('#appSw .sw'), function (x) { var on = x.dataset.k === k; x.classList.toggle('on', on); x.setAttribute('aria-selected', on); });
+}
+function appSwitch(sw, urls) {
   var gone = false;
   [].forEach.call(sw.querySelectorAll('.sw'), function (b) {
     b.addEventListener('click', function (e) {
       e.preventDefault();
-      var k = b.dataset.k;
+      var k = b.dataset.k, here = swHere;
       if (!swAllowed || gone || k === here || !urls[k]) return;   // 로그인 전·배포용 아이디는 눌러도 반응 없음
+      if (typeof urls[k] === 'function') { urls[k](); return; }
       gone = true; sw.classList.add('go');
       [].forEach.call(sw.querySelectorAll('.sw'), function (x) { var on = x === b; x.classList.toggle('on', on); x.setAttribute('aria-selected', on); });
       setTimeout(function () { window.open(urls[k], '_top'); }, 220);
       setTimeout(function () {                               // 이동이 안 됐을 때(뒤로 오기 등) 원래대로
         gone = false; sw.classList.remove('go');
-        [].forEach.call(sw.querySelectorAll('.sw'), function (x) { var on = x.dataset.k === here; x.classList.toggle('on', on); x.setAttribute('aria-selected', on); });
+        swLight(here);
       }, 4000);
     });
   });
 }
 var CAR_PAGE = (INIT && INIT.carPage) || '';     // INIT는 첫 화면을 그린 뒤 지워지므로 따로 보관
-if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAGE });
+if (CAR_PAGE) appSwitch(document.getElementById('appSw'), { car: CAR_PAGE, sign: function () { SWF.sign(); }, kiosk: function () { SWF.kiosk(); } });
 (function () {
   var $ = function (id) { return document.getElementById(id); };
   /* ---------- 가운데 로딩 표시: 서버를 부르는 동안 도는 동그라미 + 문구 (0.3초 넘게 걸릴 때만) ----------
@@ -1077,7 +1087,7 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
   if (staff && (!staff.token || !staff.ttl || Date.now() - lastAct > staff.ttl * 1000)) staff = null;   // 예전 표시·마지막 동작 후 20분 지난 로그인
 
   function show(id) {
-    ['sl', 's1', 'sp', 's2', 's3', 'sf', 'sx', 'so', 'sr', 'sk', 'su', 'sv'].forEach(function (s) { $(s).classList.toggle('hidden', s !== id); });
+    ['sl', 's1', 'sq', 'sp', 's2', 's3', 'sf', 'sx', 'so', 'sr', 'sk', 'su', 'sv'].forEach(function (s) { $(s).classList.toggle('hidden', s !== id); });
     var flow = ['s1', 's2', 's3'], at = id === 'sp' ? 1 : flow.indexOf(id), adminScr = ['so', 'sr'].indexOf(id) > -1;
     document.body.setAttribute('data-s', id);
     $('hero').classList.toggle('hidden', id !== 's1' && id !== 'sl');
@@ -1095,8 +1105,9 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
       el.querySelector('b').textContent = (i < at || id === 's3') ? '✓' : String(i + 1);
     });
     document.querySelector('header h1').textContent = adminScr ? '관리자' : DIRECT || NOQR ? '환불 등록' : 'e-싸인';
-    var swOn = !!(CAR_PAGE && (id === 's1' || id === 'sl') && !adminScr && !(typeof DIALOG !== 'undefined' && DIALOG));   // 로그인·서명지 목록에서 전환 버튼
-    swAllowed = !!(swOn && id === 's1' && staff && staff.token && !staff.guest);
+    var swOn = !!(CAR_PAGE && (id === 's1' || id === 'sl' || id === 'sq') && !adminScr && !(typeof DIALOG !== 'undefined' && DIALOG));   // 로그인·서명지 목록·키오스크에서 전환 버튼
+    swAllowed = !!(swOn && (id === 's1' || id === 'sq') && staff && staff.token && !staff.guest);
+    swLight(id === 'sq' ? 'kiosk' : 'sign');
     $('appSw').classList.toggle('hidden', !swOn); document.querySelector('header h1').classList.toggle('hidden', swOn);
     document.documentElement.classList.toggle('noPull', id === 'sk');
     if (id !== 'sk') document.body.classList.remove('skSig');
@@ -1159,6 +1170,7 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
     refreshInit();
     if (st.skL) { enterList(); skOpen(st.skL); skLeadOpen(st.skL, st.skLi); return; }   // 팀장 내용 보기 중이었으면 그 역
     if (st.s === 'sk' && st.sk) { enterList(); skOpen(st.sk, false, st.skSt); return; }
+    if (st.s === 'sq' || KIOSK_WANT) { kioskOpen(); return; }   // 키오스크 화면이었거나 차량관리에서 [키오스크]로 옴
     if (!st.edu || !st.code) { enterList(); return; }
     edu = st.edu; code = st.code; selId = edu.id; renderEdus();
     $('eduName').textContent = edu.title; $('eduDate').textContent = [edu.dept, edu.date].filter(Boolean).join(' · ');
@@ -1653,7 +1665,7 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
     if (typeof DIALOG !== 'undefined' && DIALOG) return 0;   // 시트 메뉴 창
     var id = curScreen;
     if (rfEdu && rfDirect && (id === 'sf' || id === 's3')) return 0;   // 환불 등록 QR로 바로 들어온 승객은 제외
-    return ({ sp: 1, s2: edu && (edu.guest || edu.pdf) ? 2 : 1, s3: 1, sf: 1, so: 1, sr: 1, sk: 1, su: 1, sv: 1 })[id] || 0;
+    return ({ sp: 1, s2: edu && (edu.guest || edu.pdf) ? 2 : 1, s3: 1, sf: 1, so: 1, sr: 1, sk: 1, su: 1, sv: 1, sq: 1 })[id] || 0;
   }
   function navApply() {                    // 쌓아 둔 칸을 지금 화면에 맞춤 (같은 순간의 여러 변화는 한 번에)
     if (NAV.q) return;
@@ -1680,6 +1692,7 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
     else if (s === 'so') $('oBack').onclick();
     else if (s === 'sr') $('rBack').onclick();
     else if (s === 'sk') skBack();
+    else if (s === 'sq') enterList();
   }
   function popPush() { navApply(); }       // 팝업을 열 때
   function popSync() { navApply(); }       // 팝업을 버튼·바깥 누르기 등으로 닫았을 때
@@ -1855,6 +1868,7 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
     admCards();                                     // 새 서명지 열기: 직원 모두, 배포용 아이디·개인 코드 관리: 관리자
     if (!edus.length) $('edus').innerHTML = '<div class="hint">불러오는 중…</div>';
     show('s1');
+    if (KIOSK_WANT && !g) kioskOpen();             // 차량관리의 [키오스크]로 왔으면 로그인 뒤 키오스크 화면
   }
   function logout(text) {
     if (staff && staff.token) google.script.run.staffLogout(staff.token);
@@ -3379,6 +3393,20 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
       .catch(function (e) { msg($('smMsg'), e.message, '#c0392b'); });
   };
   $('smClear').onclick = function () { if (confirm('이 역의 안내 이미지를 비울까요? (역 화면에는 시계만 나옵니다)')) smSend({ files: [], clear: true }); };
+
+  /* ---------- 키오스크 화면 (오른쪽 위 [키오스크]): 관리자 → [역 안내 화면], 근무자 → [우리 역 안내 이미지] ---------- */
+  var KIOSK_WANT = location.hash === '#kiosk';      // 차량관리 화면의 [키오스크]로 들어옴 (로그인 뒤 키오스크로)
+  if (KIOSK_WANT) try { history.replaceState(history.state, '', location.pathname + location.search); } catch (x) {}
+  function kioskOpen() {
+    KIOSK_WANT = false;
+    if (!staff || !staff.token || staff.guest) { enterList(); return; }
+    enterList(); show('sq');
+    var adm = isAdm();
+    if (adm && !$('stCard').classList.contains('open')) { $('stCard').classList.add('open'); stLoad(); }
+    if (!adm) $('smCard').classList.add('open');
+  }
+  SWF.kiosk = kioskOpen;
+  SWF.sign = function () { enterList(); };
 
   /* ---------- 서명지 관리 창: 서명지 목록 카드 밀기 [정보 수정]·[내보내기] (관리자) ---------- */
   var admOverId = null, admOverMode = '';
