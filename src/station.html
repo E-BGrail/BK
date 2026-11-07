@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#1b2333">
+<link rel="manifest" href="station.webmanifest">
+<link rel="icon" href="station-192.png">
+<title>BGL 역 안내</title>
+<!-- 원본: bgl-car/src/station.html → node build-index.js 가 bgl-car/station.html 생성 (직접 고치지 않음) -->
+<style>
+  * { box-sizing:border-box; }
+  html, body { margin:0; height:100%; background:#000; color:#fff; font-family:'Pretendard','Malgun Gothic','Apple SD Gothic Neo',sans-serif; overflow:hidden; }
+  .hidden { display:none !important; }
+  /* 역 코드 입력 */
+  #setup { position:fixed; inset:0; display:flex; align-items:center; justify-content:center; background:#eef1f7; color:#1b2333; padding:16px; }
+  #setup .box { width:100%; max-width:420px; background:#fff; border-radius:16px; padding:28px 24px; box-shadow:0 8px 30px rgba(27,35,51,.12); }
+  #setup h1 { margin:0 0 6px; font-size:22px; }
+  #setup p { margin:0 0 18px; color:#667085; font-size:14px; line-height:1.5; }
+  #setup input { width:100%; font-size:20px; padding:12px 14px; border:1.5px solid #d8dde8; border-radius:10px; font-family:inherit; }
+  #setup button { width:100%; margin-top:12px; font-size:18px; font-weight:800; padding:13px; border:0; border-radius:10px; background:#324eb3; color:#fff; font-family:inherit; cursor:pointer; }
+  #setup button:disabled { opacity:.6; }
+  #setMsg { min-height:20px; margin-top:10px; font-size:14px; color:#c0392b; }
+  /* 평소: 이미지 넘기기 */
+  #slides { position:fixed; inset:0; background:#000; }
+  #slides img { position:absolute; inset:0; width:100%; height:100%; object-fit:contain; opacity:0; transition:opacity .8s ease; }
+  #slides img.on { opacity:1; }
+  #idle { position:fixed; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; background:#1b2333; gap:2vh; }
+  #idle b { font-size:7vh; } #idleClock { font-size:12vh; font-weight:800; letter-spacing:.02em; } #idle small { font-size:2.4vh; opacity:.6; }
+  /* 환불 등록 QR */
+  #qr { position:fixed; inset:0; background:#fff; color:#1b2333; display:flex; align-items:center; justify-content:center; gap:5vw; padding:4vh 5vw; }
+  #qrPic { width:min(80vh, 50vw); aspect-ratio:1; flex:none; }
+  #qrPic svg { width:100%; height:100%; display:block; }
+  #qrText { max-width:40vw; }
+  #qrText .tag { display:inline-block; background:#b42318; color:#fff; font-weight:800; font-size:2.6vh; padding:.6vh 1.4vh; border-radius:1vh; }
+  #qrText h2 { font-size:6vh; margin:2vh 0 1vh; line-height:1.2; }
+  #qrTitle { font-size:3vh; color:#667085; margin:0 0 3vh; }
+  #qrText p { font-size:3.4vh; line-height:1.5; margin:0 0 2vh; }
+  #qrLeft { font-size:3vh; font-weight:800; color:#22378a; }
+  #qrNext { font-size:2.2vh; color:#667085; margin-top:1vh; }
+  @media (max-aspect-ratio: 1/1) {      /* 세로 화면 */
+    #qr { flex-direction:column; gap:3vh; text-align:center; }
+    #qrPic { width:min(80vw, 55vh); } #qrText { max-width:90vw; }
+  }
+  /* 연결 끊김 표시·설정 */
+  #off { position:fixed; right:1.5vh; bottom:1.5vh; width:1.4vh; height:1.4vh; border-radius:50%; background:#e0a400; box-shadow:0 0 0 .3vh rgba(0,0,0,.4); }
+  #gear { position:fixed; left:1.5vh; bottom:1.5vh; font-size:14px; padding:8px 12px; border:0; border-radius:8px; background:rgba(0,0,0,.55); color:#fff; cursor:pointer; opacity:0; transition:opacity .3s; font-family:inherit; }
+  body.mouse #gear { opacity:1; }
+  body.nocur, body.nocur * { cursor:none; }
+</style>
+</head>
+<body class="nocur">
+<div id="setup" class="hidden">
+  <div class="box">
+    <h1>BGL 역 안내 화면</h1>
+    <p>관리자에게 받은 역 코드를 넣으세요. 이 컴퓨터에 기억되어 다음부터는 바로 시작합니다.</p>
+    <input type="password" id="code" autocomplete="off" placeholder="역 코드" aria-label="역 코드">
+    <button id="go" type="button">시작</button>
+    <div id="setMsg"></div>
+  </div>
+</div>
+<div id="slides" class="hidden"></div>
+<div id="idle" class="hidden"><b id="idleName"></b><div id="idleClock"></div><small>BGL</small></div>
+<div id="qr" class="hidden" role="img" aria-label="환불 등록 QR">
+  <div id="qrPic"></div>
+  <div id="qrText">
+    <span class="tag">운행 장애 안내</span>
+    <h2>환불 등록</h2>
+    <div id="qrTitle"></div>
+    <p>휴대폰 카메라로 QR을 찍어<br>환불을 등록해 주세요.</p>
+    <div id="qrLeft"></div>
+    <div id="qrNext"></div>
+  </div>
+</div>
+<div id="off" class="hidden" title="연결 확인 안 됨"></div>
+<button id="gear" type="button">역 코드 바꾸기</button>
+<script>
+(function () {
+  'use strict';
+  /* ---------- 역 안내 화면 ----------
+   * 10초마다 GitHub Pages의 역 파일(s/<id>.json, 암호화)만 읽음 → 구글 서버를 거치지 않음
+   * id·열쇠는 역 코드에서 만듦 (PBKDF2, 서버 Station.js와 같은 방식). 내용: 이미지 목록·넘김 초, 환불 QR(열쇠·주소·끝 시각)
+   * 환불 QR은 20초마다 바뀜 (e-싸인 직원 화면과 같은 서명). 시각은 Pages 응답의 Date로 맞춤 */
+  var DATA = '../BK-st/', SALT = 'bgl-station-v1', ITER = 4000, POLL = 10000, STEP = 20;
+  var $ = function (id) { return document.getElementById(id); };
+  var enc = new TextEncoder();
+  var st = { id: '', key: null, data: null, off: 0, okAt: 0, miss: 0, slot: 0, qrKey: '' };
+  var LS = { get: function (k) { try { return localStorage.getItem(k); } catch (x) { return null; } },
+    set: function (k, v) { try { if (v === null) localStorage.removeItem(k); else localStorage.setItem(k, v); } catch (x) {} } };
+
+  /*@QR@*/
+
+  /* ---------- 암호 ---------- */
+  function hex(b) { return Array.prototype.map.call(b, function (x) { return (x < 16 ? '0' : '') + x.toString(16); }).join(''); }
+  function b64(s) { var t = atob(s), o = new Uint8Array(t.length); for (var i = 0; i < t.length; i++) o[i] = t.charCodeAt(i); return o; }
+  function cat(a, b) { var o = new Uint8Array(a.length + b.length); o.set(a); o.set(b, a.length); return o; }
+  function hmac(key, data) {
+    return crypto.subtle.importKey('raw', key, { name: 'HMAC', hash: 'SHA-256' }, false, ['sign'])
+      .then(function (k) { return crypto.subtle.sign('HMAC', k, data); }).then(function (b) { return new Uint8Array(b); });
+  }
+  function derive(code) {
+    return crypto.subtle.importKey('raw', enc.encode(code), 'PBKDF2', false, ['deriveBits']).then(function (km) {
+      return crypto.subtle.deriveBits({ name: 'PBKDF2', salt: enc.encode(SALT), iterations: ITER, hash: 'SHA-256' }, km, 512);
+    }).then(function (b) { b = new Uint8Array(b); return { id: hex(b.slice(32, 48)), key: b.slice(0, 32) }; });
+  }
+  function unseal(key, txt) {
+    var o = JSON.parse(txt), n = b64(o.n), c = b64(o.c), t = b64(o.t), kE, kM;
+    return Promise.all([hmac(key, enc.encode('enc')), hmac(key, enc.encode('mac'))]).then(function (ks) {
+      kE = ks[0]; kM = ks[1];
+      return hmac(kM, cat(n, c));
+    }).then(function (tag) {
+      for (var i = 0; i < 16; i++) if (tag[i] !== t[i]) throw new Error('bad');
+      var jobs = [];
+      for (var b = 0; b * 32 < c.length; b++) jobs.push(hmac(kE, cat(n, new Uint8Array([b >>> 24 & 255, b >>> 16 & 255, b >>> 8 & 255, b & 255]))));
+      return Promise.all(jobs);
+    }).then(function (blocks) {
+      var p = new Uint8Array(c.length);
+      for (var i = 0; i < c.length; i++) p[i] = c[i] ^ blocks[i >> 5][i & 31];
+      return JSON.parse(new TextDecoder().decode(p));
+    });
+  }
+
+  /* ---------- 역 코드 ---------- */
+  function showSetup(m) {
+    $('setup').classList.remove('hidden'); document.body.classList.remove('nocur');
+    $('setMsg').textContent = m || ''; $('go').disabled = false;
+    setTimeout(function () { $('code').focus(); }, 50);
+  }
+  $('go').onclick = function () {
+    var code = $('code').value.trim();
+    if (!code) { $('setMsg').textContent = '역 코드를 넣으세요.'; return; }
+    $('go').disabled = true; $('setMsg').textContent = '';
+    derive(code).then(function (k) {
+      return fetchFile(k.id).then(function (txt) {
+        if (txt === null) throw new Error('none');
+        return unseal(k.key, txt).then(function (d) {
+          st.id = k.id; st.key = k.key; st.miss = 0;
+          LS.set('bglStCode', code); $('code').value = '';
+          $('setup').classList.add('hidden'); document.body.classList.add('nocur');
+          apply(d); start();
+        });
+      });
+    }).catch(function (e) {
+      $('go').disabled = false;
+      $('setMsg').textContent = e && e.message === 'net' ? '인터넷 연결을 확인하세요.' : '역 코드가 맞지 않습니다. (새로 정한 코드면 1분 뒤 다시 해 보세요)';
+    });
+  };
+  $('code').onkeydown = function (ev) { if (ev.key === 'Enter') $('go').click(); };
+  $('gear').onclick = function () {
+    if (!confirm('이 컴퓨터에 기억된 역 코드를 지우고 다시 넣을까요?')) return;
+    LS.set('bglStCode', null); LS.set('bglStData', null); location.reload();
+  };
+
+  /* ---------- 읽기 (10초마다) ---------- */
+  function fetchFile(id) {
+    return fetch(DATA + 's/' + id + '.json?t=' + Date.now(), { cache: 'no-store' }).then(function (r) {
+      var d = Date.parse(r.headers.get('Date') || '');
+      if (isFinite(d)) st.off = d + 500 - Date.now();         // Date는 초 단위 → 가운데 값
+      if (r.status === 404) return null;
+      if (!r.ok) throw new Error('net');
+      return r.text();
+    }, function () { throw new Error('net'); });
+  }
+  var pollT = null;
+  function start() { if (!pollT) { pollT = setInterval(poll, POLL); setInterval(tick, 1000); tick(); } }
+  function poll() {
+    fetchFile(st.id).then(function (txt) {
+      if (txt === null) {                                     // 파일 없음: 역 코드가 바뀌었거나 꺼짐 (3번 연속이면 코드 다시)
+        if (++st.miss >= 3) { LS.set('bglStCode', null); LS.set('bglStData', null); location.reload(); }
+        return;
+      }
+      st.miss = 0;
+      return unseal(st.key, txt).then(function (d) { st.okAt = Date.now(); apply(d); });
+    }).catch(function () {});
+  }
+  function now() { return Date.now() + st.off; }
+
+  /* ---------- 그리기 ---------- */
+  var slides = { list: '', els: [], i: 0, sec: 10, t: 0 };
+  function apply(d) {
+    if (!d || !d.v) return;
+    st.okAt = st.okAt || Date.now();
+    var keep = st.data && st.data.at === d.at;
+    st.data = d;
+    if (!keep) LS.set('bglStData', JSON.stringify(d));
+    $('idleName').textContent = d.n || '';
+    var key = (d.imgs || []).join('|');
+    slides.sec = Math.max(3, Number(d.sec) || 10);
+    if (key !== slides.list) {                                // 이미지가 바뀜 → 새로 불러옴 (서비스 워커가 기기에 저장)
+      slides.list = key; $('slides').innerHTML = ''; slides.els = []; slides.i = 0; slides.t = 0;
+      (d.imgs || []).forEach(function (p) {
+        var im = new Image(); im.alt = ''; im.decoding = 'async';
+        im.onerror = function () { im.dataset.bad = '1'; };
+        im.src = DATA + p; $('slides').appendChild(im); slides.els.push(im);
+      });
+    }
+    if (!d.qr || d.qr.k !== st.qrKey) { st.slot = 0; st.qrKey = d.qr ? d.qr.k : ''; }
+    tick();
+  }
+  function slideStep() {
+    var ok = slides.els.filter(function (im) { return !im.dataset.bad && im.complete && im.naturalWidth; });
+    $('slides').classList.toggle('hidden', !ok.length); $('idle').classList.toggle('hidden', !!ok.length);
+    if (!ok.length) return;
+    var t = Date.now();
+    if (!slides.t || t - slides.t >= slides.sec * 1000 || !ok.some(function (im) { return im.classList.contains('on'); })) {
+      slides.t = t;
+      var cur = ok.filter(function (im) { return im.classList.contains('on'); })[0];
+      var next = ok[(ok.indexOf(cur) + 1) % ok.length];
+      if (cur && ok.length === 1) return;
+      slides.els.forEach(function (im) { im.classList.toggle('on', im === next); });
+    }
+  }
+  function sig(key, t) {
+    return hmac(enc.encode(key), enc.encode(String(t))).then(function (b) { return hex(b).slice(0, 16); });
+  }
+  function tick() {
+    var d = st.data, n = now();
+    var c = new Date(n);
+    $('idleClock').textContent = (c.getHours() < 10 ? '0' : '') + c.getHours() + ':' + (c.getMinutes() < 10 ? '0' : '') + c.getMinutes();
+    $('off').classList.toggle('hidden', !st.okAt || Date.now() - st.okAt < 60000);
+    var q = d && d.qr && n < d.qr.end ? d.qr : null;
+    $('qr').classList.toggle('hidden', !q);
+    if (!q) { slideStep(); return; }
+    var t = Math.floor(n / 1000 / STEP) * STEP;
+    if (t !== st.slot) {
+      st.slot = t;
+      sig(q.k, t).then(function (s) {
+        if (st.slot !== t) return;
+        var svg = qrSvg(q.u + '&k=' + t + '.' + s, '#1b2333'); if (svg) $('qrPic').innerHTML = svg;
+      }).catch(function () {});
+    }
+    $('qrTitle').textContent = q.t || '';
+    var left = Math.max(0, Math.ceil((q.end - n) / 1000)), mm = Math.floor(left / 60), ss = left % 60;
+    $('qrLeft').textContent = '접수 마감까지 ' + mm + ':' + (ss < 10 ? '0' : '') + ss;
+    $('qrNext').textContent = Math.max(1, Math.ceil(t + STEP - n / 1000)) + '초 뒤 새 QR';
+  }
+
+  /* ---------- 화면 켜 두기·전체 화면·마우스 ---------- */
+  var wl = null;
+  function wake() { if (navigator.wakeLock && !wl && document.visibilityState === 'visible') navigator.wakeLock.request('screen').then(function (l) { wl = l; l.addEventListener('release', function () { wl = null; }); }).catch(function () {}); }
+  document.addEventListener('visibilitychange', function () { wake(); if (document.visibilityState === 'visible' && st.id) poll(); });
+  document.addEventListener('click', function (ev) {
+    wake();
+    if (ev.target.closest('#setup, #gear')) return;
+    if (!document.fullscreenElement && document.documentElement.requestFullscreen) document.documentElement.requestFullscreen().catch(function () {});
+  });
+  var mT = null;
+  document.addEventListener('mousemove', function () {
+    document.body.classList.add('mouse'); document.body.classList.remove('nocur');
+    clearTimeout(mT); mT = setTimeout(function () { document.body.classList.remove('mouse'); if (st.id) document.body.classList.add('nocur'); }, 3000);
+  });
+  if ('serviceWorker' in navigator) navigator.serviceWorker.register('station-sw.js', { scope: './station' }).catch(function () {});
+
+  /* ---------- 시작 ---------- */
+  if (!(window.crypto && crypto.subtle)) { showSetup('이 브라우저는 지원하지 않습니다. 크롬으로 열어 주세요.'); $('go').disabled = true; return; }
+  wake();
+  var code = LS.get('bglStCode');
+  if (!code) { showSetup(); return; }
+  derive(code).then(function (k) {
+    st.id = k.id; st.key = k.key;
+    try { var d0 = JSON.parse(LS.get('bglStData') || 'null'); if (d0) apply(d0); } catch (x) {}   // 인터넷이 끊겨도 지난 화면부터
+    if (!st.data) $('idle').classList.remove('hidden');
+    start(); poll();
+  });
+})();
+</script>
+</body>
+</html>

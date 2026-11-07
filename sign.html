@@ -297,7 +297,15 @@
   #chgCard .nhead, #pcCard .nhead, #gstCard .nhead { cursor:pointer; position:relative; padding-right:34px; }
   #chgCard .nhead::after, #pcCard .nhead::after, #gstCard .nhead::after { content:'▾'; position:absolute; right:2px; top:-2px; color:var(--sub); font-size:28px; line-height:1; transition:transform .2s; }
   #chgCard.open .nhead::after, #pcCard.open .nhead::after, #gstCard.open .nhead::after { transform:rotate(180deg); }
-  #chgCard .ebody, #pcCard .ebody, #gstCard .ebody { display:none; } #chgCard.open .ebody, #pcCard.open .ebody, #gstCard.open .ebody { display:block; }
+  #chgCard .ebody, #pcCard .ebody, #gstCard .ebody, #stCard .ebody, #smCard .ebody { display:none; } #chgCard.open .ebody, #pcCard.open .ebody, #gstCard.open .ebody, #stCard.open .ebody, #smCard.open .ebody { display:block; }
+  /* 역 안내 화면 카드 (관리자) */
+  .stTools { display:flex; gap:6px; margin:10px 0 6px; } .stTools .btn { flex:none; }
+  .stList { display:grid; grid-template-columns:repeat(auto-fill, minmax(140px, 1fr)); gap:6px; max-height:340px; overflow:auto; }
+  .stRow { display:flex; align-items:flex-start; gap:6px; border:1px solid var(--line); border-radius:10px; padding:8px; font-size:14px; cursor:pointer; background:#fff; }
+  .stRow input { margin:2px 0 0; flex:none; width:auto; } .stRow small { display:block; color:var(--sub); font-size:12px; margin-top:2px; }
+  .stRow.on { border-color:#b42318; background:#fff5f4; } .stRow.on small { color:#b42318; }
+  .stSub { margin:16px 0 4px; font-weight:800; font-size:15px; }
+  #stPage { word-break:break-all; }
   #chgCard .codeRow, #pcCard .codeRow { align-items:flex-end; }
   /* 개인 코드: 입력 글자를 점으로 가림 (비밀번호 칸이 아니라서 휴대폰·브라우저가 저장하자고 묻지 않음) */
   .secret { -webkit-text-security:disc; letter-spacing:4px; }
@@ -610,6 +618,39 @@
         <div class="field"><label>아이디 (숫자 4자리 이상)</label><input type="tel" id="gstId" autocomplete="off" inputmode="numeric" pattern="[0-9]*" maxlength="20"></div>
         <div class="row"><button class="btn pri" id="gstSave" type="button">저장</button></div>
         <div class="msg" id="gstMsg"></div>
+      </div>
+    </div>
+    <div class="card hidden" id="smCard">
+      <div class="nhead" id="smHead"><b>우리 역 안내 이미지</b></div>
+      <div class="ebody">
+        <div class="note">역 안내 화면에 넘겨 보여 줄 이미지를 바꿉니다. 역 코드를 넣으면 그 역만 바뀝니다. 관리자가 환불 등록 QR을 띄우면 이미지보다 QR이 먼저 나옵니다. 약 1분 뒤 역 화면에 나타납니다.</div>
+        <div class="field"><label>역 코드</label><input type="password" id="smCode" autocomplete="off" maxlength="40"></div>
+        <div class="field"><label>이미지 (여러 장 가능, 10장까지)</label><input type="file" id="smFiles" accept="image/jpeg,image/png,image/webp" multiple></div>
+        <div class="field"><label>한 장 보여 주는 시간(초)</label><input type="tel" id="smSec" inputmode="numeric" pattern="[0-9]*" value="10" maxlength="3"></div>
+        <div class="row"><button class="btn pri" id="smSave" type="button">이미지 바꾸기</button><button class="btn gray" id="smClear" type="button">이미지 비우기</button></div>
+        <div class="msg" id="smMsg"></div>
+      </div>
+    </div>
+    <div class="card hidden" id="stCard">
+      <div class="nhead" id="stHead"><b>역 안내 화면</b></div>
+      <div class="ebody">
+        <div class="note">역 PC 크롬에서 <b id="stPage"></b> 를 열고 역 코드를 넣은 뒤, 주소창의 [설치]를 누르세요. 역 PC는 GitHub만 10초마다 확인합니다. 바꾼 내용은 약 1분 뒤 역 화면에 나타납니다.</div>
+        <div class="stTools"><button class="btn gray sbtn" id="stAll" type="button">전체 선택</button><button class="btn gray sbtn" id="stNone" type="button">선택 해제</button></div>
+        <div class="stList" id="stList"></div>
+        <div class="stSub">환불 등록 QR</div>
+        <div class="field"><select id="stRf" aria-label="띄울 환불 등록"></select></div>
+        <div class="row"><button class="btn pri" id="stQrOn" type="button">고른 역에 QR 띄우기</button><button class="btn gray" id="stQrOff" type="button">QR 내리기</button></div>
+        <div class="stSub">안내 이미지</div>
+        <div class="field"><label>이미지 (여러 장 가능, 고른 역 모두 이 이미지로 바뀜)</label><input type="file" id="stFiles" accept="image/jpeg,image/png,image/webp" multiple></div>
+        <div class="field"><label>한 장 보여 주는 시간(초)</label><input type="tel" id="stSec" inputmode="numeric" pattern="[0-9]*" value="10" maxlength="3"></div>
+        <div class="row"><button class="btn pri" id="stImgSave" type="button">이미지 바꾸기</button><button class="btn gray" id="stImgClear" type="button">이미지 비우기</button></div>
+        <div class="stSub">역 코드 (한 역만 골랐을 때)</div>
+        <div class="note">추측하기 어렵게 6자 이상. 비우고 저장하면 그 역 화면이 꺼집니다.</div>
+        <div class="codeRow">
+          <div style="flex:1"><input type="text" id="stCode" placeholder="새 역 코드" autocomplete="off" maxlength="40"></div>
+          <button class="btn pri sbtn" id="stCodeSave" style="flex:none" type="button">저장</button>
+        </div>
+        <div class="msg" id="stMsg"></div>
       </div>
     </div>
     <div class="card hidden" id="pcCard">
@@ -997,7 +1038,7 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
     staffDeleteEdu: '삭제하는 중', pdfDelete: '삭제하는 중', adminPcReset: '초기화하는 중',
     adminExportPdf: '파일 만드는 중', adminExportLog: '파일 만드는 중', eduPdf: '파일 만드는 중', safetyPdf: '파일 만드는 중'
   };
-  function busyText(k) { return BUSY_TEXT[k] || (/^(admin(Edit|Set|Reorder|Sort|Unlock)|staff(SetOpen|RfExtend)|emp(Change|Register)$|safetyLeaderCancel)/.test(k) ? '데이터 저장 중' : '데이터 불러오는 중'); }
+  function busyText(k) { return BUSY_TEXT[k] || (/^(admin(Edit|Set|Reorder|Sort|Unlock|St(Code|Imgs|Qr))|staffStImgs|staff(SetOpen|RfExtend)|emp(Change|Register)$|safetyLeaderCancel)/.test(k) ? '데이터 저장 중' : '데이터 불러오는 중'); }
   function busyOn(text) {
     if (!busyEl) {
       busyEl = document.createElement('div'); busyEl.className = 'busyOver hidden'; busyEl.setAttribute('role', 'status'); busyEl.setAttribute('aria-live', 'polite');
@@ -1819,7 +1860,7 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
     if (staff && staff.token) google.script.run.staffLogout(staff.token);
     if (admTok) google.script.run.adminLogout(admTok);   // 관리자 접속 표시도 서버에서 지움
     admTok = null; admData = null; admMe = null; admExp = {}; admOrder = {}; admOverHide(); $('nDept').innerHTML = '';
-    ['newCard', 'gstCard', 'pcCard'].forEach(function (id) { $(id).classList.remove('open'); });
+    ['newCard', 'gstCard', 'stCard', 'smCard', 'pcCard'].forEach(function (id) { $(id).classList.remove('open'); });
     setStaff(null); edus = []; renderEdus(); resetAll();
     $('lgPin').value = savedPin(); $('lgCode').value = '';
     if (text) msg($('lgMsg'), text, '#c0392b');
@@ -3204,7 +3245,7 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
   function admCards() {
     var g = !!(staff && staff.guest), adm = isAdm();
     $('newCard').classList.toggle('hidden', g || !(staff && staff.token));
-    $('gstCard').classList.toggle('hidden', !adm); $('pcCard').classList.toggle('hidden', !(adm && staff.master));
+    $('gstCard').classList.toggle('hidden', !adm); $('stCard').classList.toggle('hidden', !adm); $('smCard').classList.toggle('hidden', adm || g || !(staff && staff.token)); $('pcCard').classList.toggle('hidden', !(adm && staff.master));
     if (!adm || !admData) nTplFill([]);
   }
   /** 관리자 작업 응답 그리기. quiet: 처음 받을 때(서명지 목록은 이미 최신) */
@@ -3230,6 +3271,115 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAG
     if (note) admOverMsg(note);
     if (!quiet && staff && staff.token) refreshInit();   // 서명지 목록(제목·마감 등)도 새로
   }
+  /* ---------- 관리자: 역 안내 화면 (서버 Station.js, 역 PC는 GitHub Pages의 station.html) ----------
+   * 역을 골라 환불 등록 QR 띄우기·내리기, 안내 이미지 바꾸기, 역 코드 정하기. 서버가 GitHub에 올리고 역 PC는 10초마다 확인 (반영 약 1분) */
+  var stSel = {}, stD = null;
+  function stPageUrl() { return /sign\.html/.test(qrUrl) ? qrUrl.replace(/sign\.html.*$/, 'station.html') : 'https://e-bgrail.github.io/BK/station.html'; }
+  function stNames() { return Object.keys(stSel).filter(function (k) { return stSel[k]; }); }
+  function stRender(d) {
+    stD = d; $('stPage').textContent = stPageUrl();
+    var box = $('stList'), names = d.stations.map(function (s) { return s.name; }); box.innerHTML = '';
+    Object.keys(stSel).forEach(function (k) { if (names.indexOf(k) < 0) delete stSel[k]; });
+    d.stations.forEach(function (s) {
+      var l = document.createElement('label'); l.className = 'stRow' + (s.qr && s.qr.live ? ' on' : '');
+      var cb = document.createElement('input'); cb.type = 'checkbox'; cb.checked = !!stSel[s.name];
+      cb.onchange = function () { stSel[s.name] = cb.checked; stSync(); };
+      var t = document.createElement('div'), b = document.createElement('b'), sm = document.createElement('small');
+      b.textContent = s.name;
+      sm.textContent = [s.code ? '코드 ' + s.code : '코드 없음', '이미지 ' + s.imgs + '장' + (s.imgs ? ' · ' + s.sec + '초' : ''),
+        s.qr ? (s.qr.live ? 'QR 표시 중' : 'QR 끝남') : ''].filter(Boolean).join(' · ');
+      if (s.qr) sm.title = s.qr.title;
+      t.appendChild(b); t.appendChild(sm); l.appendChild(cb); l.appendChild(t); box.appendChild(l);
+    });
+    var sel = $('stRf'), prev = sel.value; sel.innerHTML = '';
+    if (!d.refunds.length) { var o0 = document.createElement('option'); o0.value = ''; o0.textContent = '고객용 QR 접수 중인 환불 등록 없음'; sel.appendChild(o0); }
+    d.refunds.forEach(function (e) { var o = document.createElement('option'); o.value = e.id; o.textContent = e.title; sel.appendChild(o); });
+    if (prev && d.refunds.some(function (e) { return e.id === prev; })) sel.value = prev;
+    stSync();
+    if (!d.ready) msg($('stMsg'), '역 화면 저장소 토큰이 아직 없습니다 (스크립트 속성 ST_GH_TOKEN). 넣기 전에는 올릴 수 없습니다.', '#c0392b');
+    else if (d.note) msg($('stMsg'), d.note, '#12833b');
+  }
+  function stSync() {
+    var n = stNames().length;
+    $('stQrOn').disabled = !n || !$('stRf').value; $('stQrOff').disabled = !n;
+    $('stImgSave').disabled = !n; $('stImgClear').disabled = !n; $('stCodeSave').disabled = n !== 1;
+  }
+  function stLoad() { admCall('adminStInfo', [], stRender, $('stMsg')); }
+  function stNeed() { if (!stNames().length) { msg($('stMsg'), '역을 하나 이상 고르세요.', '#c0392b'); return false; } return true; }
+  $('stHead').onclick = function () { if ($('stCard').classList.toggle('open')) stLoad(); };
+  $('stAll').onclick = function () { if (stD) stD.stations.forEach(function (s) { stSel[s.name] = true; }); if (stD) stRender(Object.assign({}, stD, { note: '' })); };
+  $('stNone').onclick = function () { stSel = {}; if (stD) stRender(Object.assign({}, stD, { note: '' })); };
+  $('stRf').onchange = stSync;
+  $('stQrOn').onclick = function () {
+    if (!stNeed() || !$('stRf').value) return;
+    admCall('adminStQr', [stNames(), $('stRf').value, rfUrl('')], stRender, $('stMsg'));
+  };
+  $('stQrOff').onclick = function () { if (stNeed()) admCall('adminStQr', [stNames(), '', ''], stRender, $('stMsg')); };
+  $('stCodeSave').onclick = function () {
+    var n = stNames(); if (n.length !== 1) { msg($('stMsg'), '역 코드는 한 역만 골라서 정하세요.', '#c0392b'); return; }
+    var c = $('stCode').value.trim();
+    if (!c && !confirm(n[0] + ' 역 코드를 지우면 그 역 화면이 꺼집니다. 지울까요?')) return;
+    admCall('adminStCode', [n[0], c], function (d) { $('stCode').value = ''; stRender(d); }, $('stMsg'));
+  };
+  /** 이미지를 긴 쪽 1920px 이하 JPEG로 줄여서 보냄 (작은 PNG·WEBP는 그대로) */
+  function stShrink(file) {
+    return new Promise(function (ok, no) {
+      var url = URL.createObjectURL(file), im = new Image();
+      im.onload = function () {
+        var W = im.naturalWidth, H = im.naturalHeight, s = Math.min(1, 1920 / Math.max(W, H));
+        if (s === 1 && file.size < 1.5e6 && /^image\/(png|webp|jpeg)$/.test(file.type)) {
+          URL.revokeObjectURL(url);
+          var fr = new FileReader();
+          fr.onload = function () { ok({ type: file.type, b64: String(fr.result).split(',')[1] }); };
+          fr.onerror = function () { no(new Error(file.name + ': 읽지 못했습니다.')); };
+          fr.readAsDataURL(file); return;
+        }
+        var cv = document.createElement('canvas'); cv.width = Math.round(W * s); cv.height = Math.round(H * s);
+        var g = cv.getContext('2d'); g.fillStyle = '#000'; g.fillRect(0, 0, cv.width, cv.height); g.drawImage(im, 0, 0, cv.width, cv.height);
+        URL.revokeObjectURL(url);
+        ok({ type: 'image/jpeg', b64: cv.toDataURL('image/jpeg', 0.85).split(',')[1] });
+      };
+      im.onerror = function () { URL.revokeObjectURL(url); no(new Error(file.name + ': 이미지를 읽지 못했습니다.')); };
+      im.src = url;
+    });
+  }
+  $('stImgSave').onclick = function () {
+    if (!stNeed()) return;
+    var fs = [].slice.call($('stFiles').files || []), sec = Number($('stSec').value) || 10;
+    if (fs.length > 10) { msg($('stMsg'), '이미지는 10장까지 올릴 수 있습니다.', '#c0392b'); return; }
+    if (!fs.length) {                               // 이미지 없이 누르면 넘김 시간만 바꿈
+      admCall('adminStImgs', [{ names: stNames(), files: [], sec: sec }], stRender, $('stMsg')); return;
+    }
+    msg($('stMsg'), '이미지 줄이는 중…', '#6b7686');
+    Promise.all(fs.map(stShrink)).then(function (files) {
+      admCall('adminStImgs', [{ names: stNames(), files: files, sec: sec }], function (d) { $('stFiles').value = ''; stRender(d); }, $('stMsg'));
+    }).catch(function (e) { msg($('stMsg'), e.message, '#c0392b'); });
+  };
+  $('stImgClear').onclick = function () {
+    if (!stNeed() || !confirm('고른 역 ' + stNames().length + '곳의 안내 이미지를 비울까요? (역 화면에는 시계만 나옵니다)')) return;
+    admCall('adminStImgs', [{ names: stNames(), files: [], clear: true }], stRender, $('stMsg'));
+  };
+
+  /* ---------- 역 근무자: 우리 역 안내 이미지 (역 코드로 그 역만, QR은 관리자만) ---------- */
+  $('smHead').onclick = function () { $('smCard').classList.toggle('open'); };
+  function smSend(p, ok) {
+    var code = $('smCode').value.trim();
+    if (!code) { msg($('smMsg'), '역 코드를 넣으세요.', '#c0392b'); return; }
+    msg($('smMsg'), '올리는 중…', '#6b7686');
+    google.script.run.withSuccessHandler(function (r) { if (ok) ok(); msg($('smMsg'), r.note, '#12833b'); })
+      .withFailureHandler(function (e) { if (/로그인이 필요/.test(errText(e))) { logout(errText(e)); return; } msg($('smMsg'), errText(e), '#c0392b'); })
+      .staffStImgs(staff && staff.token || '', code, p);
+  }
+  $('smSave').onclick = function () {
+    var fs = [].slice.call($('smFiles').files || []), sec = Number($('smSec').value) || 10;
+    if (fs.length > 10) { msg($('smMsg'), '이미지는 10장까지 올릴 수 있습니다.', '#c0392b'); return; }
+    if (!fs.length) { smSend({ files: [], sec: sec }); return; }
+    msg($('smMsg'), '이미지 줄이는 중…', '#6b7686');
+    Promise.all(fs.map(stShrink)).then(function (files) { smSend({ files: files, sec: sec }, function () { $('smFiles').value = ''; }); })
+      .catch(function (e) { msg($('smMsg'), e.message, '#c0392b'); });
+  };
+  $('smClear').onclick = function () { if (confirm('이 역의 안내 이미지를 비울까요? (역 화면에는 시계만 나옵니다)')) smSend({ files: [], clear: true }); };
+
   /* ---------- 서명지 관리 창: 서명지 목록 카드 밀기 [정보 수정]·[내보내기] (관리자) ---------- */
   var admOverId = null, admOverMode = '';
   function admOverOpen(id, mode) {

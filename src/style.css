@@ -287,7 +287,15 @@
   #chgCard .nhead, #pcCard .nhead, #gstCard .nhead { cursor:pointer; position:relative; padding-right:34px; }
   #chgCard .nhead::after, #pcCard .nhead::after, #gstCard .nhead::after { content:'▾'; position:absolute; right:2px; top:-2px; color:var(--sub); font-size:28px; line-height:1; transition:transform .2s; }
   #chgCard.open .nhead::after, #pcCard.open .nhead::after, #gstCard.open .nhead::after { transform:rotate(180deg); }
-  #chgCard .ebody, #pcCard .ebody, #gstCard .ebody { display:none; } #chgCard.open .ebody, #pcCard.open .ebody, #gstCard.open .ebody { display:block; }
+  #chgCard .ebody, #pcCard .ebody, #gstCard .ebody, #stCard .ebody, #smCard .ebody { display:none; } #chgCard.open .ebody, #pcCard.open .ebody, #gstCard.open .ebody, #stCard.open .ebody, #smCard.open .ebody { display:block; }
+  /* 역 안내 화면 카드 (관리자) */
+  .stTools { display:flex; gap:6px; margin:10px 0 6px; } .stTools .btn { flex:none; }
+  .stList { display:grid; grid-template-columns:repeat(auto-fill, minmax(140px, 1fr)); gap:6px; max-height:340px; overflow:auto; }
+  .stRow { display:flex; align-items:flex-start; gap:6px; border:1px solid var(--line); border-radius:10px; padding:8px; font-size:14px; cursor:pointer; background:#fff; }
+  .stRow input { margin:2px 0 0; flex:none; width:auto; } .stRow small { display:block; color:var(--sub); font-size:12px; margin-top:2px; }
+  .stRow.on { border-color:#b42318; background:#fff5f4; } .stRow.on small { color:#b42318; }
+  .stSub { margin:16px 0 4px; font-weight:800; font-size:15px; }
+  #stPage { word-break:break-all; }
   #chgCard .codeRow, #pcCard .codeRow { align-items:flex-end; }
   /* 개인 코드: 입력 글자를 점으로 가림 (비밀번호 칸이 아니라서 휴대폰·브라우저가 저장하자고 묻지 않음) */
   .secret { -webkit-text-security:disc; letter-spacing:4px; }

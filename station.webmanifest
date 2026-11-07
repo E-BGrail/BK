@@ -1,0 +1,13 @@
+{
+  "name": "BGL 역 안내 화면",
+  "short_name": "역 안내",
+  "start_url": "station.html",
+  "scope": "station",
+  "display": "fullscreen",
+  "background_color": "#000000",
+  "theme_color": "#1b2333",
+  "icons": [
+    { "src": "station-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "station-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" }
+  ]
+}

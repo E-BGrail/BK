@@ -130,7 +130,7 @@
     if (staff && staff.token) google.script.run.staffLogout(staff.token);
     if (admTok) google.script.run.adminLogout(admTok);   // 관리자 접속 표시도 서버에서 지움
     admTok = null; admData = null; admMe = null; admExp = {}; admOrder = {}; admOverHide(); $('nDept').innerHTML = '';
-    ['newCard', 'gstCard', 'pcCard'].forEach(function (id) { $(id).classList.remove('open'); });
+    ['newCard', 'gstCard', 'stCard', 'smCard', 'pcCard'].forEach(function (id) { $(id).classList.remove('open'); });
     setStaff(null); edus = []; renderEdus(); resetAll();
     $('lgPin').value = savedPin(); $('lgCode').value = '';
     if (text) msg($('lgMsg'), text, '#c0392b');

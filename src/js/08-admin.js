@@ -343,7 +343,7 @@
   function admCards() {
     var g = !!(staff && staff.guest), adm = isAdm();
     $('newCard').classList.toggle('hidden', g || !(staff && staff.token));
-    $('gstCard').classList.toggle('hidden', !adm); $('pcCard').classList.toggle('hidden', !(adm && staff.master));
+    $('gstCard').classList.toggle('hidden', !adm); $('stCard').classList.toggle('hidden', !adm); $('smCard').classList.toggle('hidden', adm || g || !(staff && staff.token)); $('pcCard').classList.toggle('hidden', !(adm && staff.master));
     if (!adm || !admData) nTplFill([]);
   }
   /** 관리자 작업 응답 그리기. quiet: 처음 받을 때(서명지 목록은 이미 최신) */
