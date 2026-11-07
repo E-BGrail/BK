@@ -339,11 +339,11 @@
     if (prev && (list.indexOf(prev) > -1 || (prev === PDF_TPL && had))) sel.value = prev;   // 처음 양식을 받으면 첫 양식
     nTplUi();
   }
-  /** 서명지 목록 화면에 들어올 때: 새 서명지 열기(직원 모두)·배포용 아이디·개인 코드 관리(관리자만) */
+  /** 서명지 목록 화면에 들어올 때: 새 서명지 열기(직원 모두)·배포용 아이디(관리자)·개인 코드 관리(마스터만) */
   function admCards() {
     var g = !!(staff && staff.guest), adm = isAdm();
     $('newCard').classList.toggle('hidden', g || !(staff && staff.token));
-    $('gstCard').classList.toggle('hidden', !adm); $('pcCard').classList.toggle('hidden', !adm);
+    $('gstCard').classList.toggle('hidden', !adm); $('pcCard').classList.toggle('hidden', !(adm && staff.master));
     if (!adm || !admData) nTplFill([]);
   }
   /** 관리자 작업 응답 그리기. quiet: 처음 받을 때(서명지 목록은 이미 최신) */

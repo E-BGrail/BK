@@ -293,7 +293,7 @@
   .secret { -webkit-text-security:disc; letter-spacing:4px; }
   /* 로그인 */
   .meBar { display:flex; align-items:center; gap:6px; } .meBar b { flex:1; min-width:0; font-size:15px; }
-  .meAdm { display:inline-block; margin-left:6px; padding:1px 7px; border-radius:999px; background:var(--pri); color:#fff; font-size:12px; font-weight:700; vertical-align:1px; }
+  .meAdm { display:inline-block; margin-left:6px; padding:1px 7px; border-radius:999px; background:var(--pri); color:#fff; font-size:12px; font-weight:700; vertical-align:1px; } .meAdm.mst { background:#6d28d9; }
   .rfTime { margin-top:6px; font-size:14px; font-weight:700; color:var(--sub); } .rfTime.soon { color:#c0392b; }
   .qrOver .regBox { padding:0; overflow-x:hidden; }
   .regHead { display:flex; align-items:center; gap:12px; padding:16px 18px; color:#fff; background:linear-gradient(160deg, #3d5cc8 0%, var(--pri) 45%, var(--pri2) 100%); }
@@ -405,6 +405,15 @@
   .lvTop span { font-size:13px; font-weight:700; color:var(--pri); white-space:nowrap; }
   .lvTop select { flex:none; max-width:44%; height:36px; font-size:15px; border:1px solid var(--line); border-radius:8px; padding:0 6px; background:#fff; color:var(--text); }
   .lvPage { flex:1; overflow-y:auto; -webkit-overflow-scrolling:touch; overscroll-behavior:contain; padding:10px; }
+  .lvPage > .skPaper, .lvPage > .hint, .lvPage > .lvHint, .lvPage > .lvNav, .lvPage > .card { max-width:794px; margin-left:auto; margin-right:auto; }   /* A4 폭(794px)까지만, 가운데 */
+  .lvPage > .skPaper { aspect-ratio:210 / 297; box-sizing:border-box; }   /* A4 비율 (내용이 길면 아래로 늘어남) */
+  /* 가운데 로딩 표시 (서버를 부르는 동안, 0.3초 넘으면) */
+  .busyOver { position:fixed; inset:0; z-index:9999; display:flex; align-items:center; justify-content:center; background:rgba(15,23,42,.28); }
+  .busyOver.hidden { display:none; }
+  .busyBox { display:flex; flex-direction:column; align-items:center; gap:12px; min-width:170px; padding:22px 26px; border-radius:16px; background:#fff; box-shadow:0 8px 30px rgba(0,0,0,.25); }
+  .busyBox b { font-size:15px; color:var(--text); }
+  .busySpin { width:42px; height:42px; border:4px solid #dbe3f4; border-top-color:var(--pri); border-radius:50%; animation:busySp .8s linear infinite; }
+  @keyframes busySp { to { transform:rotate(360deg); } }
   .lvHint { text-align:center; font-size:12px; color:var(--sub); padding:8px 0; }
   .lvNav { margin:6px 0 30px; }
   /* PDF 서명지 */

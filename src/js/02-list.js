@@ -271,13 +271,15 @@
       var w = ev.target.closest('.esw');
       if (!w || ev.target.closest('.eswAct')) return;
       var wd = width(w), wl = widthL(w);
-      S = { w: w, f: w.querySelector('.eswFront'), x: ev.clientX, y: ev.clientY, on: false, dx: 0, wd: wd, wl: wl,
+      S = { w: w, f: w.querySelector('.eswFront'), x: ev.clientX, y: ev.clientY, on: false, dx: 0, wd: wd, wl: wl, mouse: ev.pointerType === 'mouse',
         start: w.classList.contains('open') ? -wd : w.classList.contains('openR') ? wl : 0 };
+      if (S.mouse && !/^(INPUT|SELECT|TEXTAREA)$/.test(ev.target.tagName)) ev.preventDefault();   // 마우스: 끄는 동안 글자 선택·끌어 놓기 막음
     });
     box.addEventListener('pointermove', function (ev) {
       if (!S) return;
+      if (S.mouse && !(ev.buttons & 1)) { end(); return; }   // 버튼을 이미 뗐으면(놓친 pointerup) 끝냄
       var dx = ev.clientX - S.x, dy = ev.clientY - S.y;
-      if (!S.on) { if (Math.abs(dy) > 12 && Math.abs(dy) > Math.abs(dx)) { S = null; return; } if (Math.abs(dx) < 10) return; S.on = true; eswClose(S.w); S.w.classList.add('drag'); }
+      if (!S.on) { if (Math.abs(dy) > 12 && Math.abs(dy) > Math.abs(dx)) { S = null; return; } if (Math.abs(dx) < 10) return; S.on = true; eswClose(S.w); S.w.classList.add('drag'); if (S.mouse) try { box.setPointerCapture(ev.pointerId); } catch (x) {} }   // 마우스: 목록 밖에서 버튼을 떼도 끝나게
       S.dx = dx; S.f.style.transition = 'none';
       S.f.style.transform = 'translateX(' + Math.max(-S.wd, Math.min(S.wl, S.start + dx)) + 'px)';
     });
@@ -295,6 +297,8 @@
     };
     box.addEventListener('pointerup', end);
     box.addEventListener('pointercancel', end);
+    box.addEventListener('lostpointercapture', end);
+    box.addEventListener('dragstart', function (ev) { if (ev.target.closest && ev.target.closest('.esw')) ev.preventDefault(); });
     box.addEventListener('touchmove', function (ev) { if (S && S.on) ev.preventDefault(); }, { passive: false });   // 옆으로 미는 중에는 페이지가 스크롤되지 않게 (스크롤이 남으면 다음 첫 탭이 무시됨)
     box.addEventListener('click', function (ev) {
       var w = ev.target.closest('.esw');

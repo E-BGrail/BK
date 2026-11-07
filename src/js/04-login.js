@@ -120,7 +120,7 @@
   function enterList() {
     var g = !!(staff && staff.guest);
     $('meName').textContent = g ? '외부 참석자' : ((staff.disp ? staff.disp + ' ' : '') + staff.name + ' 님').trim();
-    if (!g && staff.admin) { var ma = document.createElement('span'); ma.className = 'meAdm'; ma.textContent = '관리자'; $('meName').appendChild(ma); }
+    if (!g && staff.admin) { var ma = document.createElement('span'); ma.className = 'meAdm' + (staff.master ? ' mst' : ''); ma.textContent = staff.master ? '마스터' : '관리자'; $('meName').appendChild(ma); }
     $('chgCard').classList.toggle('hidden', g);
     admCards();                                     // 새 서명지 열기: 직원 모두, 배포용 아이디·개인 코드 관리: 관리자
     if (!edus.length) $('edus').innerHTML = '<div class="hint">불러오는 중…</div>';
@@ -151,7 +151,7 @@
       var ttl = Number(r.ttl) || 1200;                    // 마지막 동작 후 이 시간(초)이면 자동 로그아웃 (서버와 같게)
       lastAct = lastPing = lastSave = Date.now(); try { sessionStorage.setItem(ACT_KEY, String(lastAct)); } catch (x) {}
       if (r.guest) { $('lgPin').value = ''; setStaff({ token: r.token, guest: true, ttl: ttl }); }
-      else setStaff({ token: r.token, name: r.name, disp: r.disp, admin: !!r.admin, ttl: ttl });
+      else setStaff({ token: r.token, name: r.name, disp: r.disp, admin: !!r.admin, master: !!r.master, ttl: ttl });
       edus = []; enterList();
       if (r.init) loadInit(r.init); else refreshInit();
     }).withFailureHandler(function (e) {
@@ -287,7 +287,7 @@
     google.script.run.withSuccessHandler(function (r) {
       $('chgSend').disabled = false; chgTicket = ''; $('chgForm').classList.add('hidden');
       $('chgMailSend').textContent = '메일로 인증 코드 받기';
-      setStaff({ token: staff.token, name: r.name, disp: r.disp, admin: staff.admin });
+      setStaff({ token: staff.token, name: r.name, disp: r.disp, admin: staff.admin, master: staff.master });
       enterList(); refreshInit();
       msg($('chgMsg'), '개인정보를 변경했습니다.', '#12833b');
     }).withFailureHandler(function (e) {

@@ -48,6 +48,49 @@ var CAR_PAGE = (INIT && INIT.carPage) || '';     // INIT는 첫 화면을 그린
 if (CAR_PAGE) appSwitch(document.getElementById('appSw'), 'sign', { car: CAR_PAGE });
 (function () {
   var $ = function (id) { return document.getElementById(id); };
+  /* ---------- 가운데 로딩 표시: 서버를 부르는 동안 도는 동그라미 + 문구 (0.3초 넘게 걸릴 때만) ----------
+   * 화면 코드의 google.script.run을 이 안에서만 감쌈 (구글 웹 앱·GitHub 화면 둘 다). 자동으로 도는 호출은 표시 안 함 */
+  var busyN = 0, busyT = null, busyEl = null;
+  var BUSY_SKIP = { staffPing: 1, staffLogout: 1, adminLogout: 1, staffRfLeft: 1 };
+  var BUSY_TEXT = {
+    staffLogin: '로그인하는 중', adminLogin: '관리자 정보 불러오는 중',
+    enterCode: '확인하는 중', verifyPerson: '확인하는 중', empMailVerify: '확인하는 중', empChangeVerify: '확인하는 중', adminPcLookup: '확인하는 중',
+    empMailSend: '메일 보내는 중', empChangeSend: '메일 보내는 중',
+    submitSignature: '서명 저장 중', pdfSign: '서명 저장 중', safetySubmit: '데이터 저장 중', safetyLeaderSubmit: '서명 저장 중', submitRefund: '데이터 저장 중',
+    adminCreateEdu: '서명지 만드는 중', pdfCreate: '서명지 만드는 중',
+    staffDeleteEdu: '삭제하는 중', pdfDelete: '삭제하는 중', adminPcReset: '초기화하는 중',
+    adminExportPdf: '파일 만드는 중', adminExportLog: '파일 만드는 중', eduPdf: '파일 만드는 중', safetyPdf: '파일 만드는 중'
+  };
+  function busyText(k) { return BUSY_TEXT[k] || (/^(admin(Edit|Set|Reorder|Sort|Unlock)|staff(SetOpen|RfExtend)|emp(Change|Register)$|safetyLeaderCancel)/.test(k) ? '데이터 저장 중' : '데이터 불러오는 중'); }
+  function busyOn(text) {
+    if (!busyEl) {
+      busyEl = document.createElement('div'); busyEl.className = 'busyOver hidden'; busyEl.setAttribute('role', 'status'); busyEl.setAttribute('aria-live', 'polite');
+      busyEl.innerHTML = '<div class="busyBox"><span class="busySpin"></span><b></b></div>'; document.body.appendChild(busyEl);
+    }
+    busyN++; busyEl.querySelector('b').textContent = text;
+    if (!busyT && busyEl.classList.contains('hidden')) busyT = setTimeout(function () { busyT = null; if (busyN > 0) busyEl.classList.remove('hidden'); }, 300);
+    var done = false;
+    return function () {
+      if (done) return; done = true;
+      if (--busyN > 0) return;
+      busyN = 0; clearTimeout(busyT); busyT = null; busyEl.classList.add('hidden');
+    };
+  }
+  var google = (function (G) {
+    function runner(ok, fail) {
+      return new Proxy({}, { get: function (_, k) {
+        if (k === 'withSuccessHandler') return function (f) { return runner(f, fail); };
+        if (k === 'withFailureHandler') return function (f) { return runner(ok, f); };
+        if (typeof k !== 'string') return undefined;
+        return function () {
+          var off = BUSY_SKIP[k] ? function () {} : busyOn(busyText(k));
+          var r = G.script.run.withSuccessHandler(function (d) { off(); if (ok) ok(d); }).withFailureHandler(function (e) { off(); if (fail) fail(e); });
+          return r[k].apply(r, arguments);
+        };
+      } });
+    }
+    return { script: { get run() { return runner(null, null); }, get history() { return G.script.history; }, get host() { return G.script.host; } } };
+  })(window.google);
   var drawn = 0, drawing = false, last = null, submitting = false;   // submitting: 서명 제출 중 (서명 칸·지우기·뒤로 막음)
   var edus = [], selId = '', code = '', edu = null, person = null;
   var staff = null;                      // 로그인: { token, name, disp, admin } 또는 배포용 아이디 { token, guest: true } (이 탭에서만 기억, 개인 코드는 저장 안 함)
