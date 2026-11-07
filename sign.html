@@ -300,9 +300,11 @@
   #chgCard .ebody, #pcCard .ebody, #gstCard .ebody, #stCard .ebody, #smCard .ebody { display:none; } #chgCard.open .ebody, #pcCard.open .ebody, #gstCard.open .ebody, #stCard.open .ebody, #smCard.open .ebody { display:block; }
   /* 역 안내 화면 카드 (관리자) */
   .stTools { display:flex; gap:6px; margin:10px 0 6px; } .stTools .btn { flex:none; }
-  .stList { display:grid; grid-template-columns:repeat(auto-fill, minmax(140px, 1fr)); gap:6px; max-height:340px; overflow:auto; }
-  .stRow { display:flex; align-items:flex-start; gap:6px; border:1px solid var(--line); border-radius:10px; padding:8px; font-size:14px; cursor:pointer; background:#fff; }
-  .stRow input { margin:2px 0 0; flex:none; width:auto; } .stRow small { display:block; color:var(--sub); font-size:12px; margin-top:2px; }
+  .stList { display:grid; grid-template-columns:repeat(auto-fill, minmax(96px, 1fr)); gap:4px; }   /* 21개 역이 한 화면에 (휴대폰 3칸) */
+  .stRow { display:flex; align-items:center; gap:4px; border:1px solid var(--line); border-radius:8px; padding:5px 6px; font-size:13px; line-height:1.2; cursor:pointer; background:#fff; min-width:0; }
+  .stRow > div { min-width:0; } .stRow b { display:block; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; letter-spacing:-.04em; }
+  .stRow input { margin:0; flex:none; width:auto; } .stRow small { display:block; color:var(--sub); font-size:11px; white-space:nowrap; }
+  .stRow.nocode small { color:#b54708; }
   .stRow.on { border-color:#b42318; background:#fff5f4; } .stRow.on small { color:#b42318; }
   .stSub { margin:16px 0 4px; font-weight:800; font-size:15px; }
   #stPage { word-break:break-all; }
@@ -3300,8 +3302,8 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), { car: CAR_PAGE, sign:
       cb.onchange = function () { stSel[s.name] = cb.checked; stSync(); };
       var t = document.createElement('div'), b = document.createElement('b'), sm = document.createElement('small');
       b.textContent = s.name;
-      sm.textContent = [s.code ? '코드 ' + s.code : '코드 없음', '이미지 ' + s.imgs + '장' + (s.imgs ? ' · ' + s.sec + '초' : ''),
-        s.qr ? (s.qr.live ? 'QR 표시 중' : 'QR 끝남') : ''].filter(Boolean).join(' · ');
+      sm.textContent = s.qr && s.qr.live ? 'QR 표시 중' : !s.code ? '코드 없음' : '이미지 ' + s.imgs + '장';   // 역 코드는 보이지 않음
+      if (!s.code) l.classList.add('nocode');
       if (s.qr) sm.title = s.qr.title;
       t.appendChild(b); t.appendChild(sm); l.appendChild(cb); l.appendChild(t); box.appendChild(l);
     });

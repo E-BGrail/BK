@@ -13,8 +13,8 @@
       cb.onchange = function () { stSel[s.name] = cb.checked; stSync(); };
       var t = document.createElement('div'), b = document.createElement('b'), sm = document.createElement('small');
       b.textContent = s.name;
-      sm.textContent = [s.code ? '코드 ' + s.code : '코드 없음', '이미지 ' + s.imgs + '장' + (s.imgs ? ' · ' + s.sec + '초' : ''),
-        s.qr ? (s.qr.live ? 'QR 표시 중' : 'QR 끝남') : ''].filter(Boolean).join(' · ');
+      sm.textContent = s.qr && s.qr.live ? 'QR 표시 중' : !s.code ? '코드 없음' : '이미지 ' + s.imgs + '장';   // 역 코드는 보이지 않음
+      if (!s.code) l.classList.add('nocode');
       if (s.qr) sm.title = s.qr.title;
       t.appendChild(b); t.appendChild(sm); l.appendChild(cb); l.appendChild(t); box.appendChild(l);
     });
