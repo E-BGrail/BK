@@ -186,7 +186,7 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), { car: CAR_PAGE, sign:
       return;
     }
     if (!staff) { show('sl'); return; }              // 로그인 전
-    refreshInit();
+    refreshInit(st.s === 'sq' || KIOSK_WANT);       // 키오스크로 열면 목록은 뒤에서 조용히 (차량관리 [키오스크]로 새로 열 때)
     if (st.skL) { enterList(); skOpen(st.skL); skLeadOpen(st.skL, st.skLi); return; }   // 팀장 내용 보기 중이었으면 그 역
     if (st.s === 'sk' && st.sk) { enterList(); skOpen(st.sk, false, st.skSt); return; }
     if (st.s === 'sq' || KIOSK_WANT) { kioskOpen(); return; }   // 키오스크 화면이었거나 차량관리에서 [키오스크]로 옴
