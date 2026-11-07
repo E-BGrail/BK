@@ -132,6 +132,7 @@
     if (admTok) google.script.run.adminLogout(admTok);   // 관리자 접속 표시도 서버에서 지움
     admTok = null; admData = null; admMe = null; admExp = {}; admOrder = {}; admOverHide(); $('nDept').innerHTML = '';
     ['newCard', 'gstCard', 'stCard', 'smCard', 'pcCard'].forEach(function (id) { $(id).classList.remove('open'); });
+    try { localStorage.removeItem('bglStInfo'); } catch (x) {} stD = null; stPicked = false; stSel = {};   // 키오스크 역 정보 저장본
     setStaff(null); edus = []; renderEdus(); resetAll();
     $('lgPin').value = savedPin(); $('lgCode').value = '';
     if (text) msg($('lgMsg'), text, '#c0392b');

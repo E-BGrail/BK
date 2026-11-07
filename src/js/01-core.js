@@ -90,7 +90,7 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), { car: CAR_PAGE, sign:
         if (typeof k !== 'string') return undefined;
         return function () {
           var off = BUSY_SKIP[k] ? function () {} : busyOn(busyText(k));
-          var r = G.script.run.withSuccessHandler(function (d) { off(); if (ok) ok(d); }).withFailureHandler(function (e) { off(); if (fail) fail(e); });
+          var r = G.script.run.withSuccessHandler(function (d) { try { if (ok) ok(d); } finally { off(); } }).withFailureHandler(function (e) { try { if (fail) fail(e); } finally { off(); } });   // 처리 뒤에 끔: 이어서 부르는 호출이 있으면 로딩창이 꺼지지 않고 한 번만
           return r[k].apply(r, arguments);
         };
       } });

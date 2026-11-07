@@ -289,7 +289,37 @@
   #chgCard.open .nhead::after, #pcCard.open .nhead::after, #gstCard.open .nhead::after { transform:rotate(180deg); }
   #chgCard .ebody, #pcCard .ebody, #gstCard .ebody, #stCard .ebody, #smCard .ebody { display:none; } #chgCard.open .ebody, #pcCard.open .ebody, #gstCard.open .ebody, #stCard.open .ebody, #smCard.open .ebody { display:block; }
   /* 역 안내 화면 카드 (관리자) */
-  .stTools { display:flex; gap:6px; margin:10px 0 6px; } .stTools .btn { flex:none; }
+  .stTools { display:flex; gap:6px; align-items:center; margin:0 0 8px; } .stTools .btn { flex:none; } .stTools b { flex:1; font-size:14px; }
+  /* 키오스크: 지금 역 화면 요약 · 보낼 역 · 역 고르기 */
+  .stNow { display:flex; align-items:center; justify-content:space-between; gap:10px; border:1px solid var(--line); border-radius:12px; padding:10px 12px; margin-bottom:4px; }
+  .stNow > div { min-width:0; } .stNow b { display:block; font-size:15px; } .stNow small { display:block; color:var(--sub); font-size:13px; margin-top:2px; } .stNow .btn { flex:none; }
+  .stTo { display:flex; align-items:center; justify-content:space-between; gap:8px; } .stTo .btn { flex:none; }
+  .stPill { min-width:0; font-size:14px; font-weight:700; padding:5px 12px; border-radius:8px; background:#e8edfb; color:var(--pri2); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .stPill.none { background:#fff5f4; color:#b42318; }
+  .stPick { border:1px solid var(--line); border-radius:12px; padding:10px; margin-top:8px; background:#f8f9fc; }
+  .stPick > .btn { width:100%; margin-top:10px; }
+  #stDiff { margin-top:14px; color:#b54708; }
+  #stImgSave, #smSave { width:100%; margin-top:12px; }
+  /* 안내 이미지 목록 편집기 (관리자·근무자) */
+  .edHead { display:flex; align-items:baseline; justify-content:space-between; margin:16px 0 4px; } .edHead b { font-weight:800; font-size:15px; } .edCnt { color:var(--sub); font-size:13px; }
+  .edRow { display:flex; align-items:center; gap:8px; padding:7px 0; border-top:1px solid var(--line); cursor:pointer; font-size:14px; }
+  .edRow.open { background:#f3f5fb; } .edRow.off .edTh { opacity:.45; }
+  .edTh { width:52px; height:32px; flex:none; object-fit:cover; border-radius:5px; background:#1b2333; } .edTh.bad { background:#d8dde8; }
+  .edName { flex:1; min-width:0; } .edName b { display:block; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; } .edName small { display:block; color:#b54708; font-size:12px; }
+  .edSec { flex:none; color:var(--sub); font-size:13px; }
+  .edBtn { flex:none; width:30px; height:30px; padding:0; border:1px solid var(--line); border-radius:7px; background:#fff; color:var(--sub); font-size:13px; cursor:pointer; }
+  .edDet { padding:6px 4px 12px; border-top:1px dashed var(--line); background:#f3f5fb; }
+  .edBig { display:block; width:100%; aspect-ratio:16/9; object-fit:contain; background:#000; border-radius:8px; } .edBig.cover { object-fit:cover; }
+  .edPair { display:flex; align-items:center; gap:6px; } .edPair input { flex:1; min-width:0; margin-top:0; } .edPair span { color:var(--sub); }
+  .edAdd { display:block; width:100%; margin-top:8px; text-align:center; cursor:pointer; font-size:16px; font-weight:600; padding:12px; border-radius:12px; }
+  .edFitL { margin:12px 0 4px; font-size:13px; color:var(--sub); }
+  .edSeg { display:flex; border:1px solid var(--line); border-radius:10px; overflow:hidden; }
+  .edSeg button { flex:1; padding:9px 0; border:0; background:#fff; font:inherit; font-size:14px; color:var(--sub); cursor:pointer; } .edSeg button.on { background:#e8edfb; color:var(--pri2); font-weight:700; }
+  /* 미리보기 (역 화면처럼) */
+  .stPrevOver { position:fixed; inset:0; z-index:90; background:#000; display:flex; align-items:center; justify-content:center; }
+  .stPrevOver img { width:100%; height:100%; object-fit:contain; } .stPrevOver img.cover { object-fit:cover; }
+  .stPrevCap { position:absolute; left:12px; right:60px; bottom:14px; color:#fff; font-size:13px; background:rgba(0,0,0,.55); padding:6px 10px; border-radius:8px; }
+  .stPrevX { position:absolute; right:12px; top:12px; width:42px; height:42px; border:0; border-radius:50%; background:rgba(0,0,0,.55); color:#fff; font-size:20px; cursor:pointer; }
   .stList { display:grid; grid-template-columns:repeat(auto-fill, minmax(96px, 1fr)); gap:4px; }   /* 21개 역이 한 화면에 (휴대폰 3칸) */
   .stRow { display:flex; align-items:center; gap:4px; border:1px solid var(--line); border-radius:8px; padding:5px 6px; font-size:13px; line-height:1.2; cursor:pointer; background:#fff; min-width:0; }
   .stRow > div { min-width:0; } .stRow b { display:block; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; letter-spacing:-.04em; }

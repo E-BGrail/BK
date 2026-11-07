@@ -25,6 +25,7 @@
   #slides { position:fixed; inset:0; background:#000; }
   #slides img { position:absolute; inset:0; width:100%; height:100%; object-fit:contain; opacity:0; transition:opacity .8s ease; }
   #slides img.on { opacity:1; }
+  #slides.cover img { object-fit:cover; }   /* 화면 맞춤: 꽉 채우기 (넘치는 곳은 잘림) */
   #idle { position:fixed; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; background:#1b2333; gap:2vh; }
   #idle b { font-size:7vh; } #idleClock { font-size:12vh; font-weight:800; letter-spacing:.02em; } #idle small { font-size:2.4vh; opacity:.6; }
   /* 환불 등록 QR */
@@ -79,7 +80,7 @@
   'use strict';
   /* ---------- 역 안내 화면 ----------
    * 10초마다 GitHub Pages의 역 파일(s/<id>.json, 암호화)만 읽음 → 구글 서버를 거치지 않음
-   * id·열쇠는 역 코드에서 만듦 (PBKDF2, 서버 Station.js와 같은 방식). 내용: 이미지 목록·넘김 초, 환불 QR(열쇠·주소·끝 시각)
+   * id·열쇠는 역 코드에서 만듦 (PBKDF2, 서버 Station.js와 같은 방식). 내용: 이미지 목록(장마다 초·게시 기간·시간대)·화면 맞춤, 환불 QR(열쇠·주소·끝 시각)
    * 환불 QR은 20초마다 바뀜 (e-싸인 직원 화면과 같은 서명). 시각은 Pages 응답의 Date로 맞춤 */
   var DATA = '../BK-st/', SALT = 'bgl-station-v1', ITER = 4000, POLL = 10000, STEP = 20;
   var $ = function (id) { return document.getElementById(id); };
@@ -308,7 +309,7 @@
   function now() { return Date.now() + st.off; }
 
   /* ---------- 그리기 ---------- */
-  var slides = { list: '', els: [], i: 0, sec: 10, t: 0 };
+  var slides = { list: '', els: [], t: 0 };
   function apply(d) {
     if (!d || !d.v) return;
     st.okAt = st.okAt || Date.now();
@@ -316,29 +317,42 @@
     st.data = d;
     if (!keep) LS.set('bglStData', JSON.stringify(d));
     $('idleName').textContent = d.n || '';
-    var key = (d.imgs || []).join('|');
-    slides.sec = Math.max(3, Number(d.sec) || 10);
+    var items = d.items || (d.imgs || []).map(function (p) { return { p: p, s: d.sec }; });   // v1(예전): 경로 목록 + 공통 초
+    var key = items.map(function (x) { return x.p; }).join('|');
+    $('slides').classList.toggle('cover', d.fit === 'cover');
     if (key !== slides.list) {                                // 이미지가 바뀜 → 새로 불러옴 (서비스 워커가 기기에 저장)
-      slides.list = key; $('slides').innerHTML = ''; slides.els = []; slides.i = 0; slides.t = 0;
-      (d.imgs || []).forEach(function (p) {
+      slides.list = key; $('slides').innerHTML = ''; slides.els = []; slides.t = 0;
+      items.forEach(function (x) {
         var im = new Image(); im.alt = ''; im.decoding = 'async';
         im.onerror = function () { im.dataset.bad = '1'; };
-        im.src = DATA + p; $('slides').appendChild(im); slides.els.push(im);
+        im.src = DATA + x.p; $('slides').appendChild(im); slides.els.push(im);
       });
     }
+    items.forEach(function (x, i) { slides.els[i].it = x; });   // 초·기간·시간대는 다시 안 불러오고 바꿈
     if (!d.qr || d.qr.k !== st.qrKey) { st.slot = 0; st.qrKey = d.qr ? d.qr.k : ''; }
     tick();
   }
+  function p2(n) { return (n < 10 ? '0' : '') + n; }
+  /** 지금 보여 줄 이미지인지: 게시 기간(날짜, 끝 날 포함)·시간대(끝 시각 전까지, 밤을 넘겨도 됨) */
+  function live(it, n) {
+    var c = new Date(n), day = c.getFullYear() + '-' + p2(c.getMonth() + 1) + '-' + p2(c.getDate()), hm = p2(c.getHours()) + ':' + p2(c.getMinutes());
+    if (it.from && day < it.from) return false;
+    if (it.to && day > it.to) return false;
+    if (it.h1 && it.h2 && it.h1 !== it.h2) return it.h1 < it.h2 ? hm >= it.h1 && hm < it.h2 : hm >= it.h1 || hm < it.h2;
+    return true;
+  }
   function slideStep() {
-    var ok = slides.els.filter(function (im) { return !im.dataset.bad && im.complete && im.naturalWidth; });
+    var n = now();
+    var ok = slides.els.filter(function (im) { return !im.dataset.bad && im.complete && im.naturalWidth && live(im.it || {}, n); });
     $('slides').classList.toggle('hidden', !ok.length); $('idle').classList.toggle('hidden', !!ok.length);
     if (!ok.length) return;
-    var t = Date.now();
-    if (!slides.t || t - slides.t >= slides.sec * 1000 || !ok.some(function (im) { return im.classList.contains('on'); })) {
+    var t = Date.now(), cur = ok.filter(function (im) { return im.classList.contains('on'); })[0];
+    var sec = Math.max(3, Number(cur && cur.it && cur.it.s) || 10);   // 지금 이미지의 보여 주는 시간
+    if (!slides.t || t - slides.t >= sec * 1000 || !cur) {
       slides.t = t;
-      var cur = ok.filter(function (im) { return im.classList.contains('on'); })[0];
-      var next = ok[(ok.indexOf(cur) + 1) % ok.length];
-      if (cur && ok.length === 1) return;
+      var all = slides.els, next = null;
+      for (var k = 1; k <= all.length && !next; k++) { var c2 = all[((cur ? all.indexOf(cur) : -1) + k) % all.length]; if (ok.indexOf(c2) > -1) next = c2; }   // 목록 순서대로 다음 볼 이미지
+      if (cur && next === cur) return;
       slides.els.forEach(function (im) { im.classList.toggle('on', im === next); });
     }
   }
@@ -348,7 +362,7 @@
   function tick() {
     var d = st.data, n = now();
     var c = new Date(n);
-    $('idleClock').textContent = (c.getHours() < 10 ? '0' : '') + c.getHours() + ':' + (c.getMinutes() < 10 ? '0' : '') + c.getMinutes();
+    $('idleClock').textContent = p2(c.getHours()) + ':' + p2(c.getMinutes());
     $('off').classList.toggle('hidden', !st.okAt || Date.now() - st.okAt < 60000);
     var q = d && d.qr && n < d.qr.end ? d.qr : null;
     $('qr').classList.toggle('hidden', !q);
