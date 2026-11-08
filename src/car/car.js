@@ -42,6 +42,7 @@ var CARAPP = (function () {
   }
   /** 차량관리 안에서 다른 화면으로 (예전 location.href): 새 기록 */
   function go(search) {
+    if (!window.APP_CAR && window.SIGN_LINK) SIGN_LINK.mark();   // e-싸인에서 떠남: 뒤로 오면 그때 화면으로
     try { history.pushState(null, '', location.pathname + search); } catch (x) {}
     mount(search, { fromHome: true });
   }
