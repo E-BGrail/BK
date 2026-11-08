@@ -101,6 +101,8 @@
   .person { transition:border-color .15s, background .15s; }
   input:focus, select:focus, textarea:focus { outline:none; border-color:var(--pri); box-shadow:0 0 0 3px rgba(50,78,179,.15); }
   .badge { font-size:13px; font-weight:600; }
+  .pdfBtn { flex:none; height:36px; padding:0 12px; border:0; border-radius:9px; background:var(--pri); color:#fff; font-size:14px; font-weight:700; font-family:inherit; cursor:pointer; white-space:nowrap; }   /* 마감 서명지 [PDF] (카드는 안 눌림) */
+  .pdfBtn:active { opacity:.8; }
   canvas { width:100%; height:220px; border:2px dashed #b9c4e6; border-radius:12px; touch-action:none; display:block;
            background:#fff linear-gradient(transparent calc(100% - 46px), #c9d1e8 calc(100% - 46px), #c9d1e8 calc(100% - 45px), transparent calc(100% - 45px)); }
   .row { display:flex; gap:8px; margin-top:10px; }

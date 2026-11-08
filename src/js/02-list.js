@@ -161,25 +161,16 @@
       if (e.safety) { put(e, skItem(e)); return; }
       if (e.pdfSign) { put(e, pdfItem(e)); return; }
       var closed = e.open === false;
-      var b = document.createElement('button');
+      var pdfOk = closed && !!(staff && staff.token && !staff.guest);   // 마감된 서명지: 직원은 [PDF] 버튼만 눌러 받기 (카드는 안 눌림)
+      var b = document.createElement(pdfOk ? 'div' : 'button');
       b.className = 'person' + (closed ? ' closed' : '') + (e.id === selId ? ' sel' : '');
-      b.innerHTML = '<span><b></b><br><span class="rank"></span><span class="cnt1"></span></span><span class="badge"></span>';
+      b.innerHTML = '<span><b></b><br><span class="rank"></span><span class="cnt1"></span></span>' + (pdfOk ? '<button type="button" class="pdfBtn">📄 PDF</button>' : '<span class="badge"></span>');
       b.querySelector('b').textContent = e.title;
       b.querySelector('.rank').textContent = [e.dept, e.date].filter(Boolean).join(' · ');
       b.querySelector('.cnt1').textContent = '서명 완료 ' + (e.count || 0) + '명';
-      var pdfOk = closed && !!(staff && staff.token && !staff.guest);   // 마감된 서명지: 직원은 눌러서 PDF (서명은 불가)
-      var pdfTx = e.pdfDl ? '📄 PDF ✓' : '📄 PDF';     // 누가 받았으면 ✓ (서버 기록)
-      b.querySelector('.badge').textContent = pdfOk ? pdfTx : closed ? '접수 마감' : '선택';
+      if (!pdfOk) b.querySelector('.badge').textContent = closed ? '접수 마감' : '선택';
       if (pdfOk && e.pdfDl) { var dl = document.createElement('span'); dl.className = 'pdfDl'; dl.textContent = '✓ PDF 받음 · ' + (e.pdfDl.n || '') + ' ' + (e.pdfDl.at || ''); b.firstChild.appendChild(document.createElement('br')); b.firstChild.appendChild(dl); }
-      if (pdfOk) b.onclick = function () {            // 실수로 눌러도 PDF를 만들지 않게 두 번 눌러 받기
-        var bd = b.querySelector('.badge');
-        if (!b.classList.contains('armed')) {
-          b.classList.add('armed'); bd.textContent = '한 번 더 누르면 PDF';
-          setTimeout(function () { b.classList.remove('armed'); bd.textContent = pdfTx; }, 4000);
-          return;
-        }
-        b.classList.remove('armed'); bd.textContent = pdfTx; eduPdfGet(e);
-      };
+      if (pdfOk) b.querySelector('.pdfBtn').onclick = function () { eduPdfGet(e); };
       else if (closed) b.disabled = true;
       else b.onclick = function () { openCode(e); };   // 누르면 접속 코드 창
       put(e, b);
