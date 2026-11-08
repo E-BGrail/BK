@@ -65,7 +65,7 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), { car: CAR_PAGE, sign:
     submitSignature: '서명 저장 중', pdfSign: '서명 저장 중', safetySubmit: '데이터 저장 중', safetyLeaderSubmit: '서명 저장 중', submitRefund: '데이터 저장 중',
     adminCreateEdu: '서명지 만드는 중', pdfCreate: '서명지 만드는 중',
     staffDeleteEdu: '삭제하는 중', pdfDelete: '삭제하는 중', adminPcReset: '초기화하는 중',
-    adminExportPdf: '파일 만드는 중', adminExportLog: '파일 만드는 중', eduPdf: '파일 만드는 중', safetyPdf: '파일 만드는 중'
+    adminGradeSet: '데이터 저장 중', adminExportPdf: '파일 만드는 중', adminExportLog: '파일 만드는 중', eduPdf: '파일 만드는 중', safetyPdf: '파일 만드는 중'
   };
   function busyText(k) { return BUSY_TEXT[k] || (/^(admin(Edit|Set|Reorder|Sort|Unlock|St(Code|Imgs|Qr))|staffStImgs|staff(SetOpen|RfExtend)|emp(Change|Register)$|safetyLeaderCancel)/.test(k) ? '데이터 저장 중' : '데이터 불러오는 중'); }
   function busyOn(text) {

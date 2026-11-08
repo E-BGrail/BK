@@ -669,12 +669,16 @@
       <div class="ebody">
         <div class="note" id="gdNote">2등급은 자기 부서 직원을 1등급으로 지정할 수 있습니다. 휴가 등으로 자리를 비우기 전에 미리 지정해 두세요. 지정·해제는 그 직원이 다시 로그인하면 반영됩니다.</div>
         <div class="codeRow">
-          <div style="flex:1"><input type="tel" id="gdPin" placeholder="지정할 직원의 사번" autocomplete="off" inputmode="numeric" pattern="[0-9]*"></div>
+          <div style="flex:1"><input type="tel" id="gdPin" placeholder="직원 사번" autocomplete="off" inputmode="numeric" pattern="[0-9]*"></div>
           <select id="gdLv" style="flex:none;width:auto"></select>
-          <button class="btn pri sbtn" id="gdSet" style="flex:none">지정</button>
+        </div>
+        <div class="codeRow" style="margin-top:8px">
+          <button class="btn pri sbtn" id="gdSet" style="flex:1 !important">지정</button>
+          <button class="btn sbtn" id="gdOff" style="flex:1 !important">해제</button>
         </div>
         <div class="msg" id="gdMsg"></div>
-        <div id="gdList" class="gdList"></div>
+        <button class="btn sbtn" id="gdShow" style="margin-top:8px">관리자 명단 보기</button>
+        <div id="gdList" class="gdList hidden"></div>
       </div>
     </div>
   </section>
@@ -1111,7 +1115,7 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), { car: CAR_PAGE, sign:
     submitSignature: '서명 저장 중', pdfSign: '서명 저장 중', safetySubmit: '데이터 저장 중', safetyLeaderSubmit: '서명 저장 중', submitRefund: '데이터 저장 중',
     adminCreateEdu: '서명지 만드는 중', pdfCreate: '서명지 만드는 중',
     staffDeleteEdu: '삭제하는 중', pdfDelete: '삭제하는 중', adminPcReset: '초기화하는 중',
-    adminExportPdf: '파일 만드는 중', adminExportLog: '파일 만드는 중', eduPdf: '파일 만드는 중', safetyPdf: '파일 만드는 중'
+    adminGradeSet: '데이터 저장 중', adminExportPdf: '파일 만드는 중', adminExportLog: '파일 만드는 중', eduPdf: '파일 만드는 중', safetyPdf: '파일 만드는 중'
   };
   function busyText(k) { return BUSY_TEXT[k] || (/^(admin(Edit|Set|Reorder|Sort|Unlock|St(Code|Imgs|Qr))|staffStImgs|staff(SetOpen|RfExtend)|emp(Change|Register)$|safetyLeaderCancel)/.test(k) ? '데이터 저장 중' : '데이터 불러오는 중'); }
   function busyOn(text) {
@@ -4446,39 +4450,46 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), { car: CAR_PAGE, sign:
   $('pcPin').addEventListener('input', pcDisarm);
 
   /* ---------- 관리자 지정 (2등급: 자기 부서 직원을 1등급으로, 3등급: 1·2등급) ---------- */
-  var gdArm = null;
-  function gdDisarm() { clearTimeout(gdArm); gdArm = null; }
+  /* 카드를 열 때는 서버를 부르지 않음: 고를 수 있는 등급은 로그인 때 받은 내 등급으로. 명단은 [관리자 명단 보기]를 누를 때만 */
+  function gdOpen() {
+    var my = admLv(), can = my >= 3 ? [2, 1] : [1], sel = $('gdLv'), cur = sel.value; sel.innerHTML = '';
+    can.forEach(function (lv) { var o = document.createElement('option'); o.value = lv; o.textContent = lv + '등급'; sel.appendChild(o); });
+    if (cur && can.indexOf(Number(cur)) > -1) sel.value = cur;
+    $('gdNote').textContent = my >= 3 ? '3등급은 1·2등급을 지정·해제할 수 있습니다 (3등급은 관리 탭에서 직접). 사번을 넣고 [지정]·[해제]를 누르세요. 지정·해제는 그 직원이 다시 로그인하면 반영됩니다.'
+      : '2등급은 자기 부서 직원을 1등급으로 지정·해제할 수 있습니다. 휴가 등으로 자리를 비우기 전에 미리 지정해 두세요. 지정·해제는 그 직원이 다시 로그인하면 반영됩니다.';
+  }
   function gdDraw(d) {
-    var sel = $('gdLv'), cur = sel.value; sel.innerHTML = '';
-    d.can.slice().reverse().forEach(function (lv) { var o = document.createElement('option'); o.value = lv; o.textContent = lv + '등급'; sel.appendChild(o); });
-    if (cur && d.can.indexOf(Number(cur)) > -1) sel.value = cur;
-    $('gdNote').textContent = d.myLv >= 3 ? '3등급은 1·2등급을 지정할 수 있습니다 (3등급은 관리 탭에서 직접). 지정·해제는 그 직원이 다시 로그인하면 반영됩니다.'
-      : '2등급은 자기 부서(' + (d.dept || '부서 없음') + ') 직원을 1등급으로 지정할 수 있습니다. 휴가 등으로 자리를 비우기 전에 미리 지정해 두세요. 지정·해제는 그 직원이 다시 로그인하면 반영됩니다.';
-    var box = $('gdList'); box.innerHTML = '';
+    var box = $('gdList'); box.innerHTML = ''; box.classList.remove('hidden'); $('gdShow').textContent = '관리자 명단 닫기';
     d.list.forEach(function (a) {
       var row = document.createElement('div'); row.className = 'srow';
-      row.innerHTML = '<span class="nm"><small></small><span></span></span><span class="st"></span><button class="x" title="관리자 해제">✕</button>';
-      row.querySelector('small').textContent = [a.dept, a.disp].filter(Boolean).join(' ');
+      row.innerHTML = '<span class="nm"><small></small><span></span></span><span class="st"></span>';
+      row.querySelector('small').textContent = [a.dept, a.disp, a.pin].filter(Boolean).join(' ');
       row.querySelector('.nm span').textContent = a.name + (a.me ? ' (나)' : '');
       row.querySelector('.st').textContent = a.lv + '등급';
-      var x = row.querySelector('.x');
-      if (a.me || a.lv >= d.myLv) x.remove();
-      else x.onclick = function () {
-        if (gdArm !== a.pin) { gdDisarm(); gdArm = a.pin; setTimeout(function () { if (gdArm === a.pin) { gdArm = null; msg($('gdMsg'), ''); } }, 10000); msg($('gdMsg'), a.name + ' 님을 관리자에서 해제할까요? ✕를 한 번 더 누르면 해제됩니다.', '#b42318'); return; }
-        gdDisarm(); admCall('adminGradeSet', [a.pin, 0], gdDone, $('gdMsg'));
-      };
       box.appendChild(row);
     });
     if (!d.list.length) box.innerHTML = '<div class="srow"><span class="hint">지정된 관리자가 없습니다.</span></div>';
   }
-  function gdDone(d) { gdDraw(d); $('gdPin').value = ''; msg($('gdMsg'), d.note, '#12833b'); }
-  $('gdHead').onclick = function () { if ($('gdCard').classList.toggle('open')) admCall('adminGradeList', [], gdDraw, $('gdMsg')); };
-  $('gdSet').onclick = function () {
-    var v = $('gdPin').value.trim();
-    if (!v) { msg($('gdMsg'), '지정할 직원의 사번을 입력하세요.', '#c0392b'); return; }
-    $('gdSet').disabled = true;
-    admCall('adminGradeSet', [v, Number($('gdLv').value) || 1], function (d) { $('gdSet').disabled = false; gdDone(d); }, $('gdMsg'), function () { $('gdSet').disabled = false; });
+  function gdHide() { $('gdList').classList.add('hidden'); $('gdList').innerHTML = ''; $('gdShow').textContent = '관리자 명단 보기'; }
+  $('gdHead').onclick = function () { if ($('gdCard').classList.toggle('open')) { gdOpen(); gdHide(); msg($('gdMsg'), ''); } };
+  $('gdShow').onclick = function () {
+    if (!$('gdList').classList.contains('hidden')) { gdHide(); return; }
+    $('gdShow').disabled = true;
+    admCall('adminGradeList', [], function (d) { $('gdShow').disabled = false; gdDraw(d); }, $('gdMsg'), function () { $('gdShow').disabled = false; });
   };
+  function gdRun(lv) {
+    var v = $('gdPin').value.trim();
+    if (!v) { msg($('gdMsg'), '직원의 사번을 입력하세요.', '#c0392b'); return; }
+    $('gdSet').disabled = $('gdOff').disabled = true;
+    var end = function () { $('gdSet').disabled = $('gdOff').disabled = false; };
+    admCall('adminGradeSet', [v, lv, !$('gdList').classList.contains('hidden')], function (d) {   // 이미 관리자인지·아닌지는 서버가 판단해서 note로 알려 줌
+      end(); msg($('gdMsg'), d.note, d.same ? '#b42318' : '#12833b');
+      if (!d.same) $('gdPin').value = '';
+      if (d.list && !$('gdList').classList.contains('hidden')) gdDraw(d);   // 명단을 펼쳐 둔 때만 새로 그림
+    }, $('gdMsg'), end);
+  }
+  $('gdSet').onclick = function () { gdRun(Number($('gdLv').value) || 1); };
+  $('gdOff').onclick = function () { gdRun(0); };
 
   /* ---------- 휴대폰 키보드: 팝업을 보이는 영역 안에 두고, 입력 칸이 가리지 않게 ---------- */
   (function () {
