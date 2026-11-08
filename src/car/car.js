@@ -111,7 +111,7 @@ var CUR = '', NAV = { n: 0, skip: 0, t: null, q: false };
 var FROM_HOME = ctx.fromHome;                       // 차량 목록에서 들어옴 (QR로 바로 연 게 아님)
 function navDepth() {
   var base = FROM_HOME ? 0 : 1;                     // QR로 바로 들어왔으면 촬영 화면 뒤에 '첫 화면' 한 칸
-  return CUR === 'cf' ? base + 1 : (CUR === 'cam' || CUR === 'done') ? base : 0;
+  return (CUR === 'cf' ? base + 1 : (CUR === 'cam' || CUR === 'done') ? base : 0) + (PIC_ON ? 1 : 0);   // 전표 사진 팝업: 한 칸 더 (뒤로가기 = 닫기)
 }
 function navSync() {
   if (NAV.q) return;
@@ -136,6 +136,7 @@ function onPop() {                                   // 뒤로가기 (CARAPP.pop
   }
   if (NAV.n === 0) return;
   NAV.n--;
+  if (PIC_ON) { crcPicClose(); return; }                 // 전표 사진 팝업 닫기
   if (S.busy) { navSync(); return; }                                  // 저장 중에는 그대로
   if (CUR === 'cf') openCam();
   else if (CUR === 'cam' || CUR === 'done') { stopCam(); ctx.replace('?car'); }   // 업무차량관리 첫 화면 (로그인 안 했으면 e-싸인 로그인)
@@ -376,7 +377,7 @@ $('carDelOk').onclick = function () {
 
 /* ---------- 전표 등록 (차량 카드를 왼쪽으로 밀기): 운행 고르기 → 관리일지 칸(구분·계기판 km·세부내용·금액·비고) → 촬영 → 사번·개인 코드
  * 등록하면 차량관리일지(별지 제3호)에 한 줄. 위 [관리일지 PDF]: 고른 달의 차량관리일지 ---------- */
-var CRC = { car: '', id: '', img: '', rows: [] };
+var CRC = { car: '', id: '', img: '', rows: [], all: [], fuel: [], pics: {} };   // rows: 최근 운행 15개, all: 전체, fuel: 최근 주유 3개, pics: 받아 둔 전표 사진
 function crcSync() {
   $('crcForm').classList.toggle('hidden', !CRC.id);
   $('crcThumb').classList.toggle('hidden', !CRC.img); if (CRC.img) $('crcThumb').src = CRC.img;
@@ -386,7 +387,7 @@ function crcSync() {
 $('carList2').addEventListener('click', function (e) {
   var b = e.target.closest('.carRc'); if (!b) return;
   carSwClose();
-  CRC = { car: b.getAttribute('data-car'), id: '', img: '', rows: [] };
+  CRC = { car: b.getAttribute('data-car'), id: '', img: '', rows: [], all: [], fuel: [], pics: {} };
   ['crcKm', 'crcDetail', 'crcAmt', 'crcNote'].forEach(function (id) { $(id).value = ''; }); $('crcKind').value = '주유';
   $('crcMonth').innerHTML = monthOpts([]); $('crcPdf').disabled = false;
   $('crcTitle').textContent = carLabel(CRC.car, b.getAttribute('data-model')) + ' 기록 선택';
@@ -396,18 +397,43 @@ $('carList2').addEventListener('click', function (e) {
   var car = CRC.car;
   apiGet('recs', car).then(function (d) {
     if (CRC.car !== car) return;
-    var rows = (d.rows || []).slice(0, 15);   // 최근 운행 (주유 운행은 표시)
-    CRC.rows = rows; $('crcMonth').innerHTML = monthOpts(d.rows || []);
-    $('crcList').innerHTML = rows.map(function (r) {
-      return '<button type="button" class="crcRow" data-id="' + esc(r.id) + '">' + esc(r.date + ' ' + r.time + ' · ' + r.driver + ' · ' + r.reason) + (r.receipt ? '<em>전표 있음</em>' : '') + '</button>';
-    }).join('') || '운행 기록이 없습니다.';
+    CRC.all = d.rows || []; CRC.rows = CRC.all.slice(0, 15);   // 최근 운행
+    CRC.fuel = CRC.all.filter(function (r) { return r.fuel; }).slice(0, 3);   // 최근 주유 기록 3개 (운행목적 또는 전표 구분이 주유)
+    $('crcMonth').innerHTML = monthOpts(CRC.all);
+    crcDraw(false);
   }, function (e) { $('crcList').textContent = errText(e); });
 });
+/** 운행 고르기 목록: 처음엔 최근 주유 기록 3개, [다른 운행 고르기]를 누르면 최근 운행 15개. 전표가 있으면 [전표] 버튼 (누르면 사진 크게) */
+function crcDraw(all) {
+  var rows = all ? CRC.rows : CRC.fuel;
+  var row = function (r) {
+    return '<div class="crcItem"><button type="button" class="crcRow' + (r.id === CRC.id ? ' on' : '') + '" data-id="' + esc(r.id) + '">' + esc(r.date + ' ' + r.time + ' · ' + r.driver + ' · ' + r.reason) + '</button>' +
+      (r.receipt ? '<button type="button" class="crcPic" data-id="' + esc(r.id) + '" aria-label="전표 사진 보기">' + carIc('rc') + '전표</button>' : '') + '</div>';
+  };
+  $('crcList').innerHTML = '<div class="crcSub">' + (all ? '최근 운행' : '최근 주유 기록') + '</div>' +
+    (rows.map(row).join('') || '<div class="crcSub">' + (all ? '운행 기록이 없습니다.' : '최근 주유 기록이 없습니다.') + '</div>') +
+    (!all && CRC.rows.length ? '<button type="button" class="crcMore">다른 운행 고르기</button>' : '');
+}
+/** 전표 사진 크게 (화면 전체 팝업, 누르거나 뒤로가기로 닫음) */
+var PIC_ON = false;
+function crcPicOpen(id) {
+  var show = function (src) { $('crcPopImg').src = src; $('crcPop').classList.remove('hidden'); PIC_ON = true; navSync(); };
+  if (CRC.pics[id]) return show(CRC.pics[id]);
+  var car = CRC.car;
+  busyWrap(api('carReceipt', [id, car]), '사진 불러오는 중').then(function (d) {
+    if (CRC.car !== car) return;
+    if (d.img) { CRC.pics[id] = d.img; show(d.img); } else if (d.url) window.open(d.url, '_blank'); else throw new Error('전표 사진이 없습니다.');
+  }).catch(function (e) { $('crcMsg').textContent = errText(e); });
+}
+function crcPicClose() { if (!PIC_ON) return; PIC_ON = false; $('crcPop').classList.add('hidden'); $('crcPopImg').removeAttribute('src'); navSync(); }
+$('crcPop').addEventListener('click', crcPicClose);
 $('crcList').addEventListener('click', function (e) {
+  var pic = e.target.closest('.crcPic'); if (pic) { crcPicOpen(pic.getAttribute('data-id')); return; }
+  if (e.target.closest('.crcMore')) { crcDraw(true); return; }
   var b = e.target.closest('.crcRow'); if (!b) return;
-  [].forEach.call($('crcList').children, function (x) { x.classList.toggle('on', x === b); });
+  [].forEach.call($('crcList').querySelectorAll('.crcRow'), function (x) { x.classList.toggle('on', x === b); });
   CRC.id = b.getAttribute('data-id');
-  var r = CRC.rows.filter(function (x) { return x.id === CRC.id; })[0];
+  var r = CRC.all.filter(function (x) { return x.id === CRC.id; })[0];
   if (r) { $('crcKm').value = r.endKm === '' || r.endKm == null ? '' : String(r.endKm); $('crcKind').value = r.reason === '주유' ? '주유' : $('crcKind').value; }
   crcSync();
 });

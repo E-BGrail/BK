@@ -718,7 +718,15 @@
   #crcTitle { display:block; font-size:17px; }
   .crcList { display:flex; flex-direction:column; gap:6px; margin-top:8px; max-height:240px; overflow-y:auto; }
   .crcRow { text-align:left; padding:10px; border:1px solid var(--line); border-radius:10px; background:#fff; font-size:14px; color:var(--text); }
-  .crcRow.on { border-color:var(--pri); background:#eef1fb; font-weight:700; } .crcRow em { font-style:normal; font-size:12px; color:#9a5b00; margin-left:6px; }
+  .crcRow.on { border-color:var(--pri); background:#eef1fb; font-weight:700; }
+  .crcItem { display:flex; gap:6px; } .crcItem .crcRow { flex:1; min-width:0; }
+  .crcPic { flex:none; display:flex; align-items:center; gap:4px; padding:0 10px; border:1px solid #f0c27a; border-radius:10px; background:#fff7e0; color:#9a5b00; font-size:13px; font-weight:800; font-family:inherit; }   /* 전표 있음: 누르면 사진 크게 */
+  .crcPic svg { width:15px; height:15px; }
+  .crcSub { font-size:12px; font-weight:700; color:var(--sub); }
+  .crcMore { border:0; background:none; color:var(--pri); font-size:14px; font-weight:700; text-decoration:underline; padding:6px 0; align-self:flex-start; font-family:inherit; }
+  .crcPop { position:fixed; inset:0; z-index:60; background:rgba(10,12,18,.92); display:flex; align-items:center; justify-content:center; padding:16px; }
+  .crcPop img { max-width:100%; max-height:100%; object-fit:contain; border-radius:6px; background:#fff; }
+  .crcPopX { position:absolute; top:calc(12px + env(safe-area-inset-top)); right:14px; color:#fff; font-size:15px; font-weight:700; padding:8px 12px; border-radius:18px; background:rgba(255,255,255,.18); }
   .crcShot { display:block; width:100%; margin-top:8px; padding:12px; font-size:15px; text-align:center; background:#e4e7ec; color:var(--text); }
   .crcShots { display:flex; gap:8px; } .crcShots .crcShot { flex:1; min-width:0; }
   .rcBtns { display:flex; flex-direction:column; gap:6px; flex:none; } .rcBtns .sbtn { justify-content:center; } .sbtn.alt { background:#e4e7ec; color:var(--text); }
@@ -918,6 +926,7 @@
         <div class="carPanelBtns"><button type="button" class="btn gray" id="crcNo">취소</button><button type="button" class="btn pri" id="crcOk" disabled>등록</button></div>
         <div class="msg" id="crcMsg"></div>
       </div>
+      <div class="crcPop hidden" id="crcPop" role="dialog" aria-label="전표 사진 (누르면 닫힘)"><img id="crcPopImg" alt="전표 사진"><span class="crcPopX">✕ 닫기</span></div>
       <div class="msg" id="carNote"></div>
       <div class="carList" id="carList2"><div style="padding:14px;color:var(--sub);font-size:14px">불러오는 중…</div></div>
     </div>
@@ -977,6 +986,6 @@
 </section>
 </template>
 <script src="assets/sign.js?v=27c10fcfa9"></script>
-<script src="assets/car.js?v=aa6f74d5fc"></script>
+<script src="assets/car.js?v=4e0ad737fc"></script>
 </body>
 </html>
