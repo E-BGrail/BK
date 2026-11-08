@@ -745,7 +745,7 @@
   .recTool .sbtn { flex:none; }
   .recTool .mBtn { flex:none; width:40px; height:44px; border:1px solid var(--line); border-radius:10px; background:#fff; color:var(--pri); font-size:14px; }
   .recTool .mBtn:disabled { opacity:.35; }
-  /* 운행기록 표 (엑셀 형식): 폰 폭에서는 표만 가로 스크롤, 날짜 열 고정 */
+  /* 운행기록 표: 폰 폭에서는 표만 가로 스크롤, 날짜 열 고정 */
   .recTbl { overflow-x:auto; -webkit-overflow-scrolling:touch; border:1px solid #c8ced9; border-radius:8px; }
   .recTbl table { border-collapse:collapse; width:100%; font-size:13px; white-space:nowrap; }
   .recTbl th, .recTbl td { border:1px solid #d5dae3; padding:8px 8px; text-align:left; }
@@ -938,7 +938,7 @@
   </main>
 </section>
 
-<!-- ===== 운행기록 (차량별 보기 · 엑셀 · 운행일지 PDF) ===== -->
+<!-- ===== 운행기록 (차량별 보기 · 운행일지 PDF) ===== -->
 <section id="rec" class="hidden">
   <main>
     <div class="card">
@@ -946,7 +946,6 @@
         <button class="mBtn" id="rPrev" type="button" aria-label="이전 달">◀</button>
         <select id="rMonth" aria-label="조회 월"></select>
         <button class="mBtn" id="rNext" type="button" aria-label="다음 달">▶</button>
-        <button class="sbtn" id="rXlsx" type="button">엑셀</button>
         <button class="sbtn" id="rPdf" type="button">PDF</button>
       </div>
     </div>
@@ -986,6 +985,6 @@
 </section>
 </template>
 <script src="assets/sign.js?v=2caa1225da"></script>
-<script src="assets/car.js?v=4e0ad737fc"></script>
+<script src="assets/car.js?v=f02354445c"></script>
 </body>
 </html>

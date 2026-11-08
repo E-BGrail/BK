@@ -470,7 +470,7 @@ $('crcOk').onclick = function () {
   }, function (e) { $('crcOk').disabled = false; $('crcMsg').textContent = errText(e); });
 };
 
-/* ---------- 운행기록: 차량별 월 단위 보기 · 엑셀 · 운행일지 PDF ---------- */
+/* ---------- 운행기록: 차량별 월 단위 보기 · 운행일지 PDF ---------- */
 var REC = { car: '', data: null, month: '', months: [] };
 function showRec(car) {
   show('rec');
@@ -522,8 +522,8 @@ function drawRec() {
   var rows = recRows(), i = REC.months.indexOf(REC.month);
   $('rMonth').value = REC.month;
   $('rPrev').disabled = i >= REC.months.length - 1; $('rNext').disabled = i <= 0;
-  $('rXlsx').disabled = !rows.length; $('rPdf').disabled = !rows.length;
-  // 엑셀 같은 표 (보고용 운행일지와 같은 열). 양식 모양은 [PDF]로
+  $('rPdf').disabled = !rows.length;
+  // 표 (보고용 운행일지와 같은 열). 양식 모양은 [PDF]로
   $('rRows').innerHTML = rows.length ? '<div class="recTbl"><table><thead><tr><th>날짜</th><th>운전자</th><th>출발 km</th><th>도착 km</th><th>운행거리</th><th>행선지</th><th>운행목적</th><th>특이사항</th></tr></thead><tbody>' +
     rows.map(function (r) {
       return '<tr><td>' + esc(dayText(r)) + '</td><td>' + esc(r.driver) + '</td>' +
@@ -536,35 +536,6 @@ function drawRec() {
 $('rMonth').addEventListener('change', function () { REC.month = this.value; drawRec(); });
 $('rPrev').addEventListener('click', function () { var i = REC.months.indexOf(REC.month); if (i < REC.months.length - 1) { REC.month = REC.months[i + 1]; drawRec(); } });
 $('rNext').addEventListener('click', function () { var i = REC.months.indexOf(REC.month); if (i > 0) { REC.month = REC.months[i - 1]; drawRec(); } });
-
-/* 엑셀 내보내기: 보고용 운행일지와 같은 열 (오래된 기록부터) */
-var XLSX_URL = 'https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js';
-function loadXlsx() {
-  if (window.XLSX) return Promise.resolve(window.XLSX);
-  return new Promise(function (res, rej) {
-    var sc = document.createElement('script'); sc.src = XLSX_URL;
-    sc.onload = function () { window.XLSX ? res(window.XLSX) : rej(); }; sc.onerror = rej;
-    document.head.appendChild(sc);
-  });
-}
-$('rXlsx').addEventListener('click', function () {
-  var rows = recRows().slice().reverse(), btn = this;
-  if (!rows.length) return;
-  var head = ['날짜', '요일', '운전자', '주행거리 출발 시(km)', '주행거리 도착 시(km)', '운행거리(km)', '행선지', '운행목적', '특이사항'];
-  var aoa = [head].concat(rows.map(function (r) { return [r.date, r.dow, r.driver, r.startKm, r.endKm, r.dist, r.route, r.reason, r.memo || '']; }));
-  var name = '운행일지_' + REC.car + '_' + (REC.month || '전체');
-  btn.disabled = true; btn.textContent = '…';
-  loadXlsx().then(function (X) {
-    var ws = X.utils.aoa_to_sheet(aoa);
-    ws['!cols'] = [12, 6, 10, 18, 18, 13, 14, 16, 40].map(function (w) { return { wch: w }; });
-    var wb = X.utils.book_new(); X.utils.book_append_sheet(wb, ws, String(REC.car).slice(0, 31));
-    X.writeFile(wb, name + '.xlsx');
-  }).catch(function () {                              // 엑셀 도구를 못 불러오면 CSV(엑셀에서 열림)로
-    var csv = aoa.map(function (r) { return r.map(function (v) { v = String(v == null ? '' : v); return /[",\r\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; }).join(','); }).join('\r\n');
-    var a = document.createElement('a'); a.href = URL.createObjectURL(new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8' })); a.download = name + '.csv';
-    document.body.appendChild(a); a.click(); setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 4000);
-  }).then(function () { btn.disabled = false; btn.textContent = '엑셀'; });
-});
 
 function showPick() {
   show('pick');

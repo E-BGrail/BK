@@ -175,7 +175,7 @@
   .recTool .sbtn { flex:none; }
   .recTool .mBtn { flex:none; width:40px; height:44px; border:1px solid var(--line); border-radius:10px; background:#fff; color:var(--pri); font-size:14px; }
   .recTool .mBtn:disabled { opacity:.35; }
-  /* 운행기록 표 (엑셀 형식): 폰 폭에서는 표만 가로 스크롤, 날짜 열 고정 */
+  /* 운행기록 표: 폰 폭에서는 표만 가로 스크롤, 날짜 열 고정 */
   .recTbl { overflow-x:auto; -webkit-overflow-scrolling:touch; border:1px solid #c8ced9; border-radius:8px; }
   .recTbl table { border-collapse:collapse; width:100%; font-size:13px; white-space:nowrap; }
   .recTbl th, .recTbl td { border:1px solid #d5dae3; padding:8px 8px; text-align:left; }
