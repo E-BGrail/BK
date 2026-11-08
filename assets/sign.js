@@ -2144,10 +2144,10 @@ appSwitch(document.getElementById('appSw'), { car: function () { CARAPP.go('?car
     var t = admData && admData.tplPrev && admData.tplPrev[name];
     box.classList.toggle('hidden', !t);
     if (!t) { box.innerHTML = ''; return; }
-    if (t.refund) {                     // 비상(환불 등록) 양식: 입력 칸만 보여 줌
+    if (t.refund) {                     // 비상(환불 등록) 양식: 입력 칸 이름만 줄바꿈되는 칩으로 (칸이 많아 표로 그리면 밖으로 넘침)
       var hs = (t.blocks[0] || { heads: [] }).heads;
-      box.innerHTML = '<div class="cap"><b>' + esc(name) + '</b> · 환불 등록 · 입력 칸 ' + hs.length + '개</div><div class="wrap"><table><tr>' +
-        hs.map(function (h) { return '<th>' + esc(h.t) + '</th>'; }).join('') + '</tr><tr>' + hs.map(function () { return '<td></td>'; }).join('') + '</tr></table></div>';
+      box.innerHTML = '<div class="cap"><b>' + esc(name) + '</b> · 환불 등록 · 입력 칸 ' + hs.length + '개</div><div class="chips">' +
+        hs.map(function (h) { return '<span>' + esc(h.t) + '</span>'; }).join('') + '</div>';
       return;
     }
     if (t.safety) {                     // 안전점검 양식: 분야·항목·기본 수량 (역별 수량은 양식 탭 오른쪽 표)
