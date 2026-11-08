@@ -131,7 +131,7 @@
     if (staff && staff.token) srv().staffLogout(staff.token);
     admTok = null; admData = null; admMe = null; admExp = {}; admOrder = {}; admOverHide(); $('nDept').innerHTML = '';
     ['newCard', 'gstCard', 'stCard', 'smCard', 'pcCard', 'gdCard'].forEach(function (id) { $(id).classList.remove('open'); });
-    try { localStorage.removeItem('bglStInfo'); } catch (x) {} stD = null; stPicked = false; stSel = {};   // DID 역 정보 저장본
+    try { localStorage.removeItem('bglStInfo'); } catch (x) {} initDrop(); stD = null; stPicked = false; stSel = {};   // DID 역 정보 저장본
     setStaff(null); edus = []; renderEdus(); resetAll();
     $('lgPin').value = savedPin(); $('lgCode').value = '';
     if (text) msg($('lgMsg'), text, '#c0392b');

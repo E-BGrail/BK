@@ -176,7 +176,11 @@ appSwitch(document.getElementById('appSw'), { car: function () { CARAPP.go('?car
       rfDirect = false; resetAll();                  // 직원 대리 등록 화면은 목록을 다시 받아 처음부터
       return;
     }
-    if (!staff) { show('sl'); return; }              // 로그인 전
+    if (!staff) {                                    // 로그인 전
+      show('sl');
+      api('getInit', ['']).catch(function () {});    // 서버 미리 깨우기: 사번·개인 코드를 넣는 동안 (오래 안 쓴 뒤 첫 호출이 느림, 결과는 안 씀)
+      return;
+    }
     refreshInit(st.s === 'sq' || window.APP_CAR);   // DID·차량 화면으로 열었으면 목록은 뒤에서 조용히
     if (st.skL) { enterList(); skOpen(st.skL); skLeadOpen(st.skL, st.skLi); return; }   // 팀장 내용 보기 중이었으면 그 역
     if (st.s === 'sk' && st.sk) { enterList(); skOpen(st.sk, false, st.skSt); return; }

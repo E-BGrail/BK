@@ -176,7 +176,11 @@ appSwitch(document.getElementById('appSw'), { car: function () { CARAPP.go('?car
       rfDirect = false; resetAll();                  // 직원 대리 등록 화면은 목록을 다시 받아 처음부터
       return;
     }
-    if (!staff) { show('sl'); return; }              // 로그인 전
+    if (!staff) {                                    // 로그인 전
+      show('sl');
+      api('getInit', ['']).catch(function () {});    // 서버 미리 깨우기: 사번·개인 코드를 넣는 동안 (오래 안 쓴 뒤 첫 호출이 느림, 결과는 안 씀)
+      return;
+    }
     refreshInit(st.s === 'sq' || window.APP_CAR);   // DID·차량 화면으로 열었으면 목록은 뒤에서 조용히
     if (st.skL) { enterList(); skOpen(st.skL); skLeadOpen(st.skL, st.skLi); return; }   // 팀장 내용 보기 중이었으면 그 역
     if (st.s === 'sk' && st.sk) { enterList(); skOpen(st.sk, false, st.skSt); return; }
@@ -739,9 +743,19 @@ appSwitch(document.getElementById('appSw'), { car: function () { CARAPP.go('?car
   $('qrOver').onclick = closeQr;
   document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !$('qrOver').classList.contains('hidden')) closeQr(); });
 
-  function loadInit(r) {
+  /* 서명지 목록 저장본 (이 탭에서만, 로그인 토큰별): 새로고침·돌아올 때 먼저 그리고 최신 목록은 뒤에서 받음.
+     환불 QR 열쇠(qrKey)가 들어 있어 탭을 닫으면 지워지는 sessionStorage에만 */
+  var INIT_KEY = 'bglInit';
+  function initSaved() {
+    try { var c = JSON.parse(sessionStorage.getItem(INIT_KEY) || 'null'); return c && c.r && staff && staff.token && c.t === staff.token ? c : null; } catch (x) { return null; }
+  }
+  function initDrop() { try { sessionStorage.removeItem(INIT_KEY); } catch (x) {} }
+  function loadInit(r, saved) {
     edus = (r && r.educations) || [];
-    if (r && r.now) RQ.off = Number(r.now) - Date.now();   // 서버 시각에 맞춤 (고객용 환불 QR)
+    if (r && r.now && !saved) {
+      RQ.off = Number(r.now) - Date.now();   // 서버 시각에 맞춤 (고객용 환불 QR)
+      try { if (staff && staff.token && !r.error) sessionStorage.setItem(INIT_KEY, JSON.stringify({ t: staff.token, r: r, off: RQ.off })); } catch (x) {}   // 서버에서 받은 목록만 저장
+    }
     if (r && r.url) setupQr(r.url);
     if (selId && !edus.some(function (e) { return e.id === selId && e.open !== false && !e.refund; })) selId = '';
     renderEdus();
@@ -749,6 +763,10 @@ appSwitch(document.getElementById('appSw'), { car: function () { CARAPP.go('?car
   }
   /** 서명지 목록 받기. quiet: 목록이 안 보이는 화면(DID)이면 가운데 로딩 표시 없이 */
   function refreshInit(quiet) {
+    if (!edus.length) {                    // 화면에 목록이 아직 없으면 저장본부터 (있으면 로딩창 없이 뒤에서 최신으로)
+      var c = initSaved();
+      if (c) { RQ.off = Number(c.off) || 0; loadInit(c.r, true); quiet = true; }
+    }
     BUSY_SKIP.getInit = quiet ? 1 : 0;
     srv().withSuccessHandler(loadInit).withFailureHandler(function (e) { msg($('msg1'), errText(e), '#c0392b'); }).getInit(staff && staff.token || '');
   }
@@ -886,7 +904,7 @@ appSwitch(document.getElementById('appSw'), { car: function () { CARAPP.go('?car
     if (staff && staff.token) srv().staffLogout(staff.token);
     admTok = null; admData = null; admMe = null; admExp = {}; admOrder = {}; admOverHide(); $('nDept').innerHTML = '';
     ['newCard', 'gstCard', 'stCard', 'smCard', 'pcCard', 'gdCard'].forEach(function (id) { $(id).classList.remove('open'); });
-    try { localStorage.removeItem('bglStInfo'); } catch (x) {} stD = null; stPicked = false; stSel = {};   // DID 역 정보 저장본
+    try { localStorage.removeItem('bglStInfo'); } catch (x) {} initDrop(); stD = null; stPicked = false; stSel = {};   // DID 역 정보 저장본
     setStaff(null); edus = []; renderEdus(); resetAll();
     $('lgPin').value = savedPin(); $('lgCode').value = '';
     if (text) msg($('lgMsg'), text, '#c0392b');
