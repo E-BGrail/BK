@@ -153,8 +153,11 @@
   function navDepth() {                    // 지금 화면이 원하는 칸 수
     var id = curScreen;
     if (rfEdu && rfDirect && (id === 'sf' || id === 's3')) return 0;   // 환불 등록 QR로 바로 들어온 승객은 제외
-    return ({ sp: 1, s2: edu && (edu.guest || edu.pdf) ? 2 : 1, s3: 1, sf: 1, so: 1, sr: 1, sk: 1, su: 1, sv: 1, sq: DID_CAR ? 0 : 1 })[id] || 0;   // 차량관리에서 온 DID: 뒤로가기 = 차량관리
+    return ({ sp: 1, s2: edu && (edu.guest || edu.pdf) ? 2 : 1, s3: 1, sf: 1, so: 1, sr: 1, sk: skDepth(), su: 1, sv: 1, sq: DID_CAR ? 0 : 1 })[id] || 0;   // 차량관리에서 온 DID: 뒤로가기 = 차량관리
   }
+  /** 안전점검 화면: 단계마다 한 칸 (역 선택 1 → 체크리스트 2 → 확인 3 → 서명 4, 팀장 일괄 서명 2)
+   *  다음 단계 버튼을 누를 때 칸을 넣고(크롬은 화면을 누르지 않고 넣은 칸을 뒤로가기 때 건너뜀), 뒤로가기 땐 칸이 줄기만 함 */
+  function skDepth() { return skStep === 'sig' ? (skSigMode === 'lead' ? 2 : 4) : ({ form: 2, rev: 3 })[skStep] || 1; }
   function navApply() {                    // 쌓아 둔 칸을 지금 화면에 맞춤 (같은 순간의 여러 변화는 한 번에)
     if (NAV.q || window.APP_CAR) return;   // 차량 화면이 켜져 있으면 기록은 차량 화면이 씀 (돌아올 때 맞춤)
     NAV.q = true;

@@ -44,6 +44,7 @@
     if (s !== 'sig') landOff();
     if (s === 'sig') { msg($('skMsg'), ''); $('skSigEdu').textContent = [sk.title, sk.date].filter(Boolean).join(' · '); setTimeout(function () { skPad.setup(); }, 30); }   // 서명 칸 높이는 skPad.fit이 맞춤
     window.scrollTo(0, 0); saveState();
+    navSync();                                       // 단계마다 뒤로가기 칸 (03-qr-nav skDepth)
   }
   /* ---------- PDF 출력: 팀장 확인이 끝난 역별 (마감된 서명지도 받을 수 있음, 전체 PDF는 없음) ---------- */
   var skPdfBusy = false;
@@ -394,9 +395,9 @@
       if (wsum > 240) { wsum = 0; lvGo(skL.idx + 1); } else if (wsum < -240) { wsum = 0; lvGo(skL.idx - 1); }
     }, { passive: true });
   })();
-  /* 안전점검 화면에서 페이지를 나가려 하면 확인 (휴대폰 뒤로가기 제스처로 창이 닫히는 것 막기) */
+  /* 안전점검 입력 중(체크리스트·확인·서명)에 페이지를 나가려 하면 확인 (휴대폰 뒤로가기 제스처로 입력이 날아가는 것 막기). 역 선택 화면에서는 묻지 않음 */
   window.addEventListener('beforeunload', function (e) {
-    if (curScreen !== 'sk' && $('skView').classList.contains('hidden')) return;
+    if (!(curScreen === 'sk' && /^(form|rev|sig)$/.test(skStep))) return;
     e.preventDefault(); e.returnValue = '';
   });
 

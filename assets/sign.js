@@ -673,8 +673,11 @@ appSwitch(document.getElementById('appSw'), { car: function () { CARAPP.go('?car
   function navDepth() {                    // 지금 화면이 원하는 칸 수
     var id = curScreen;
     if (rfEdu && rfDirect && (id === 'sf' || id === 's3')) return 0;   // 환불 등록 QR로 바로 들어온 승객은 제외
-    return ({ sp: 1, s2: edu && (edu.guest || edu.pdf) ? 2 : 1, s3: 1, sf: 1, so: 1, sr: 1, sk: 1, su: 1, sv: 1, sq: DID_CAR ? 0 : 1 })[id] || 0;   // 차량관리에서 온 DID: 뒤로가기 = 차량관리
+    return ({ sp: 1, s2: edu && (edu.guest || edu.pdf) ? 2 : 1, s3: 1, sf: 1, so: 1, sr: 1, sk: skDepth(), su: 1, sv: 1, sq: DID_CAR ? 0 : 1 })[id] || 0;   // 차량관리에서 온 DID: 뒤로가기 = 차량관리
   }
+  /** 안전점검 화면: 단계마다 한 칸 (역 선택 1 → 체크리스트 2 → 확인 3 → 서명 4, 팀장 일괄 서명 2)
+   *  다음 단계 버튼을 누를 때 칸을 넣고(크롬은 화면을 누르지 않고 넣은 칸을 뒤로가기 때 건너뜀), 뒤로가기 땐 칸이 줄기만 함 */
+  function skDepth() { return skStep === 'sig' ? (skSigMode === 'lead' ? 2 : 4) : ({ form: 2, rev: 3 })[skStep] || 1; }
   function navApply() {                    // 쌓아 둔 칸을 지금 화면에 맞춤 (같은 순간의 여러 변화는 한 번에)
     if (NAV.q || window.APP_CAR) return;   // 차량 화면이 켜져 있으면 기록은 차량 화면이 씀 (돌아올 때 맞춤)
     NAV.q = true;
@@ -1567,6 +1570,7 @@ appSwitch(document.getElementById('appSw'), { car: function () { CARAPP.go('?car
     if (s !== 'sig') landOff();
     if (s === 'sig') { msg($('skMsg'), ''); $('skSigEdu').textContent = [sk.title, sk.date].filter(Boolean).join(' · '); setTimeout(function () { skPad.setup(); }, 30); }   // 서명 칸 높이는 skPad.fit이 맞춤
     window.scrollTo(0, 0); saveState();
+    navSync();                                       // 단계마다 뒤로가기 칸 (03-qr-nav skDepth)
   }
   /* ---------- PDF 출력: 팀장 확인이 끝난 역별 (마감된 서명지도 받을 수 있음, 전체 PDF는 없음) ---------- */
   var skPdfBusy = false;
@@ -1917,9 +1921,9 @@ appSwitch(document.getElementById('appSw'), { car: function () { CARAPP.go('?car
       if (wsum > 240) { wsum = 0; lvGo(skL.idx + 1); } else if (wsum < -240) { wsum = 0; lvGo(skL.idx - 1); }
     }, { passive: true });
   })();
-  /* 안전점검 화면에서 페이지를 나가려 하면 확인 (휴대폰 뒤로가기 제스처로 창이 닫히는 것 막기) */
+  /* 안전점검 입력 중(체크리스트·확인·서명)에 페이지를 나가려 하면 확인 (휴대폰 뒤로가기 제스처로 입력이 날아가는 것 막기). 역 선택 화면에서는 묻지 않음 */
   window.addEventListener('beforeunload', function (e) {
-    if (curScreen !== 'sk' && $('skView').classList.contains('hidden')) return;
+    if (!(curScreen === 'sk' && /^(form|rev|sig)$/.test(skStep))) return;
     e.preventDefault(); e.returnValue = '';
   });
 
