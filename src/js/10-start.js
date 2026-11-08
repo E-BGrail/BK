@@ -28,6 +28,41 @@
   };
   $('pcPin').addEventListener('input', pcDisarm);
 
+  /* ---------- 관리자 지정 (2등급: 자기 부서 직원을 1등급으로, 3등급: 1·2등급) ---------- */
+  var gdArm = null;
+  function gdDisarm() { clearTimeout(gdArm); gdArm = null; }
+  function gdDraw(d) {
+    var sel = $('gdLv'), cur = sel.value; sel.innerHTML = '';
+    d.can.slice().reverse().forEach(function (lv) { var o = document.createElement('option'); o.value = lv; o.textContent = lv + '등급'; sel.appendChild(o); });
+    if (cur && d.can.indexOf(Number(cur)) > -1) sel.value = cur;
+    $('gdNote').textContent = d.myLv >= 3 ? '3등급은 1·2등급을 지정할 수 있습니다 (3등급은 관리 탭에서 직접). 지정·해제는 그 직원이 다시 로그인하면 반영됩니다.'
+      : '2등급은 자기 부서(' + (d.dept || '부서 없음') + ') 직원을 1등급으로 지정할 수 있습니다. 휴가 등으로 자리를 비우기 전에 미리 지정해 두세요. 지정·해제는 그 직원이 다시 로그인하면 반영됩니다.';
+    var box = $('gdList'); box.innerHTML = '';
+    d.list.forEach(function (a) {
+      var row = document.createElement('div'); row.className = 'srow';
+      row.innerHTML = '<span class="nm"><small></small><span></span></span><span class="st"></span><button class="x" title="관리자 해제">✕</button>';
+      row.querySelector('small').textContent = [a.dept, a.disp].filter(Boolean).join(' ');
+      row.querySelector('.nm span').textContent = a.name + (a.me ? ' (나)' : '');
+      row.querySelector('.st').textContent = a.lv + '등급';
+      var x = row.querySelector('.x');
+      if (a.me || a.lv >= d.myLv) x.remove();
+      else x.onclick = function () {
+        if (gdArm !== a.pin) { gdDisarm(); gdArm = a.pin; setTimeout(function () { if (gdArm === a.pin) { gdArm = null; msg($('gdMsg'), ''); } }, 10000); msg($('gdMsg'), a.name + ' 님을 관리자에서 해제할까요? ✕를 한 번 더 누르면 해제됩니다.', '#b42318'); return; }
+        gdDisarm(); admCall('adminGradeSet', [a.pin, 0], gdDone, $('gdMsg'));
+      };
+      box.appendChild(row);
+    });
+    if (!d.list.length) box.innerHTML = '<div class="srow"><span class="hint">지정된 관리자가 없습니다.</span></div>';
+  }
+  function gdDone(d) { gdDraw(d); $('gdPin').value = ''; msg($('gdMsg'), d.note, '#12833b'); }
+  $('gdHead').onclick = function () { if ($('gdCard').classList.toggle('open')) admCall('adminGradeList', [], gdDraw, $('gdMsg')); };
+  $('gdSet').onclick = function () {
+    var v = $('gdPin').value.trim();
+    if (!v) { msg($('gdMsg'), '지정할 직원의 사번을 입력하세요.', '#c0392b'); return; }
+    $('gdSet').disabled = true;
+    admCall('adminGradeSet', [v, Number($('gdLv').value) || 1], function (d) { $('gdSet').disabled = false; gdDone(d); }, $('gdMsg'), function () { $('gdSet').disabled = false; });
+  };
+
   /* ---------- 휴대폰 키보드: 팝업을 보이는 영역 안에 두고, 입력 칸이 가리지 않게 ---------- */
   (function () {
     var v = window.visualViewport, root = document.documentElement;

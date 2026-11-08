@@ -1,40 +1,40 @@
   /* ---------- 관리자 ---------- */
-  /* 관리자 페이지 없음: 관리자로 지정된 직원은 서명지 목록 화면에서 바로 관리 (카드 밀기 [정보 수정]·[내보내기], 새 서명지 열기, 배포용 아이디, 개인 코드 관리)
-   * 관리자 정보(양식·서명지 현황)는 처음 필요할 때 한 번만 받음 (admEnsure) → 직원 화면 로딩은 그대로 */
+  /* 관리자 페이지 없음: 관리자로 지정된 직원은 서명지 목록 화면에서 바로 관리 (카드 밀기 [정보 수정]·[내보내기], 새 서명지 열기, 배포용 아이디, 개인 코드 관리, 관리자 지정)
+   * 관리자 등급은 로그인 때 받음 (staff.lv). 관리 기능도 직원 로그인 토큰을 그대로 씀 (따로 관리자 접속 없음, 서버가 요청마다 등급 확인)
+   * 관리자 정보(양식 목록·서명지 현황)는 목록이 뜬 뒤 조용히 미리 받음 (admEnsure quiet) */
   var admTok = null, admData = null, admExp = {}, admOrder = {};
-  var admMe = null;                      // 로그인한 관리자의 { dept, team }: 새 서명지 부서명·팀 기본값
+  var admMe = null;                      // 로그인한 관리자의 { dept, team, lv }: 새 서명지 부서명·팀 기본값
   var PDF_TPL = '__pdf__';               // 새 서명지 양식 고르는 칸의 [PDF 서명지] (누구나)
-  var admWait = [], admFails = [];
+  var admWait = [], admFails = [], admMsgs = [];
   function isAdm() { return !!(staff && staff.admin && !staff.guest && staff.token); }
-  /** 관리자 접속·정보가 없으면 받은 뒤 cb (여러 번 불러도 서버는 한 번) */
-  function admEnsure(cb, m, onFail) {
+  /** 관리자 등급 1~3 (예전에 저장된 로그인은 선임관리자 = 3) */
+  function admLv() { return !isAdm() ? 0 : Number(staff.lv) || (staff.master ? 3 : 1); }
+  /** 관리자 정보가 없으면 받은 뒤 cb (여러 번 불러도 서버는 한 번). quiet: 미리 받기 (안내 글 없음) */
+  function admEnsure(cb, m, onFail, quiet) {
+    if (isAdm()) admTok = staff.token;
     if (admTok && admData) { cb(); return; }
     if (!isAdm()) { if (onFail) onFail(); return; }
-    m = m || $('msg1');
+    if (!quiet) { m = m || $('msg1'); admMsgs.push(m); msg(m, '관리자 정보 불러오는 중…', '#6b7686'); }
     admWait.push(cb); if (onFail) admFails.push(onFail);
     if (admWait.length > 1) return;
-    msg(m, '관리자 정보 불러오는 중…', '#6b7686');
-    var done = function () { var w = admWait; admWait = []; admFails = []; w.forEach(function (f) { f(); }); };
+    var clear = function () { admMsgs.forEach(function (x) { msg(x, ''); }); };
+    var done = function () { var w = admWait; admWait = []; admFails = []; clear(); admMsgs = []; w.forEach(function (f) { f(); }); };
     var fail = function (e) {
-      var fs = admFails; admWait = []; admFails = [];
+      var fs = admFails, ms = admMsgs; admWait = []; admFails = []; admMsgs = [];
       if (/로그인이 필요/.test(errText(e))) { logout(errText(e)); return; }
-      msg(m, errText(e), '#c0392b'); fs.forEach(function (f) { f(e); });
+      ms.forEach(function (x) { msg(x, errText(e), '#c0392b'); }); fs.forEach(function (f) { f(e); });
     };
-    var login = function () {
-      google.script.run.withSuccessHandler(function (r) { admTok = r.token; admMe = r.me || null; msg(m, ''); renderAdmin(r.data, true); saveState(); done(); })
-        .withFailureHandler(fail).adminLogin(staff.token);
-    };
-    if (admTok) google.script.run.withSuccessHandler(function (d) { msg(m, ''); renderAdmin(d, true); done(); })
-      .withFailureHandler(function () { admTok = null; login(); }).adminRefresh(admTok);
-    else login();
+    google.script.run.withSuccessHandler(function (d) { admMe = d.me || admMe; renderAdmin(d, true); done(); })
+      .withFailureHandler(fail).adminRefresh(admTok);
   }
-  function admCall(fn, args, onOk, m, onFail, again) {
+  function admCall(fn, args, onOk, m, onFail) {
     m = m || $('msg1');
-    if (!admTok) { admEnsure(function () { admCall(fn, args, onOk, m, onFail, true); }, m, onFail); return; }
+    if (!isAdm()) { msg(m, '관리자로 지정된 직원만 할 수 있습니다.', '#c0392b'); if (onFail) onFail(); return; }
+    admTok = staff.token;
     msg(m, '처리 중…', '#6b7686');
     var run = google.script.run.withSuccessHandler(function (r) { msg(m, ''); onOk(r); })
       .withFailureHandler(function (e) {
-        if (!again && /관리자 로그인 시간이 지났/.test(errText(e))) { admTok = null; admData = null; admCall(fn, args, onOk, m, onFail, true); return; }   // 관리자 접속만 끊김 → 다시 받고 한 번 더 (서버는 확인 단계에서 멈췄으므로 안전)
+        if (/로그인이 필요/.test(errText(e))) { logout(errText(e)); return; }
         msg(m, errText(e), '#c0392b'); if (onFail) onFail(e);
       });
     run[fn].apply(run, [admTok].concat(args));
@@ -192,14 +192,14 @@
     $('oSave').disabled = true;
     admCall('adminReorder', [ordId, ord], function (d) {
       delete admOrder[ordId]; renderAdmin(d); ord = ordEdu().signers.map(function (s) { return s.key; }); drawOrder();
-      msg($('oMsg'), '서명자 순서를 저장했습니다. 서명지에도 반영되었습니다.', '#12833b');
+      msg($('oMsg'), '서명자 순서를 저장했습니다. PDF에 이 순서로 들어갑니다.', '#12833b');
     }, $('oMsg'));
   };
   $('oDb').onclick = function () {
     $('oDb').disabled = true;
     admCall('adminSortByDb', [ordId], function (d) {
       delete admOrder[ordId]; renderAdmin(d); ord = ordEdu().signers.map(function (s) { return s.key; }); drawOrder();
-      msg($('oMsg'), '직원DB 순서로 정렬했습니다. 서명지에도 반영되었습니다.', '#12833b');
+      msg($('oMsg'), '직원DB 순서로 정렬했습니다. PDF에 이 순서로 들어갑니다.', '#12833b');
     }, $('oMsg'));
   };
   $('oBack').onclick = function () {
@@ -332,18 +332,18 @@
     }
   }
   $('nTpl').onchange = nTplUi; $('nUseRoster').onchange = nTplUi; $('nVerify').onchange = nTplUi;
-  /** 양식 고르는 칸: 관리자는 시트의 양식 + [PDF 서명지], 그 밖의 직원은 [PDF 서명지]만 */
+  /** 양식 고르는 칸: 관리자는 양식목록 중 내 등급으로 열 수 있는 양식('01. 이름') + [PDF 서명지], 그 밖의 직원은 [PDF 서명지]만 */
   function nTplFill(list) {
     var sel = $('nTpl'), prev = sel.value, had = sel.options.length > 1; sel.innerHTML = '';
-    list.concat([PDF_TPL]).forEach(function (t) { var o = document.createElement('option'); o.value = t; o.textContent = t === PDF_TPL ? 'PDF 서명지 (PDF 올려서 서명받기)' : t; sel.appendChild(o); });
+    list.concat([PDF_TPL]).forEach(function (t) { var o = document.createElement('option'); o.value = t; o.textContent = t === PDF_TPL ? 'PDF 서명지 (PDF 올려서 서명받기)' : (admData && admData.tplNames && admData.tplNames[t]) || t; sel.appendChild(o); });
     if (prev && (list.indexOf(prev) > -1 || (prev === PDF_TPL && had))) sel.value = prev;   // 처음 양식을 받으면 첫 양식
     nTplUi();
   }
-  /** 서명지 목록 화면에 들어올 때: 새 서명지 열기(직원 모두)·배포용 아이디(관리자)·개인 코드 관리(선임관리자만) */
+  /** 서명지 목록 화면에 들어올 때: 새 서명지 열기(직원 모두)·배포용 아이디(관리자)·개인 코드 관리·관리자 지정(2등급 이상) */
   function admCards() {
     var g = !!(staff && staff.guest), adm = isAdm();
     $('newCard').classList.toggle('hidden', g || !(staff && staff.token));
-    $('gstCard').classList.toggle('hidden', !adm); $('stCard').classList.toggle('hidden', !adm); $('smCard').classList.toggle('hidden', adm || g || !(staff && staff.token)); $('pcCard').classList.toggle('hidden', !(adm && staff.master));
+    $('gstCard').classList.toggle('hidden', !adm); $('stCard').classList.toggle('hidden', !adm); $('smCard').classList.toggle('hidden', adm || g || !(staff && staff.token)); $('pcCard').classList.toggle('hidden', admLv() < 2); $('gdCard').classList.toggle('hidden', admLv() < 2);
     if (!adm || !admData) nTplFill([]);
   }
   /** 관리자 작업 응답 그리기. quiet: 처음 받을 때(서명지 목록은 이미 최신) */
@@ -358,11 +358,12 @@
       admData.note = d.note || ''; d = admData;
     }
     admData = d;
+    if (d.me) admMe = d.me;
     var nFirst = !$('nDept').options.length;   // 처음 그릴 때·서명지를 연 뒤에는 관리자의 부서명·팀, 그 밖에는 고른 값 유지
     deptTeamSel($('nDept'), $('nTeam'), nFirst ? (admMe && admMe.dept) || '' : $('nDept').value, nFirst ? (admMe && admMe.team) || '' : $('nTeam').value);
     $('gstId').value = (d.guest && d.guest.id) || '';
     nTplFill(d.templates);
-    if (!d.templates.length) msg($('nMsg'), '양식 탭이 없습니다. 시트에 이름이 "양식"으로 시작하는 탭을 만들어 두세요.', '#c0392b');
+    if (!d.templates.length) msg($('nMsg'), '열 수 있는 양식이 없습니다. 시트의 양식목록 탭(열 수 있는 등급)을 확인하세요.', '#c0392b');
     if (!$('nDate').value) $('nDate').value = today();
     var note = d.note || ''; d.note = '';   // 안내는 한 번만
     admOverRedraw();

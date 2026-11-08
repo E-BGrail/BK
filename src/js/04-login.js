@@ -120,18 +120,18 @@
   function enterList() {
     var g = !!(staff && staff.guest);
     $('meName').textContent = g ? '외부 참석자' : ((staff.disp ? staff.disp + ' ' : '') + staff.name + ' 님').trim();
-    if (!g && staff.admin) { var ma = document.createElement('span'); ma.className = 'meAdm' + (staff.master ? ' mst' : ''); ma.textContent = staff.master ? '선임관리자' : '관리자'; $('meName').appendChild(ma); }
+    if (!g && staff.admin) { var ma = document.createElement('span'); ma.className = 'meAdm' + (admLv() >= 2 ? ' mst' : ''); ma.textContent = '관리자 ' + admLv() + '등급'; $('meName').appendChild(ma); }
     $('chgCard').classList.toggle('hidden', g);
-    admCards();                                     // 새 서명지 열기: 직원 모두, 배포용 아이디·개인 코드 관리: 관리자
+    admCards();                                     // 새 서명지 열기: 직원 모두, 배포용 아이디: 관리자, 개인 코드 관리·관리자 지정: 2등급 이상
+    if (isAdm() && !admData) setTimeout(function () { admEnsure(function () {}, null, null, true); }, 1500);   // 관리자 정보(양식 목록 등)는 목록이 뜬 뒤 조용히 미리 받음
     if (!edus.length) $('edus').innerHTML = '<div class="hint">불러오는 중…</div>';
     show('s1');
     if (KIOSK_WANT && !g) kioskOpen();             // 차량관리의 [DID]로 왔으면 로그인 뒤 DID 화면
   }
   function logout(text) {
     if (staff && staff.token) google.script.run.staffLogout(staff.token);
-    if (admTok) google.script.run.adminLogout(admTok);   // 관리자 접속 표시도 서버에서 지움
     admTok = null; admData = null; admMe = null; admExp = {}; admOrder = {}; admOverHide(); $('nDept').innerHTML = '';
-    ['newCard', 'gstCard', 'stCard', 'smCard', 'pcCard'].forEach(function (id) { $(id).classList.remove('open'); });
+    ['newCard', 'gstCard', 'stCard', 'smCard', 'pcCard', 'gdCard'].forEach(function (id) { $(id).classList.remove('open'); });
     try { localStorage.removeItem('bglStInfo'); } catch (x) {} stD = null; stPicked = false; stSel = {};   // DID 역 정보 저장본
     setStaff(null); edus = []; renderEdus(); resetAll();
     $('lgPin').value = savedPin(); $('lgCode').value = '';
@@ -153,7 +153,7 @@
       var ttl = Number(r.ttl) || 1200;                    // 마지막 동작 후 이 시간(초)이면 자동 로그아웃 (서버와 같게)
       lastAct = lastPing = lastSave = Date.now(); try { sessionStorage.setItem(ACT_KEY, String(lastAct)); } catch (x) {}
       if (r.guest) { $('lgPin').value = ''; setStaff({ token: r.token, guest: true, ttl: ttl }); }
-      else setStaff({ token: r.token, name: r.name, disp: r.disp, admin: !!r.admin, master: !!r.master, ttl: ttl });
+      else setStaff({ token: r.token, name: r.name, disp: r.disp, admin: !!r.admin, lv: Number(r.lv) || (r.admin ? 1 : 0), ttl: ttl });
       edus = []; enterList();
       if (r.init) loadInit(r.init); else refreshInit();
     }).withFailureHandler(function (e) {
@@ -289,7 +289,7 @@
     google.script.run.withSuccessHandler(function (r) {
       $('chgSend').disabled = false; chgTicket = ''; $('chgForm').classList.add('hidden');
       $('chgMailSend').textContent = '메일로 인증 코드 받기';
-      setStaff({ token: staff.token, name: r.name, disp: r.disp, admin: staff.admin, master: staff.master });
+      setStaff({ token: staff.token, name: r.name, disp: r.disp, admin: staff.admin, lv: staff.lv });
       enterList(); refreshInit();
       msg($('chgMsg'), '개인정보를 변경했습니다.', '#12833b');
     }).withFailureHandler(function (e) {

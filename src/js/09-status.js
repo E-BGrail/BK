@@ -153,7 +153,7 @@
     if (e.roster) { var ochip = document.createElement('span'); ochip.className = 'chip ext'; ochip.textContent = '명단 지정'; q('.t').appendChild(ochip);
       if (mode !== 'exp') q('.rosterSec').classList.remove('hidden'); q('.rosterLeft').textContent = (e.rosterLeft || []).join(', ') || '없음 (전원 서명)'; }
     if (e.codeLocked) { var lchip = document.createElement('span'); lchip.className = 'chip off'; lchip.textContent = '코드 잠김'; q('.t').appendChild(lchip); }
-    if (e.missingTabs) { var tchip = document.createElement('span'); tchip.className = 'chip off'; tchip.textContent = '탭 없음'; q('.t').appendChild(tchip); }
+    if (e.missingTabs) { var tchip = document.createElement('span'); tchip.className = 'chip off'; tchip.textContent = '양식 없음'; q('.t').appendChild(tchip); }
     if (e.safety) { var kchip = document.createElement('span'); kchip.className = 'chip ext'; kchip.textContent = '안전점검'; q('.t').appendChild(kchip); }
     if (e.refund) { var rchip = document.createElement('span'); rchip.className = 'chip rf'; rchip.textContent = '환불 등록'; q('.t').appendChild(rchip);
       var rcnt = document.createElement('span'); rcnt.style.cssText = 'margin-left:6px;font-size:14px;font-weight:700;vertical-align:1px'; rcnt.textContent = e.signers.length + '명'; q('.t').appendChild(rcnt); }
@@ -231,7 +231,7 @@
       var X = admExp[e.id] || {}, L = X.log, P = X.pdf;
       if (X.err) return;
       if (e.refund) { msg(q('.m'), L ? 'CSV를 저장하세요. (등록 ' + L.valid + '명)' : '준비 중…', '#6b7686'); return; }
-      if (L && P && P.missing) msg(q('.m'), '서명지 탭이 없어 PDF는 만들 수 없습니다. CSV·HTML 파일을 저장하세요. (유효 서명 ' + L.valid + '건, 로그 ' + L.count + '건)', '#c0392b');
+      if (L && P && P.missing) msg(q('.m'), '양식 탭이 없어 PDF는 만들 수 없습니다. CSV·HTML 파일을 저장하세요. (유효 서명 ' + L.valid + '건, 로그 ' + L.count + '건)', '#c0392b');
       else if (L && P) msg(q('.m'), '파일 3개를 저장하세요. (유효 서명 ' + L.valid + '건, 로그 ' + L.count + '건' +
         (P.pageCount > 1 ? ', 서명지 ' + P.pageCount + '페이지' + (P.pdf ? '를 PDF 하나로' : '는 PDF 페이지별 파일로') : '') + ')', '#6b7686');
       else msg(q('.m'), (L ? '로그 준비 완료 · ' : '') + (P ? 'PDF 준비 완료 · ' : '') + (!P ? 'PDF 만드는 중… (서명지 크기에 따라 10초 이상 걸릴 수 있습니다)' : '로그 준비 중…'), '#6b7686');
@@ -247,11 +247,11 @@
       var both = function () { if (X.log && (X.pdf || e.refund)) q('.b-exp').disabled = false; expMsg(); };
       google.script.run.withSuccessHandler(function (r) {
         X.log = r; setBtn('.b-csv', 'CSV 저장', true); setBtn('.b-html', 'HTML 저장', true); both();
-      }).withFailureHandler(fail).adminExportLog(admTok, e.id);
+      }).withFailureHandler(fail).adminExportLog(staff.token, e.id);
       if (e.refund) return;                           // 비상 등록: PDF·HTML 없이 CSV만
       google.script.run.withSuccessHandler(function (r) {
         X.pdf = r; if (r.missing) setBtn('.b-pdf', 'PDF 없음 (탭 없음)', false); else setBtn('.b-pdf', 'PDF 저장', true); both();
-      }).withFailureHandler(fail).adminExportPdf(admTok, e.id);
+      }).withFailureHandler(fail).adminExportPdf(staff.token, e.id);
       setTimeout(function () { q('.b-exp').disabled = false; }, 60000);
     };
     q('.b-pdf').onclick = function () {

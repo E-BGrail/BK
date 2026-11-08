@@ -150,8 +150,8 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), { car: CAR_PAGE, sign:
       if (curScreen === 'sk' && sk) { st.sk = sk.id; st.skSt = skStep !== 'pick' && skSigMode !== 'lead' && skSt ? skSt.st : ''; }
       if (skL && !$('skView').classList.contains('hidden')) { st.skL = skL.id; st.skLi = skL.idx; }
       if (rfEdu && (curScreen === 'sf' || curScreen === 's3')) { st.rf = rfEdu.id; st.rfd = rfDirect; st.re = rfEnter; st.rz = rfEnd; }          // 환불 등록: 어느 등록인지만 (입력값·연락처는 저장 안 함)
-      if (admTok) {                  // 관리자 접속 (새로고침해도 다시 로그인하지 않게)
-        st.admTok = admTok; st.admOrder = admOrder; st.admMe = admMe;
+      if (isAdm()) {                 // 관리자: 고치던 순서·임무역할 화면 (새로고침해도 이어서)
+        st.admTok = 1; st.admOrder = admOrder; st.admMe = admMe;
         if (curScreen === 'so') st.ordId = ordId;
         if (curScreen === 'sr' && rData) st.r = { id: rData.id, assign: rAssign, head: $('rHead').value };
       }
@@ -163,8 +163,8 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), { car: CAR_PAGE, sign:
     var st = loadState() || {};
     if (SIGN_WANT && st.s === 'sq') st.s = 's1';    // 차량관리 [e-싸인]으로 옴: DID 대신 서명지 목록
     edTab = st.edTab === 'closed' ? 'closed' : 'open';
-    if (st.admTok && staff && staff.admin) {   // 관리자 접속: 그대로 이어 씀 (끊겼으면 필요할 때 다시 받음)
-      admTok = st.admTok; admOrder = st.admOrder || {}; admMe = st.admMe || null;
+    if (st.admTok && isAdm()) {      // 관리자: 직원 로그인 토큰을 그대로 씀
+      admTok = staff.token; admOrder = st.admOrder || {}; admMe = st.admMe || null;
       if ((st.s === 'so' && st.ordId) || (st.s === 'sr' && st.r)) {   // 순서·임무역할 화면이었으면 그 화면으로
         enterList(); refreshInit();
         admEnsure(function () {
