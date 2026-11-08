@@ -871,7 +871,7 @@ appSwitch(document.getElementById('appSw'), { car: function () { CARAPP.go('?car
   function enterList() {
     var g = !!(staff && staff.guest);
     $('meName').textContent = g ? '외부 참석자' : ((staff.disp ? staff.disp + ' ' : '') + staff.name + ' 님').trim();
-    if (!g && staff.admin) { var ma = document.createElement('span'); ma.className = 'meAdm' + (admLv() >= 2 ? ' mst' : ''); ma.textContent = '관리자 ' + admLv() + '등급'; $('meName').appendChild(ma); }
+    if (!g && staff.admin) { var ma = document.createElement('span'); ma.className = 'meAdm' + (admLv() >= 2 ? ' mst' : ''); ma.textContent = admLv() >= 3 ? '관리자' : '관리자 ' + admLv() + '등급'; $('meName').appendChild(ma); }
     $('chgCard').classList.toggle('hidden', g);
     admCards();                                     // 새 서명지 열기: 직원 모두, 배포용 아이디: 관리자, 개인 코드 관리·관리자 지정: 2등급 이상
     if (isAdm() && !admData) setTimeout(function () { admEnsure(function () {}, null, null, true); }, 1500);   // 관리자 정보(양식 목록 등)는 목록이 뜬 뒤 조용히 미리 받음
@@ -3422,7 +3422,7 @@ appSwitch(document.getElementById('appSw'), { car: function () { CARAPP.go('?car
     var my = admLv(), can = my >= 3 ? [2, 1] : [1], sel = $('gdLv'), cur = sel.value; sel.innerHTML = '';
     can.forEach(function (lv) { var o = document.createElement('option'); o.value = lv; o.textContent = lv + '등급'; sel.appendChild(o); });
     if (cur && can.indexOf(Number(cur)) > -1) sel.value = cur;
-    $('gdNote').textContent = my >= 3 ? '3등급은 1·2등급을 지정·해제할 수 있습니다 (3등급은 관리 탭에서 직접). 사번을 넣고 [지정]·[해제]를 누르세요. 지정·해제는 그 직원이 다시 로그인하면 반영됩니다.'
+    $('gdNote').textContent = my >= 3 ? '1·2등급을 지정·해제할 수 있습니다. 사번을 넣고 [지정]·[해제]를 누르세요. 지정·해제는 그 직원이 다시 로그인하면 반영됩니다.'
       : '2등급은 자기 부서 직원을 1등급으로 지정·해제할 수 있습니다. 휴가 등으로 자리를 비우기 전에 미리 지정해 두세요. 지정·해제는 그 직원이 다시 로그인하면 반영됩니다.';
   }
   function gdDraw(d) {

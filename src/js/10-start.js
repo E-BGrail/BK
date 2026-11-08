@@ -34,7 +34,7 @@
     var my = admLv(), can = my >= 3 ? [2, 1] : [1], sel = $('gdLv'), cur = sel.value; sel.innerHTML = '';
     can.forEach(function (lv) { var o = document.createElement('option'); o.value = lv; o.textContent = lv + '등급'; sel.appendChild(o); });
     if (cur && can.indexOf(Number(cur)) > -1) sel.value = cur;
-    $('gdNote').textContent = my >= 3 ? '3등급은 1·2등급을 지정·해제할 수 있습니다 (3등급은 관리 탭에서 직접). 사번을 넣고 [지정]·[해제]를 누르세요. 지정·해제는 그 직원이 다시 로그인하면 반영됩니다.'
+    $('gdNote').textContent = my >= 3 ? '1·2등급을 지정·해제할 수 있습니다. 사번을 넣고 [지정]·[해제]를 누르세요. 지정·해제는 그 직원이 다시 로그인하면 반영됩니다.'
       : '2등급은 자기 부서 직원을 1등급으로 지정·해제할 수 있습니다. 휴가 등으로 자리를 비우기 전에 미리 지정해 두세요. 지정·해제는 그 직원이 다시 로그인하면 반영됩니다.';
   }
   function gdDraw(d) {

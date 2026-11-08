@@ -119,7 +119,7 @@
   function enterList() {
     var g = !!(staff && staff.guest);
     $('meName').textContent = g ? '외부 참석자' : ((staff.disp ? staff.disp + ' ' : '') + staff.name + ' 님').trim();
-    if (!g && staff.admin) { var ma = document.createElement('span'); ma.className = 'meAdm' + (admLv() >= 2 ? ' mst' : ''); ma.textContent = '관리자 ' + admLv() + '등급'; $('meName').appendChild(ma); }
+    if (!g && staff.admin) { var ma = document.createElement('span'); ma.className = 'meAdm' + (admLv() >= 2 ? ' mst' : ''); ma.textContent = admLv() >= 3 ? '관리자' : '관리자 ' + admLv() + '등급'; $('meName').appendChild(ma); }
     $('chgCard').classList.toggle('hidden', g);
     admCards();                                     // 새 서명지 열기: 직원 모두, 배포용 아이디: 관리자, 개인 코드 관리·관리자 지정: 2등급 이상
     if (isAdm() && !admData) setTimeout(function () { admEnsure(function () {}, null, null, true); }, 1500);   // 관리자 정보(양식 목록 등)는 목록이 뜬 뒤 조용히 미리 받음
