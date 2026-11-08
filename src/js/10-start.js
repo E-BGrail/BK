@@ -87,7 +87,6 @@
   })();
 
   /* ---------- 시작 ---------- */
-  var DIALOG = false;               // 예전 시트 메뉴 '관리자 페이지' 창 (없앰)
   {
     var DIRECT = typeof INIT !== 'undefined' && INIT && INIT.direct;     // 환불 등록 QR(주소?e=…)로 들어온 경우
     var NOQR = typeof INIT !== 'undefined' && INIT && INIT.noQr;         // 환불 주소에 건 번호가 없는 경우
@@ -114,13 +113,13 @@
    환불 등록 QR(주소?e=…)은 입력 화면을 다 받은 뒤에 보여 줌 */
 (function () {
   var q = new URLSearchParams(location.search), e = String(q.get('e') || '').replace(/[^\w]/g, '').slice(0, 20);
-  var base = { url: SIGN_HOME, carPage: SIGN_HOME.replace(/[^\/]*$/, '') + 'car.html', educations: [] };   // QR은 이 화면 주소로, 업무차량관리는 같은 저장소의 car.html
-  var onRefund = /refund\.html$/.test(location.pathname);               // 환불 등록 QR은 refund.html, e-싸인은 sign.html
-  if (e && !onRefund) { location.replace('refund.html' + location.search); return; }
+  var base = { url: SIGN_HOME, educations: [] };      // QR은 이 화면 주소로
+  var onRefund = !!e || q.has('rf');                 // 환불 등록 QR(?e=건&k=…), 그 탭을 새로고침(?rf)
+  if (onRefund) document.title = '환불 등록';
   var k = String(q.get('k') || '').replace(/[^\w.]/g, '').slice(0, 40), re = '';   // k: 20초마다 바뀌는 QR의 시각·서명
   if (onRefund) {
     // 주소창에서 환불 건 번호를 지움: 주소를 복사해 보내도 QR 없이는 못 들어옴. 이 탭에서 새로고침하면 입력 시간 안(또는 완료 화면)일 때만 이어서
-    if (e) { try { history.replaceState(null, '', location.pathname); } catch (x) {} }
+    if (e) { try { history.replaceState(null, '', location.pathname + '?rf'); } catch (x) {} }
     else {
       var kept = null; try { kept = JSON.parse(sessionStorage.getItem('bglSign.v2') || 'null'); } catch (x) {}
       if (kept && kept.rf && kept.rfd && (kept.s === 's3' || Number(kept.rz) > Date.now())) { e = String(kept.rf).replace(/[^\w]/g, '').slice(0, 20); re = String(kept.re || ''); }
@@ -130,11 +129,9 @@
   if (!e) { START(base); return; }
   document.documentElement.classList.add('rfBoot');
   var go = function (d) {
-    d.url = base.url; d.carPage = base.carPage; d.direct = e;
+    d.url = base.url; d.direct = e;
     START(d);
     document.documentElement.classList.remove('rfBoot');
   };
-  fetch(API + '?api=sign&e=' + encodeURIComponent(e) + (k ? '&k=' + encodeURIComponent(k) : '') + (re ? '&re=' + encodeURIComponent(re) : '')).then(function (r) { return r.json(); })
-    .then(function (j) { go(j.ok ? j.data : { error: j.error || '불러오기 실패', educations: [] }); })
-    .catch(function () { go({ error: '서버에 연결할 수 없습니다. 인터넷 연결을 확인하세요.', educations: [] }); });
+  api('refundInit', [e, k, re]).then(go, function (x) { go({ error: errText(x) || '불러오기 실패', educations: [] }); });
 })();

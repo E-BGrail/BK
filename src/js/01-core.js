@@ -1,28 +1,38 @@
-/* ▼▼▼ 여기만 고치세요: 전자서명 웹 앱 배포 주소 (…/exec 로 끝남, 업무차량관리 car.html과 같은 주소) ▼▼▼ */
+/* ▼▼▼ 여기만 고치세요: 서버(Apps Script 웹 앱) 배포 주소 (…/exec 로 끝남) ▼▼▼ */
 var API = 'https://script.google.com/macros/s/AKfycbwjudREVuPqSxXknvG5XClW_tQKbD-4wkCJkyeZt0KKY-spuDCymTt9O5j_6L28Z9QK/exec';
 /* ▲▲▲ */
-/* GitHub Pages용 전자서명 화면: 구글 웹 앱 화면 위의 '구글 사용자가 만든 앱' 알림 없이 열림.
-   화면은 여기, 저장·조회는 전자서명 Apps Script(doPost {fn:'sign'})가 처리 */
+/* e-싸인 화면 (GitHub Pages). 화면은 여기, 저장·조회는 Apps Script(Api.js의 doPost {fn, args})가 처리.
+   아래 api()·errText()·busyOn()은 차량 화면(src/car/car.js)도 같이 씀 */
 var SIGN_HOME = location.origin + location.pathname;
-/** 서버 함수 호출 (text/plain POST: 다른 주소에서도 사전 요청 없이) */
-function signCall(name, args) {
-  return fetch(API, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ fn: 'sign', name: name, args: args }) })
+/** 서버 함수 호출 → Promise (text/plain POST: 다른 주소에서도 사전 요청 없이) */
+function api(name, args) {
+  return fetch(API, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ fn: name, args: args || [] }) })
     .then(function (r) { if (!r.ok) throw new Error('서버 응답 오류 (' + r.status + ')'); return r.json(); },
           function () { throw new Error('서버에 연결할 수 없습니다. 인터넷 연결을 확인하세요.'); })
     .then(function (j) { if (!j.ok) throw new Error(j.error || '오류가 났습니다.'); return j.data; });
 }
-/** google.script.run 흉내: 화면 코드는 그대로 두고 서버 호출만 fetch로 */
-function signRunner(ok, fail) {
-  return new Proxy({}, { get: function (_, k) {
-    if (k === 'withSuccessHandler') return function (f) { return signRunner(f, fail); };
-    if (k === 'withFailureHandler') return function (f) { return signRunner(ok, f); };
-    if (typeof k !== 'string') return undefined;
-    return function () {
-      signCall(k, [].slice.call(arguments)).then(function (d) { if (ok) ok(d); }, function (e) { if (fail) fail(e); });
-    };
-  } });
+function errText(e) { return String(e && e.message ? e.message : e || '오류가 났습니다.').replace(/^(Error|Exception):s*/, ''); }
+/** 가운데 로딩 표시: 도는 동그라미 + 문구 (0.3초 넘게 걸릴 때만). 돌려준 함수를 부르면 끔 (여러 개가 겹치면 마지막에 끔) */
+var BUSY = { n: 0, t: null, el: null };
+function busyOn(text) {
+  if (!BUSY.el) {
+    BUSY.el = document.createElement('div'); BUSY.el.className = 'busyOver hidden'; BUSY.el.setAttribute('role', 'status'); BUSY.el.setAttribute('aria-live', 'polite');
+    BUSY.el.innerHTML = '<div class="busyBox"><span class="busySpin"></span><b></b></div>'; document.body.appendChild(BUSY.el);
+  }
+  BUSY.n++; BUSY.el.querySelector('b').textContent = text;
+  if (!BUSY.t && BUSY.el.classList.contains('hidden')) BUSY.t = setTimeout(function () { BUSY.t = null; if (BUSY.n > 0) BUSY.el.classList.remove('hidden'); }, 300);
+  var done = false;
+  return function () {
+    if (done) return; done = true;
+    if (--BUSY.n > 0) return;
+    BUSY.n = 0; clearTimeout(BUSY.t); BUSY.t = null; BUSY.el.classList.add('hidden');
+  };
 }
-window.google = { script: { get run() { return signRunner(null, null); } } };
+/** Promise가 끝나면(성공·실패 모두) 로딩 표시 끔 */
+function busyWrap(pr, text) {
+  var off = busyOn(text);
+  return pr.then(function (d) { off(); return d; }, function (e) { off(); throw e; });
+}
 
 function START(INIT) {
 /** 오른쪽 위 전환 버튼 [e-싸인][차량관리][DID]: 누른 쪽에 불이 들어오며 그 화면으로 이동
@@ -50,16 +60,14 @@ function appSwitch(sw, urls) {
     });
   });
 }
-var CAR_PAGE = (INIT && INIT.carPage) || '';     // INIT는 첫 화면을 그린 뒤 지워지므로 따로 보관
-if (CAR_PAGE) appSwitch(document.getElementById('appSw'), { car: CAR_PAGE, sign: function () { SWF.sign(); }, kiosk: function () { SWF.kiosk(); } });
+appSwitch(document.getElementById('appSw'), { car: function () { CARAPP.go('?car'); }, sign: function () { SWF.sign(); }, kiosk: function () { SWF.kiosk(); } });   // 차량관리: 같은 페이지 안 차량 화면
 (function () {
   var $ = function (id) { return document.getElementById(id); };
-  /* ---------- 가운데 로딩 표시: 서버를 부르는 동안 도는 동그라미 + 문구 (0.3초 넘게 걸릴 때만) ----------
-   * 화면 코드의 google.script.run을 이 안에서만 감쌈 (구글 웹 앱·GitHub 화면 둘 다). 자동으로 도는 호출은 표시 안 함 */
-  var busyN = 0, busyT = null, busyEl = null;
-  var BUSY_SKIP = { staffPing: 1, staffLogout: 1, adminLogout: 1, staffRfLeft: 1 };
+  /* ---------- 서버 호출: srv().withSuccessHandler(f).withFailureHandler(g).함수(값…) (예전 google.script.run 모양, 속은 api())
+   * 0.3초 넘게 걸리면 가운데 로딩 표시. 자동으로 도는 호출(BUSY_SKIP)은 표시 안 함 */
+  var BUSY_SKIP = { staffPing: 1, staffLogout: 1, staffRfLeft: 1 };
   var BUSY_TEXT = {
-    staffLogin: '로그인하는 중', adminLogin: '관리자 정보 불러오는 중',
+    staffLogin: '로그인하는 중',
     enterCode: '확인하는 중', verifyPerson: '확인하는 중', empMailVerify: '확인하는 중', empChangeVerify: '확인하는 중', adminPcLookup: '확인하는 중',
     empMailSend: '메일 보내는 중', empChangeSend: '메일 보내는 중',
     submitSignature: '서명 저장 중', pdfSign: '서명 저장 중', safetySubmit: '데이터 저장 중', safetyLeaderSubmit: '서명 저장 중', submitRefund: '데이터 저장 중',
@@ -68,35 +76,18 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), { car: CAR_PAGE, sign:
     adminGradeSet: '데이터 저장 중', adminExportPdf: '파일 만드는 중', adminExportLog: '파일 만드는 중', eduPdf: '파일 만드는 중', safetyPdf: '파일 만드는 중'
   };
   function busyText(k) { return BUSY_TEXT[k] || (/^(admin(Edit|Set|Reorder|Sort|Unlock|St(Code|Imgs|Qr))|staffStImgs|staff(SetOpen|RfExtend)|emp(Change|Register)$|safetyLeaderCancel)/.test(k) ? '데이터 저장 중' : '데이터 불러오는 중'); }
-  function busyOn(text) {
-    if (!busyEl) {
-      busyEl = document.createElement('div'); busyEl.className = 'busyOver hidden'; busyEl.setAttribute('role', 'status'); busyEl.setAttribute('aria-live', 'polite');
-      busyEl.innerHTML = '<div class="busyBox"><span class="busySpin"></span><b></b></div>'; document.body.appendChild(busyEl);
-    }
-    busyN++; busyEl.querySelector('b').textContent = text;
-    if (!busyT && busyEl.classList.contains('hidden')) busyT = setTimeout(function () { busyT = null; if (busyN > 0) busyEl.classList.remove('hidden'); }, 300);
-    var done = false;
-    return function () {
-      if (done) return; done = true;
-      if (--busyN > 0) return;
-      busyN = 0; clearTimeout(busyT); busyT = null; busyEl.classList.add('hidden');
-    };
-  }
-  var google = (function (G) {
-    function runner(ok, fail) {
+  function srv() { return runner(null, null); }
+  function runner(ok, fail) {
       return new Proxy({}, { get: function (_, k) {
         if (k === 'withSuccessHandler') return function (f) { return runner(f, fail); };
         if (k === 'withFailureHandler') return function (f) { return runner(ok, f); };
         if (typeof k !== 'string') return undefined;
         return function () {
           var off = BUSY_SKIP[k] ? function () {} : busyOn(busyText(k));
-          var r = G.script.run.withSuccessHandler(function (d) { try { if (ok) ok(d); } finally { off(); } }).withFailureHandler(function (e) { try { if (fail) fail(e); } finally { off(); } });   // 처리 뒤에 끔: 이어서 부르는 호출이 있으면 로딩창이 꺼지지 않고 한 번만
-          return r[k].apply(r, arguments);
+          api(k, [].slice.call(arguments)).then(function (d) { try { if (ok) ok(d); } finally { off(); } }, function (e) { try { if (fail) fail(e); } finally { off(); } });   // 처리 뒤에 끔: 이어서 부르는 호출이 있으면 로딩창이 꺼지지 않고 한 번만
         };
       } });
-    }
-    return { script: { get run() { return runner(null, null); }, get history() { return G.script.history; }, get host() { return G.script.host; } } };
-  })(window.google);
+  }
   var drawn = 0, drawing = false, last = null, submitting = false;   // submitting: 서명 제출 중 (서명 칸·지우기·뒤로 막음)
   var edus = [], selId = '', code = '', edu = null, person = null;
   var staff = null;                      // 로그인: { token, name, disp, admin } 또는 배포용 아이디 { token, guest: true } (이 탭에서만 기억, 개인 코드는 저장 안 함)
@@ -124,7 +115,7 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), { car: CAR_PAGE, sign:
       el.querySelector('b').textContent = (i < at || id === 's3') ? '✓' : String(i + 1);
     });
     document.querySelector('header h1').textContent = adminScr ? '관리자' : DIRECT || NOQR ? '환불 등록' : 'e-싸인';
-    var swOn = !!(CAR_PAGE && (id === 's1' || id === 'sl' || id === 'sq') && !adminScr && !(typeof DIALOG !== 'undefined' && DIALOG));   // 로그인·서명지 목록·DID에서 전환 버튼
+    var swOn = !!(!DIRECT && !NOQR && (id === 's1' || id === 'sl' || id === 'sq') && !adminScr);   // 로그인·서명지 목록·DID에서 전환 버튼
     swAllowed = !!(swOn && (id === 's1' || id === 'sq') && staff && staff.token && !staff.guest);
     swLight(id === 'sq' ? 'kiosk' : 'sign');
     $('appSw').classList.toggle('hidden', !swOn); document.querySelector('header h1').classList.toggle('hidden', swOn);
@@ -132,6 +123,7 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), { car: CAR_PAGE, sign:
     if (id !== 'sk') document.body.classList.remove('skSig');
     if (id !== 's2' && id !== 'sk') landOff();
     window.scrollTo(0, 0);
+    if (id !== 'sq') DID_CAR = false;              // 차량관리에서 온 DID를 벗어나면 뒤로가기는 보통대로
     curScreen = id; saveState();
     navSync();
   }
@@ -140,7 +132,6 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), { car: CAR_PAGE, sign:
      이 탭(창)에서만 기억 (sessionStorage): 탭을 닫으면 지워짐. 처음으로·나가기·서명 완료 시 필요한 것만 남김 */
   var curScreen = 'sl', KEEP = 'bglSign.v2';
   function saveState() {
-    if (typeof DIALOG !== 'undefined' && DIALOG) return;   // 시트 메뉴 창에서는 기억하지 않음
     try {
       var st = { s: curScreen, edTab: edTab };
       if (edu && code && ['sp', 's2', 's3'].indexOf(curScreen) > -1) { st.edu = edu; st.code = code; st.name = $('name').value; st.gd = $('gDept').value; st.gr = $('gRank').value; st.go = $('gRole').value; st.gn = $('gNoteIn').value; }
@@ -161,7 +152,6 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), { car: CAR_PAGE, sign:
   function loadState() { try { return JSON.parse(sessionStorage.getItem(KEEP) || 'null'); } catch (x) { return null; } }
   function restoreState() {
     var st = loadState() || {};
-    if (SIGN_WANT && st.s === 'sq') st.s = 's1';    // 차량관리 [e-싸인]으로 옴: DID 대신 서명지 목록
     edTab = st.edTab === 'closed' ? 'closed' : 'open';
     if (st.admTok && isAdm()) {      // 관리자: 직원 로그인 토큰을 그대로 씀
       admTok = staff.token; admOrder = st.admOrder || {}; admMe = st.admMe || null;
@@ -187,10 +177,10 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), { car: CAR_PAGE, sign:
       return;
     }
     if (!staff) { show('sl'); return; }              // 로그인 전
-    refreshInit(st.s === 'sq' || KIOSK_WANT || SIGN_WANT);   // 차량관리 [e-싸인]으로 와도 조용히 (목록 칸에 '불러오는 중…')       // DID로 열면 목록은 뒤에서 조용히 (차량관리 [DID]로 새로 열 때)
+    refreshInit(st.s === 'sq' || window.APP_CAR);   // DID·차량 화면으로 열었으면 목록은 뒤에서 조용히
     if (st.skL) { enterList(); skOpen(st.skL); skLeadOpen(st.skL, st.skLi); return; }   // 팀장 내용 보기 중이었으면 그 역
     if (st.s === 'sk' && st.sk) { enterList(); skOpen(st.sk, false, st.skSt); return; }
-    if (st.s === 'sq' || KIOSK_WANT) { kioskOpen(); return; }   // DID 화면이었거나 차량관리에서 [DID]로 옴
+    if (st.s === 'sq') { kioskOpen(); return; }   // DID 화면이었으면
     if (!st.edu || !st.code) { enterList(); return; }
     edu = st.edu; code = st.code; selId = edu.id; renderEdus();
     $('eduName').textContent = edu.title; $('eduDate').textContent = [edu.dept, edu.date].filter(Boolean).join(' · ');
@@ -205,6 +195,5 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), { car: CAR_PAGE, sign:
     if (st.s === 's3' && st.done) { $('doneWho').textContent = st.done.who; $('doneMsg').textContent = st.done.msg; show('s3'); return; }
     if (edu.guest) show('sp'); else enterList();
   }
-  function errText(e) { return (e && e.message ? e.message : String(e)).replace(/^Error:\s*/, ''); }
   function msg(el, text, color) { el.style.color = color || ''; el.textContent = text || ''; }
 

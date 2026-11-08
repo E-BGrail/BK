@@ -1,1078 +1,38 @@
-<!DOCTYPE html>
-<html lang="ko">
-<head>
-<base target="_top">
-<meta charset="utf-8">
-<link rel="preconnect" href="https://script.google.com" crossorigin>
-<link rel="preconnect" href="https://script.googleusercontent.com" crossorigin>
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>환불 등록</title>
-<style>
-
-  /* 부산-김해경전철 CI 색: 블루 DIC 222 (#324EB3), 그레이 DIC 442 (#9FA9AA) */
-  :root { --bg:#eef1f7; --card:#fff; --text:#1b2333; --sub:#667085; --pri:#324eb3; --pri2:#22378a; --gray:#9fa9aa; --ok:#12833b; --line:#d8dde8; }
-  * { box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
-  body { margin:0; font-family:-apple-system,"Noto Sans KR","Malgun Gothic",sans-serif; background:var(--bg); color:var(--text);
-         padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom); }
-  header { background:#fff; color:var(--text); padding:10px 16px; display:flex; align-items:center; justify-content:space-between; gap:10px;
-           border-bottom:3px solid var(--pri); position:relative; }
-  header::after { content:''; position:absolute; left:0; right:0; bottom:-3px; height:3px;
-           background:linear-gradient(90deg, var(--pri) 0 70%, var(--gray) 70% 100%); }
-  .brand { display:flex; align-items:center; gap:8px; min-width:0; }
-  .brand img { height:30px; width:auto; max-width:190px; display:block; }
-  /* 오른쪽 위 전환 버튼: [전자서명][업무차량관리] 나란히. 지금 화면에 불(파랑)이 켜져 있고, 다른 쪽을 누르면 그쪽에 불이 들어오며 이동 */
-  .appSw { display:flex; flex:none; padding:3px; gap:2px; border-radius:20px; background:#f0f2f6; border:1px solid #d8dde8; }
-  .appSw .sw { height:28px; padding:0 10px; display:flex; align-items:center; border-radius:16px; font-size:12.5px; font-weight:700; white-space:nowrap;
-    color:#667085; text-decoration:none; user-select:none; -webkit-user-select:none; transition:background .2s, color .2s, box-shadow .2s; }
-  .appSw .sw.on { background:var(--pri); color:#fff; box-shadow:0 1px 4px rgba(50,78,179,.35); }
-  .appSw:not(.go) .sw:not(.on):active { background:#e3e7ef; }
-  header:has(.appSw:not(.hidden)) .brand img { max-width:130px; height:26px; }
-  .wm { display:none; align-items:center; gap:8px; font-weight:800; font-size:16px; color:var(--pri2); white-space:nowrap; }
-  .wm i { font-style:normal; background:var(--pri); color:#fff; border-radius:7px; padding:3px 6px; font-size:13px; letter-spacing:.5px; }
-  .brand.noimg img { display:none; } .brand.noimg .wm { display:flex; }
-  header h1 { margin:0; font-size:13px; font-weight:700; color:var(--pri); background:#eef1fb; border:1px solid #cdd6f3;
-              border-radius:20px; padding:4px 10px; white-space:nowrap; }
-  /* 첫 화면 그림 */
-  .hero { position:relative; overflow:hidden; color:#fff;
-          background:linear-gradient(160deg, #3d5cc8 0%, var(--pri) 45%, var(--pri2) 100%); padding:20px 18px 0; }
-  .hero .txt { position:relative; z-index:1; padding-right:84px; }
-  /* 첫 화면 QR: 오른쪽 위 작은 QR → 누르면 크게 */
-  .qrBtn { position:absolute; right:16px; top:18px; z-index:2; border:0; padding:5px 5px 3px; background:#fff; border-radius:10px;
-           box-shadow:0 2px 10px rgba(0,0,0,.25); display:flex; flex-direction:column; align-items:center; gap:1px; cursor:pointer; }
-  .qrBtn span { display:block; width:58px; height:58px; flex:none; } .hero .qrBtn span svg { width:100%; height:100%; display:block; margin:0; }
-  .qrBtn b { font-size:10px; color:var(--pri2); letter-spacing:.5px; }
-  .qrOver { position:fixed; top:var(--vvt, 0px); left:0; right:0; height:var(--vvh, 100%); z-index:50; background:rgba(16,24,48,.72); display:flex; align-items:center; justify-content:center; padding:20px;
-            animation:fadeIn .15s ease-out; }
-  .qrOver .qrBox { background:#fff; border-radius:18px; padding:18px 18px 14px; width:min(88vw, 380px); text-align:center; animation:pop .2s ease-out; }
-  .qrOver #qrBig svg { width:100%; height:auto; display:block; }
-  .qrOver p { margin:10px 0 0; font-size:15px; font-weight:700; color:var(--text); }
-  .qrOver .u { font-size:11px; font-weight:400; color:var(--sub); word-break:break-all; margin-top:6px; }
-  .qrOver .close { display:block; margin-top:10px; font-size:12px; color:var(--sub); }
-  .qrOver.picOnly .qrBox { padding:18px; } .qrOver.picOnly .u, .qrOver.picOnly .close { display:none; }   /* 환불 등록 QR: 그림과 안내문만 */
-  /* 관리자 로그인 팝업 (서명지 목록 열차를 왼쪽으로 밀면) */
-  #codeOver { align-items:flex-start; padding-top:10vh; }   /* 로그인 팝업은 화면 위쪽에 (휴대폰 키보드에 가리지 않게) */
-  body.kbOpen .qrOver, body.kbOpen #codeOver { align-items:flex-start; padding:10px 14px; }   /* 키보드가 올라오면 보이는 영역 맨 위로 */
-  .qrOver .qrBox { max-height:calc(var(--vvh, 100vh) - 20px); overflow-y:auto; }
-  .qrOver .msg { overflow-wrap:anywhere; }
-  .qrOver .admBox { text-align:left; }
-  .qrOver .admBox p { margin:0 0 4px; font-size:17px; }
-  @keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
-  .hero .k { font-size:12px; letter-spacing:2px; opacity:.85; font-weight:700; }
-  .hero h2 { margin:4px 0 4px; font-size:22px; line-height:1.35; }
-  .hero p { margin:0; font-size:14px; opacity:.9; }
-  .hero svg { display:block; width:100%; height:auto; margin-top:8px; }
-  .hero .run { animation:run 9s linear infinite; }
-  .hero > svg { touch-action:pan-y; } #trainHit { touch-action:pan-y; user-select:none; -webkit-user-select:none; }   /* 열차 높이의 띠: 왼쪽으로 밀면 열차가 따라옴 (세로 스크롤은 그대로) */
-  @keyframes run { from { transform:translateX(-260px); } to { transform:translateX(420px); } }
-  @media (prefers-reduced-motion: reduce) { .hero .run { animation:none; transform:translateX(90px); } }
-  /* 진행 단계 */
-  .steps { display:flex; justify-content:space-between; max-width:560px; margin:0 auto; padding:14px 22px 0; position:relative; }
-  .steps::before { content:''; position:absolute; left:40px; right:40px; top:27px; height:2px; background:var(--line); }
-  .steps .st1 { position:relative; z-index:1; display:flex; flex-direction:column; align-items:center; gap:4px; font-size:11px; color:var(--sub); width:56px; }
-  .steps .st1 b { width:28px; height:28px; border-radius:50%; background:#fff; border:2px solid var(--line); display:flex; align-items:center;
-                  justify-content:center; font-size:13px; color:var(--sub); }
-  .steps .st1.on b { background:var(--pri); border-color:var(--pri); color:#fff; box-shadow:0 0 0 4px rgba(50,78,179,.18); }
-  .steps .st1.on { color:var(--pri); font-weight:700; }
-  .steps .st1.done b { background:#e7ecfa; border-color:var(--pri); color:var(--pri); }
-  footer { text-align:center; color:#98a1b3; font-size:14px; padding:6px 0 18px; }
-  main { padding:14px; max-width:560px; margin:0 auto; }
-  .card { background:var(--card); border-radius:16px; padding:16px; box-shadow:0 1px 2px rgba(16,24,40,.05), 0 4px 14px rgba(34,55,138,.07); margin-bottom:12px; }
-  .card > b:first-child { font-size:16px; }
-  .hidden { display:none !important; }
-  input[type=text], input[type=tel], input[type=email], input[type=password] {
-    width:100%; font-size:17px; padding:12px; border:1px solid var(--line); border-radius:10px; margin-top:8px; }
-  .list { display:flex; flex-direction:column; gap:8px; margin-top:10px; }
-  /* 관리자: 서명지 카드를 왼쪽으로 밀면 뒤에 있던 [마감] 또는 [다시 열기][삭제] */
-  .esw { position:relative; border-radius:12px; overflow:hidden; }
-  /* 카드 밀면 보이는 버튼: 카드와 8px 떨어진 둥근 버튼, 두 개면 위아래로 6px 떼어 따로. 색은 CI 파랑·회색 계열 (삭제만 빨강) */
-  .esw > .eswAct { position:absolute; top:0; right:0; bottom:0; width:88px; padding-left:8px; display:flex; gap:6px; visibility:hidden; }
-  .esw.open > .eswAct, .esw.drag > .eswAct { visibility:visible; }
-  .eswAct button { flex:1; min-width:0; border:0; border-radius:12px; color:#fff; font-size:14px; font-weight:800; font-family:inherit; line-height:1.25; padding:4px;
-    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px; }
-  .eswAct button svg { width:18px; height:18px; flex:none; }
-  .eswAct .close { background:#22378a; } .eswAct .reopen { background:var(--pri); }
-  .eswAct .del { background:#b42318; }
-  .eswAct.stack { flex-direction:column; } .eswAct.stack button { flex-direction:row; gap:4px; font-size:13px; line-height:1.2; }   /* 관리자 카드: 버튼 위아래 둘 (따로 떨어짐) */
-  .eswAct.stack button svg { width:15px; height:15px; }
-  .eswAct .info { background:#6b7778; } .eswAct .exp { background:#4a66c9; }
-  .eswAct.stack button.armed { font-size:12px; }
-  .eswAct button.armed { background:#7a1610; font-size:13px; } .eswAct button.armed svg { display:none; }   /* "한 번 더 누르면…" 글자 자리 */
-  .esw > .eswFront { position:relative; transition:transform .2s ease-out; touch-action:pan-y; background:#fff; border-radius:12px; }
-  .esw.open > .eswFront { transform:translateX(var(--sw, -88px)); }
-  .esw > .eswActL { left:0; right:auto; padding-left:0; padding-right:8px; } .esw > .eswActL { visibility:hidden; } .esw.openR > .eswActL, .esw.drag > .eswActL { visibility:visible; }   /* 환불 카드 오른쪽으로 밀기 → 왼쪽 [5분 연장] */
-  .esw.open > .eswActL { visibility:hidden; } .esw.openR > .eswAct:not(.eswActL) { visibility:hidden; }
-  .eswAct .ext { background:#4a66c9; }
-  .esw.openR > .eswFront { transform:translateX(88px); }
-  .esw > .eswFront > * { margin:0; }
-  .eswHint { font-size:12.5px; color:var(--sub); margin-top:6px; }
-  .person { display:flex; align-items:center; justify-content:space-between; padding:14px; border:1px solid var(--line);
-            border-radius:12px; background:#fff; font-size:17px; width:100%; text-align:left; }
-  .person .rank { color:var(--sub); font-size:14px; margin-right:8px; }
-  .person { transition:border-color .15s, background .15s; }
-  input:focus, select:focus, textarea:focus { outline:none; border-color:var(--pri); box-shadow:0 0 0 3px rgba(50,78,179,.15); }
-  .badge { font-size:13px; font-weight:600; }
-  canvas { width:100%; height:220px; border:2px dashed #b9c4e6; border-radius:12px; touch-action:none; display:block;
-           background:#fff linear-gradient(transparent calc(100% - 46px), #c9d1e8 calc(100% - 46px), #c9d1e8 calc(100% - 45px), transparent calc(100% - 45px)); }
-  .row { display:flex; gap:8px; margin-top:10px; }
-  button.btn { flex:1; font-size:17px; padding:14px; border:0; border-radius:12px; font-weight:600; }
-  .pri { background:linear-gradient(180deg, #3b58c0, var(--pri)); color:#fff; box-shadow:0 2px 6px rgba(50,78,179,.3); }
-  .pri:disabled { opacity:.45; box-shadow:none; }
-  button.btn:active:not(:disabled) { transform:translateY(1px); }
-  .gray { background:#e6eaf0; color:var(--text); }
-  .gray:disabled { opacity:.45; }
-  .msg { color:#c0392b; font-size:14px; margin-top:8px; min-height:18px; }
-  .center { text-align:center; padding:30px 10px; }
-  .check { width:76px; height:76px; margin:0 auto 12px; border-radius:50%; background:var(--pri); color:#fff; font-size:40px;
-           display:flex; align-items:center; justify-content:center; box-shadow:0 0 0 10px rgba(50,78,179,.12); animation:pop .45s ease-out; }
-  @keyframes pop { 0% { transform:scale(.4); opacity:0; } 70% { transform:scale(1.08); } 100% { transform:scale(1); opacity:1; } }
-  .who { font-size:19px; font-weight:700; }
-  .hint { color:var(--sub); font-size:13px; margin-top:6px; }
-  .warn { background:#fff7e0; border:1px solid #f0d58a; color:#7a5a00; border-radius:10px; padding:10px 12px; font-size:14px; margin-top:10px; }
-  /* 서명 칸 첫 줄 오른쪽: 안드로이드는 [가로 서명] 버튼, 그 밖은 "가로 화면으로 서명 가능" (세로 화면에서만) */
-  .whoRow { display:flex; align-items:center; gap:8px; } .whoRow .who { flex:1; min-width:0; }
-  .lsTag { display:none; flex:none; font-size:12.5px; font-weight:700; color:var(--pri); }
-  .lsTag button { display:flex; align-items:center; gap:3px; height:26px; padding:0 8px; border:0; border-radius:7px; background:#324eb3; color:#fff; font-size:12px; font-weight:700; font-family:inherit; }
-  .lsTag button svg { width:14px; height:14px; flex:none; }
-  @media (orientation: portrait) {
-    .lsTag { display:block; }
-    /* 세로 서명 화면: 한 화면에 서명 칸과 '서명 제출'이 다 보이게 */
-    body[data-s="s2"] .steps { padding-top:8px; }
-    body[data-s="s2"] .steps::before { top:18px; }
-    body[data-s="s2"] .steps .st1 { font-size:10px; gap:2px; }
-    body[data-s="s2"] .steps .st1 b { width:22px; height:22px; font-size:11px; }
-    body[data-s="s2"] main { padding-top:8px; }
-    #s2 .card { padding:12px 14px; }
-    #s2 .who { font-size:18px; }
-    #s2 .warn { padding:6px 10px; font-size:13px; margin-top:6px; }
-    #s2 .padarea, #skSig .padarea { margin-top:8px; }
-    #s2 .actions, #skSig .actions { display:flex; flex-wrap:wrap; gap:8px; margin-top:8px; }
-    #s2 .actions .row, #skSig .actions .row { display:contents; }
-    #s2 .actions .btn, #skSig .actions .btn { padding:13px 6px; font-size:16px; }
-    #s2 .actions #clear, #s2 .actions #back, #skSig .actions #skClear, #skSig .actions #skSigBack { flex:1; }
-    #s2 .actions #submit, #skSig .actions #skSend { flex:1.8; }
-    #s2 .actions .msg, #skSig .actions .msg { flex-basis:100%; margin-top:0; min-height:0; }
-    /* 안전점검 서명 칸(점검자·팀장 일괄 서명)도 교육 서명과 같게 */
-    body.skSig main { padding-top:8px; }
-    body.skSig #sk .card { padding:12px 14px; }
-    body.skSig #skSigName { font-size:18px; }
-  }
-  .edu { color:var(--sub); font-size:14px; margin-top:2px; }
-  /* 관리자 화면 */
-  .adm-top { display:flex; align-items:center; justify-content:space-between; gap:8px; }
-  .adm-top .who { font-size:17px; }
-  #sa > .card:first-child { padding:8px 14px; }   /* 관리자 맨 위 박스: 낮게 */
-  #admOver .qrBox { width:min(94vw, 460px); } #admOver .adm-top b { font-size:17px; }   /* 서명지 관리 창 (정보 수정·내보내기) */
-  .ecard.fixed .head { cursor:default; padding-right:0; } .ecard.fixed .head::after, .ecard.fixed .tap { display:none; }
-  .sbtn { flex:none !important; width:auto; padding:8px 12px !important; font-size:14px !important; }
-  .chip { display:inline-block; font-size:12px; font-weight:700; border-radius:20px; padding:2px 8px; margin-left:6px; vertical-align:2px; }
-  .chip.on { background:#eef8f1; color:var(--ok); border:1px solid #bfe3cb; }
-  .chip.off { background:#fdecea; color:#b42318; border:1px solid #f5c2bd; }
-  .chip.ext { background:#fff4e6; color:#b45309; border:1px solid #f5d0a6; }
-  .chip.rf { background:#fdecea; color:#b42318; border:1px solid #f5c2bd; }
-  /* 비상(운행 장애 환불 등록): 첫 화면 맨 위, 오른쪽에 QR */
-  .rfItem { display:flex; gap:8px; align-items:stretch; }
-  .rfItem .rfMain { flex:1; display:block; text-align:left; border:1.5px solid #f0a7a0; background:#fff6f5; border-radius:12px; padding:12px 14px; font-size:17px; }
-  .rfItem .rfMain b { display:block; margin-top:2px; }
-  .rfItem .rfMain .rank { color:var(--sub); font-size:14px; }
-  .rfItem .rfTag { display:inline-block; font-size:12px; font-weight:800; color:#fff; background:#c0392b; border-radius:6px; padding:2px 7px; }
-  .rfItem .rfGo { display:block; margin-top:6px; font-size:13px; font-weight:700; color:#b42318; }
-  .rfItem .rfQr { flex:none; width:84px; border:1.5px solid #f0a7a0; background:#fff; border-radius:12px; padding:6px 6px 4px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px; }
-  .rfItem .rfQr span { display:block; width:68px; height:68px; } .rfItem .rfQr span svg { width:100%; height:100%; display:block; }
-  .rfItem .rfQr small { font-size:10px; color:#b42318; font-weight:700; }
-  .rfItem .rfQr em { font-style:normal; font-size:11px; font-weight:800; color:#b42318; }   /* QR 박스 위 '고객용' */
-  .rfItem .rfWho { margin-left:6px; font-size:12px; font-weight:800; color:#b42318; }   /* 태그 옆 '(직원용)' */
-  .rfItem.closed .rfMain { border-color:var(--line); background:#f4f5f7; color:#98a2b3; }
-  .doneClose { margin-top:16px; font-size:17px; font-weight:700; color:var(--pri); background:#f3f6fd; border-radius:12px; padding:14px; }
-  .rfHead { display:flex; align-items:center; gap:8px; }
-  .rfHead .rfQrMini { margin-left:auto; height:28px; padding:0 10px; border:1.5px solid #f0a7a0; border-radius:8px; background:#fff; color:#b42318; font-size:12px; font-weight:800; font-family:inherit; }   /* 직원 대리 등록 중 고객용 QR 잠깐 보기 */
-  .rfHead .rfTag { font-size:12px; font-weight:800; color:#fff; background:#c0392b; border-radius:6px; padding:2px 7px; }
-  .consent { display:flex; gap:8px; align-items:flex-start; justify-content:space-between; margin-top:14px; font-size:15px; font-weight:700; }
-  .consent input { width:20px; height:20px; margin:1px 0 0; flex:none; accent-color:var(--pri); }
-  .rfConsent { white-space:pre-line; font-size:12px; color:var(--sub); background:#f6f7f9; border-radius:8px; padding:8px 10px; margin-top:6px; line-height:1.6; }
-  .person.closed { background:#f3f4f6; color:#9aa3af; border-color:var(--line); }
-  .person .cnt1 { display:block; font-size:13px; color:var(--pri); font-weight:700; margin-top:2px; }
-  .person.closed .cnt1 { color:#9aa3af; }
-  .person.closed .badge { color:#b42318; } .person.armed .badge { color:#fff; background:var(--pri); border-radius:8px; padding:4px 8px; }
-  .ecard { border:1px solid var(--line); border-radius:12px; padding:12px; margin-top:10px; }
-  .ecard .t { font-weight:700; font-size:16px; }
-  .ecard .head { cursor:pointer; position:relative; padding-right:34px; }
-  .ecard .head::after { content:'▾'; position:absolute; right:2px; top:-2px; color:var(--sub); font-size:28px; line-height:1; transition:transform .2s; }
-  .ecard.open .head::after { transform:rotate(180deg); }
-  .ecard .body { display:none; border-top:1px dashed var(--line); margin-top:10px; padding-top:4px; }
-  .ecard.open .body { display:block; }
-  .ecard .tap { color:var(--sub); font-size:12px; margin-top:2px; }
-  .ecard.open .tap { display:none; }
-  .ecard .d { color:var(--sub); font-size:13px; margin-top:2px; }
-  .cnt { font-size:14px; }
-  .ecard .row button { font-size:14px; padding:10px; }
-  .del { background:#fdecea; color:#b42318; }
-  .padarea { margin-top:10px; }
-  canvas.locked { opacity:.55; }
-  @media (orientation: landscape) and (max-height: 600px) {   /* 휴대폰을 가로로 돌렸을 때만 (컴퓨터 화면은 아래 '휴대폰 비율' 적용) */
-    header { padding:4px 14px; }
-    .brand img { height:22px; } header h1 { font-size:11px; padding:2px 8px; }
-    .steps, .hero, footer { display:none !important; }
-    main { max-width:none; padding:8px; }
-    .card { padding:10px; margin-bottom:0; }
-    #s2 .who { font-size:16px; }
-    #s2 .edu { font-size:12px; margin-top:0; }
-    #s2 .hint { display:none; }
-    #s2 .warn { padding:4px 8px; font-size:12px; margin-top:4px; }
-    #s2 .roleT { margin-top:4px; padding:2px 10px; font-size:12px; }
-    .padarea { display:flex; gap:12px; margin-top:6px; }
-    .padwrap { flex:1; min-width:0; }
-    /* 가로 모드 서명 칸: 예전보다 약 1.2배 (아래로 늘림). 위쪽 로고 줄은 서명 화면에서만 숨기고 이름·교육명은 한 줄로 */
-    canvas { height:min(calc((100vh - 140px) * 1.2), calc(100vh - 92px)); height:min(calc((100dvh - 140px) * 1.2), calc(100dvh - 92px)); min-height:120px; }
-    body[data-s="s2"] header, body.skSig header { display:none; }
-    #s2 .whoRow, #skSig .whoRow { display:inline; }
-    #s2 .who, #skSig .who { display:inline; } #s2 .edu, #skSig .edu { display:inline; margin-left:8px; }
-    #skSig .who { font-size:16px; } #skSig .edu { font-size:12px; margin-top:0; }
-    .actions { width:150px; display:flex; flex-direction:column; gap:8px; }
-    .actions .row { flex-direction:column; margin-top:0; }
-    .actions .sub { order:-1; }
-    .actions .sub .btn { padding:22px 10px; }
-  }
-  /* 컴퓨터처럼 넓은 화면: 서명 화면을 휴대폰 폭(430px)으로 가운데에 (관리자 화면은 넓게 그대로) */
-  @media (min-width: 600px) and (min-height: 601px) {
-    html { background:#cfd5e1; }
-    body:not([data-s="sa"]):not([data-s="so"]):not([data-s="sr"]) { max-width:430px; margin:0 auto; min-height:100vh;
-      box-shadow:0 0 0 1px #c3cad8, 0 10px 40px rgba(16,24,48,.18); }
-  }
-  /* v2 추가 */
-  .person.sel { border:2px solid var(--pri); background:#eef3ff; }
-  .person.sel .badge { color:var(--pri); }
-  .codeRow { display:flex; gap:8px; align-items:center; margin-top:8px; }
-  .codeRow input { margin-top:0; }
-  .field { margin-top:10px; }
-  .field label { font-size:13px; color:var(--sub); }
-  .fRow { display:flex; gap:8px; } .fRow > .field { flex:1; min-width:0; }   /* 부서명·날짜 한 줄 (한쪽이 숨으면 나머지가 줄 전체) */
-  .rfSeg { display:flex; gap:6px; margin-top:4px; }
-  .rfSeg button { flex:1; min-width:0; font-size:16px; font-weight:700; padding:12px 4px; border:0; border-radius:10px; background:#e4e7ec; color:var(--sub); }
-  .rfSeg button.on { background:var(--pri); color:#fff; }
-  .rfStRow { display:flex; gap:8px; } .rfStRow .field { flex:1; min-width:0; }
-  #rfAcc .field:last-child { flex:2; }   /* 계좌번호가 한 번에 보이게 (은행 1 : 계좌번호 2) */
-  #rfAcc .field:first-child input { padding-left:8px; padding-right:8px; }   /* 좁은 은행 칸에 이름이 보이게 */
-  #rfFields .field label { font-size:16px; font-weight:700; color:var(--text); }   /* 환불 등록: 칸 이름 크게 */
-  select { width:100%; font-size:16px; padding:11px; border:1px solid var(--line); border-radius:10px; margin-top:4px; background:#fff; }
-  .slist { margin-top:8px; border:1px solid var(--line); border-radius:10px; overflow:hidden; }
-  .srow { display:flex; align-items:center; gap:6px; padding:6px 8px; border-top:1px solid var(--line); font-size:14px; }
-  .srow:first-child { border-top:0; }
-  .srow .no { width:26px; color:var(--sub); text-align:right; }
-  .srow .nm { flex:1; }
-  .srow .nm small { color:var(--sub); margin-right:6px; }
-  .mv { border:1px solid var(--line); background:#fff; border-radius:8px; width:34px; height:30px; font-size:14px; }
-  .mv:disabled { opacity:.35; }
-  .note { font-size:12px; color:var(--sub); margin-top:4px; }
-  /* 새 교육: 본인 확인 체크 (기본 체크) */
-  .vchk { display:flex; align-items:center; gap:8px; border:1px solid var(--line); border-radius:10px; padding:11px 12px; font-size:15px; color:var(--text) !important; cursor:pointer; }
-  .vchk input { width:20px; height:20px; margin:0; accent-color:var(--pri); flex:none; }
-  .vchk small { color:var(--sub); font-size:12px; }
-  .vRow { display:flex; gap:8px; } .vRow .vchk { flex:1; min-width:0; }   /* 본인 확인·명단 지정 한 줄 */
-  .lockRow { display:flex; align-items:center; justify-content:space-between; gap:8px; margin-top:8px; padding:8px 10px; border-radius:10px; background:#fdecea; color:#b42318; font-size:13px; font-weight:700; }
-  .rfLeft.soon, .rfLeft.over { color:#c0392b; font-weight:700; }
-  .rfMins { display:flex; gap:6px; } .rfMins button { flex:1; height:42px; border:1px solid var(--line); border-radius:10px; background:#fff; color:var(--text); font-size:15px; font-weight:700; font-family:inherit; }
-  .rfMins button.on { background:var(--pri); color:#fff; border-color:var(--pri); } .rfMins input { flex:1.3; min-width:0; height:42px; font-size:15px; text-align:center; }
-  .lockRow .btn { background:#b42318; color:#fff; }
-  .roleT { display:inline-block; margin-top:8px; background:#eef3ff; color:var(--pri); border:1px solid #c9d8fb; border-radius:20px; padding:4px 12px; font-size:14px; font-weight:700; }
-  textarea { width:100%; font-size:15px; padding:10px; border:1px solid var(--line); border-radius:10px; margin-top:6px; font-family:inherit; resize:vertical; }
-  .srow .x { border:0; background:none; color:#b42318; font-size:16px; width:28px; }
-  .srow .st { font-size:11px; color:var(--ok); margin-left:4px; }
-  .srow.rrow .nm { flex:none; white-space:nowrap; }
-  .srow .rl { flex:1; color:var(--pri); font-weight:700; text-align:right; word-break:keep-all; overflow-wrap:anywhere; }
-  /* 양식 미리보기 (구조만 작게) */
-  .tprev { margin-top:6px; background:#f7f8fb; border:1px solid var(--line); border-radius:10px; padding:8px; }
-  .tprev .cap { font-size:12px; color:var(--sub); margin-bottom:6px; }
-  .tprev .cap b { color:var(--text); }
-  .tprev .tag { display:inline-block; font-size:11px; font-weight:700; color:#b54708; background:#fff1e6; border:1px solid #f9c79c; border-radius:10px; padding:0 6px; margin-left:4px; }
-  .tprev .wrap { display:flex; gap:6px; align-items:flex-start; }
-  .tprev .wrap + .wrap { margin-top:6px; }
-  .tprev table { border-collapse:collapse; background:#fff; font-size:10px; flex:1; min-width:0; table-layout:fixed; }
-  .tprev th, .tprev td { border:1px solid #c8cfdd; padding:2px 3px; text-align:center; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; height:15px; }
-  .tprev th { background:#e9edf7; color:#33405a; font-weight:700; }
-  .tprev table.skPrev td { white-space:normal; height:auto; } .tprev table.skPrev td.l { text-align:left; } .tprev table.skPrev td.more { font-size:10px; padding:3px; }   /* 안전점검 항목은 줄바꿈 */
-  .tprev th.k-role { background:#ffe7d4; color:#b54708; }
-  .tprev th.k-sign { background:#dfe6fb; color:var(--pri2); }
-  .tprev td.more { color:var(--sub); font-size:9px; height:11px; padding:0; }
-  /* 직원 등록 카드 */
-  #chgCard .nhead, #pcCard .nhead, #gdCard .nhead, #gstCard .nhead { cursor:pointer; position:relative; padding-right:34px; }
-  #chgCard .nhead::after, #pcCard .nhead::after, #gdCard .nhead::after, #gstCard .nhead::after { content:'▾'; position:absolute; right:2px; top:-2px; color:var(--sub); font-size:28px; line-height:1; transition:transform .2s; }
-  #chgCard.open .nhead::after, #pcCard.open .nhead::after, #gdCard.open .nhead::after, #gstCard.open .nhead::after { transform:rotate(180deg); }
-  #chgCard .ebody, #pcCard .ebody, #gdCard .ebody, #gstCard .ebody, #stCard .ebody, #smCard .ebody { display:none; } #chgCard.open .ebody, #pcCard.open .ebody, #gdCard.open .ebody, #gstCard.open .ebody, #stCard.open .ebody, #smCard.open .ebody { display:block; }
-  /* 역 안내 화면 카드 (관리자) */
-  .stTools { display:flex; gap:6px; align-items:center; margin:0 0 8px; } .stTools .btn { flex:none; } .stTools b { flex:1; font-size:14px; }
-  /* DID: 지금 역 화면 요약 · 보낼 역 · 역 고르기 */
-  .stNow { display:flex; align-items:center; justify-content:space-between; gap:10px; border:1px solid var(--line); border-radius:12px; padding:10px 12px; margin-bottom:4px; }
-  .stNow > div { min-width:0; } .stNow b { display:block; font-size:15px; } .stNow small { display:block; color:var(--sub); font-size:13px; margin-top:2px; } .stNow .btn { flex:none; }
-  .stTo { display:flex; align-items:center; justify-content:space-between; gap:8px; } .stTo .btn { flex:none; }
-  .stPill { min-width:0; font-size:14px; font-weight:700; padding:5px 12px; border-radius:8px; background:#e8edfb; color:var(--pri2); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-  .stPill.none { background:#fff5f4; color:#b42318; }
-  .stPick { border:1px solid var(--line); border-radius:12px; padding:10px; margin-top:8px; background:#f8f9fc; }
-  .stPick > .btn { width:100%; margin-top:10px; }
-  #stDiff { margin-top:14px; color:#b54708; }
-  #stImgSave, #smSave { width:100%; margin-top:12px; }
-  /* 안내 이미지 목록 편집기 (관리자·근무자) */
-  .edHead { display:flex; align-items:baseline; justify-content:space-between; margin:16px 0 4px; } .edHead b { font-weight:800; font-size:15px; } .edCnt { color:var(--sub); font-size:13px; }
-  .edRow { display:flex; align-items:center; gap:8px; padding:7px 0; border-top:1px solid var(--line); cursor:pointer; font-size:14px; }
-  .edRow.open { background:#f3f5fb; } .edRow.off .edTh { opacity:.45; }
-  .edTh { width:52px; height:32px; flex:none; object-fit:cover; border-radius:5px; background:#1b2333; } .edTh.bad { background:#d8dde8; }
-  .edName { flex:1; min-width:0; } .edName b { display:block; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; } .edName small { display:block; color:#b54708; font-size:12px; }
-  .edSec { flex:none; color:var(--sub); font-size:13px; }
-  .edBtn { flex:none; width:30px; height:30px; padding:0; border:1px solid var(--line); border-radius:7px; background:#fff; color:var(--sub); font-size:13px; cursor:pointer; }
-  .edDet { padding:6px 4px 12px; border-top:1px dashed var(--line); background:#f3f5fb; }
-  .edBig { display:block; width:100%; aspect-ratio:16/9; object-fit:contain; background:#000; border-radius:8px; } .edBig.cover { object-fit:cover; }
-  .edPair { display:flex; align-items:center; gap:6px; } .edPair input { flex:1; min-width:0; margin-top:0; } .edPair span { color:var(--sub); }
-  .edAdd { display:block; width:100%; margin-top:8px; text-align:center; cursor:pointer; font-size:16px; font-weight:600; padding:12px; border-radius:12px; }
-  .edFitL { margin:12px 0 4px; font-size:13px; color:var(--sub); }
-  .edSeg { display:flex; border:1px solid var(--line); border-radius:10px; overflow:hidden; }
-  .edSeg button { flex:1; padding:9px 0; border:0; background:#fff; font:inherit; font-size:14px; color:var(--sub); cursor:pointer; } .edSeg button.on { background:#e8edfb; color:var(--pri2); font-weight:700; }
-  /* 미리보기 (역 화면처럼) */
-  .stPrevOver { position:fixed; inset:0; z-index:90; background:#000; display:flex; align-items:center; justify-content:center; }
-  .stPrevOver img { width:100%; height:100%; object-fit:contain; } .stPrevOver img.cover { object-fit:cover; }
-  .stPrevCap { position:absolute; left:12px; right:60px; bottom:14px; color:#fff; font-size:13px; background:rgba(0,0,0,.55); padding:6px 10px; border-radius:8px; }
-  .stPrevX { position:absolute; right:12px; top:12px; width:42px; height:42px; border:0; border-radius:50%; background:rgba(0,0,0,.55); color:#fff; font-size:20px; cursor:pointer; }
-  .stList { display:grid; grid-template-columns:repeat(auto-fill, minmax(96px, 1fr)); gap:4px; }   /* 21개 역이 한 화면에 (휴대폰 3칸) */
-  .stRow { display:flex; align-items:center; gap:4px; border:1px solid var(--line); border-radius:8px; padding:5px 6px; font-size:13px; line-height:1.2; cursor:pointer; background:#fff; min-width:0; }
-  .stRow > div { min-width:0; } .stRow b { display:block; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; letter-spacing:-.04em; }
-  .stRow input { margin:0; flex:none; width:auto; } .stRow small { display:block; color:var(--sub); font-size:11px; white-space:nowrap; }
-  .stRow.nocode small { color:#b54708; }
-  .stRow.on { border-color:#b42318; background:#fff5f4; } .stRow.on small { color:#b42318; }
-  .stSub { margin:16px 0 4px; font-weight:800; font-size:15px; }
-  #stPage { word-break:break-all; }
-  #chgCard .codeRow, #pcCard .codeRow, #gdCard .codeRow { align-items:flex-end; }
-  .gdList { margin-top:8px; } .gdList .srow .st { margin-left:auto; color:var(--sub); font-size:13px; }
-  /* 개인 코드: 입력 글자를 점으로 가림 (비밀번호 칸이 아니라서 휴대폰·브라우저가 저장하자고 묻지 않음) */
-  .secret { -webkit-text-security:disc; letter-spacing:4px; }
-  /* 로그인 */
-  .meBar { display:flex; align-items:center; gap:6px; } .meBar b { flex:1; min-width:0; font-size:15px; }
-  .meAdm { display:inline-block; margin-left:6px; padding:1px 7px; border-radius:999px; background:var(--pri); color:#fff; font-size:12px; font-weight:700; vertical-align:1px; } .meAdm.mst { background:#6d28d9; }
-  .rfTime { margin-top:6px; font-size:14px; font-weight:700; color:var(--sub); } .rfTime.soon { color:#c0392b; }
-  .qrOver .regBox { padding:0; overflow-x:hidden; }
-  .regHead { display:flex; align-items:center; gap:12px; padding:16px 18px; color:#fff; background:linear-gradient(160deg, #3d5cc8 0%, var(--pri) 45%, var(--pri2) 100%); }
-  .regIco { flex:none; width:42px; height:42px; border-radius:12px; background:rgba(255,255,255,.16); display:flex; align-items:center; justify-content:center; }
-  .regIco svg { width:24px; height:24px; display:block; }
-  .regHead b { display:block; font-size:17px; line-height:1.3; } .regHead small { display:block; margin-top:2px; font-size:12.5px; opacity:.85; }
-  .regSteps { display:flex; margin:0; padding:12px 18px 0; list-style:none; }
-  .regSteps li { flex:1; position:relative; font-size:12px; font-weight:600; color:var(--sub); text-align:center; }
-  .regSteps li i { display:block; width:24px; height:24px; line-height:22px; margin:0 auto 3px; border:1px solid var(--line); border-radius:50%; background:#fff; font-style:normal; font-size:12px; position:relative; z-index:1; }
-  .regSteps li + li::before { content:''; position:absolute; top:12px; left:-50%; width:100%; height:1px; background:var(--line); }
-  .regSteps li.on { color:var(--pri); font-weight:700; } .regSteps li.on i { background:var(--pri); border-color:var(--pri); color:#fff; box-shadow:0 0 0 4px rgba(50,78,179,.16); }
-  .regSteps li.done i { background:#e7ecfa; border-color:var(--pri); color:var(--pri); } .regSteps li.done + li::before, .regSteps li.on + li::before { background:var(--line); } .regSteps li.done::before, .regSteps li.on::before { background:var(--pri) !important; }
-  .regBody { padding:14px 18px 16px; }
-  .regAskText { font-size:15px; line-height:1.6; color:var(--text); } .regAskText b { color:var(--pri2); }
-  .regMailTo { font-size:14px; line-height:1.5; color:var(--text); background:#f3f6fd; border-radius:10px; padding:9px 12px; overflow-wrap:anywhere; }
-  .codeCells { position:relative; display:flex; gap:6px; margin-top:12px; } .codeCells i { flex:1; min-width:0; height:52px; line-height:50px; border:1.5px solid var(--line); border-radius:10px; background:#fff; color:var(--text); font-style:normal; font-size:24px; font-weight:700; text-align:center; transition:border-color .12s, box-shadow .12s; }
-  .codeCells i.fill { border-color:#9db0e6; background:#f7f9fe; } .codeCells.focus i.cur { border-color:var(--pri); box-shadow:0 0 0 3px rgba(50,78,179,.16); }
-  .codeCells input[type=tel] { position:absolute; inset:0; width:100%; height:100%; margin:0; padding:0; opacity:0; border:0; font-size:16px; }
-  .mailRow { display:flex; align-items:center; gap:6px; margin-top:8px; } .mailRow input[type=text] { flex:1; min-width:0; margin-top:0; } .mailRow span { flex:none; font-size:15px; font-weight:600; color:var(--text); }
-  #regOver.full { padding:0; align-items:stretch; background:var(--bg); }
-  #regOver.full .regBox { width:100%; max-width:430px; height:100%; max-height:none; border-radius:0; animation:none; }
-  #regOver.full .regHead { position:sticky; top:0; z-index:2; }
-  .regInfo { white-space:pre-line; font-size:12px; line-height:1.6; color:var(--sub); background:#f6f7f9; border-radius:8px; padding:8px 10px; margin-top:10px; }
-  .regChk { font-size:14px; line-height:1.8; background:#f3f6fd; border-radius:8px; padding:8px 10px; margin-top:8px; }
-  input[readonly] { background:#eef1f5; color:var(--sub); }
-  .eTabs { display:flex; margin-top:10px; border-bottom:1px solid var(--line); } .eTabs button { flex:1; height:42px; border:1px solid var(--line); border-bottom:0; border-radius:10px 10px 0 0; background:#eef1f5; color:var(--sub); font-size:15px; font-weight:700; }
-  .eTabs button.on { background:#fff; color:var(--pri); box-shadow:0 1px 0 #fff; }
-  .pickBox { background:#fff7e6; border:1px solid #f5d0a6; border-radius:10px; padding:8px 10px; margin-top:8px; font-size:14px; } .pickBox label { display:flex; align-items:center; gap:8px; padding:5px 0; color:var(--text) !important; } .pickBox input { width:20px; height:20px; margin:0; flex:none; accent-color:var(--pri); }
-  /* 환불 등록 QR: 입력 화면이 다 불러질 때까지 다른 화면을 보이지 않음 */
-  .rfBoot header, .rfBoot #hero, .rfBoot #steps, .rfBoot main, .rfBoot #foot { visibility:hidden; }
-  .rfBoot body::before { content:'불러오는 중…'; position:fixed; inset:0; display:flex; align-items:center; justify-content:center; color:var(--sub); font-size:15px; }
-  /* 새 교육 열기: 접고 펼치기 */
-  #newCard .nhead { cursor:pointer; position:relative; padding-right:34px; }
-  #newCard .nhead::after { content:'▾'; position:absolute; right:2px; top:-2px; color:var(--sub); font-size:28px; line-height:1; transition:transform .2s; }
-  #newCard.open .nhead::after { transform:rotate(180deg); }
-  #newCard .nbody { display:none; }
-  #newCard.open .nbody { display:block; }
-  /* 교육 카드 안 '서명지 정보 수정': 항상 펼침 */
-  .ihead { margin-top:12px; }
-  .ibox .ibody { margin:8px -12px 0; padding:2px 12px 12px; background:#f3f6fd; border-top:1.5px solid var(--pri); border-bottom:1.5px solid var(--pri); }   /* 펼치면 카드 좌우 끝까지 연한 파랑, 위아래 줄 (입력칸 폭은 그대로) */
-  .gnote { margin-top:10px; background:#fff1e6; border:1px solid #f9c79c; color:#9a3d06; border-radius:10px; padding:8px 12px; font-size:14px; }
-  /* 안전점검의 날: 서명지 목록 카드 (누르면 역 선택 화면) */
-  .skItem { border:1.5px solid #9fb3ea; background:#f5f8ff; border-radius:12px; padding:12px; cursor:pointer; }
-  .skItem .skTop b { display:block; font-size:17px; margin-top:4px; }
-  .skItem .skTop .rank { color:var(--sub); font-size:14px; }
-  .skTag { display:inline-block; font-size:12px; font-weight:800; color:#fff; background:var(--pri); border-radius:6px; padding:2px 7px; }
-  .skCnt { margin-top:8px; font-size:14px; } .skCnt strong { color:var(--pri); } .skCnt strong.done { color:var(--ok); }
-  .skGo { font-size:12px; color:var(--sub); margin-top:2px; }
-  .skItem.busy { opacity:.6; pointer-events:none; }
-  .skCell { display:flex; flex-direction:column; gap:4px; } .skCell > button:first-child { flex:1; }
-  .pdfDl { font-size:11.5px; font-weight:600; color:#12833b; }   /* PDF 받음 표시 (누가·언제) */
-  .skPdfS.got { border-color:#12833b !important; color:#12833b; }
-  .skPdfS { border:1.5px solid var(--pri) !important; background:#fff !important; color:var(--pri); font-size:13px !important; font-weight:700; padding:7px 4px !important; border-radius:8px !important; }
-  .skPdfB { width:100%; margin-top:8px; padding:10px; border:1.5px solid var(--line); border-radius:12px; background:#fff; font-size:14px; font-weight:700; color:var(--pri); }
-  .skPdfB:disabled { color:#98a2b3; background:#f4f5f7; }
-  .skItem.closed { border-color:var(--line); background:#f4f5f7; color:#98a2b3; }
-  .skItem.closed .skCnt strong { color:#98a2b3; }
-  /* 역 선택 화면의 팀장 확인 (진행 상황 · 일괄 서명) */
-  .skLead { margin-top:12px; border:1.5px solid #9fb3ea; background:#f5f8ff; border-radius:12px; padding:10px 12px; }
-  .skLead .who { font-size:16px; color:var(--pri); }
-  html { touch-action:manipulation; }   /* 휴대폰: 두 번 탭 확대 제스처 끔 → 첫 터치가 바로 버튼으로 */
-  html.noPull, html.noPull body { overscroll-behavior-y:none; }        /* 안전점검 화면: 당겨서 새로고침 끔 */
-  body.skSig #sk .rfHead, body.skSig #skTitle, body.skSig #skDate { display:none; }   /* 서명 단계: 교육 서명처럼 이름 줄 + 제목 한 줄만 */
-  .skGrid button.chk { border-color:#f0d58a; background:#fff3c4; } .skGrid button small.ck { color:#b45309; font-weight:700; }   /* 확인 필요한 역 */
-  /* 점검자 화면 */
-  .skGrid { display:grid; grid-template-columns:repeat(3, 1fr); gap:6px; margin-top:10px; }
-  .skGrid button { border:1.5px solid var(--line); background:#fff; border-radius:10px; padding:10px 4px; font-size:15px; font-weight:700; color:var(--text); line-height:1.3; }
-  .skGrid button small { display:block; font-size:11px; font-weight:400; color:var(--sub); }
-  .skGrid button.done { border-color:#bfe3cb; background:#eef8f1; } .skGrid button.done small { color:var(--ok); }
-  .skGrp { margin-top:14px; font-size:13px; font-weight:800; color:var(--pri2); border-bottom:1px solid var(--line); padding-bottom:4px; }
-  .skIt { padding:10px 0; border-bottom:1px dashed var(--line); }
-  .skH { display:flex; align-items:center; gap:8px; }
-  .skH .t { flex:1; min-width:0; font-size:15px; }
-  .skL { display:flex; align-items:center; gap:14px; margin-top:6px; }          /* 수량 칸 옆에 양호, 비고 칸 옆에 불량 (둘 중 하나만 체크) */
-  .skL .qi, .skL .ni { flex:1; width:auto !important; margin-top:0 !important; }
-  .skL label { flex:none; width:68px; display:flex; align-items:center; gap:4px; font-size:15px; font-weight:700; color:var(--text); cursor:pointer; white-space:nowrap; }
-  .skIt .skL label input { padding:0; width:24px; height:24px; margin:0; accent-color:var(--pri); flex:none; }
-  .skL label.on { color:var(--pri); } .skL label.x.on { color:#b42318; } .skL label.x input { accent-color:#c0392b; }
-  .skQ textarea.ni { width:100%; margin-top:6px; font-size:15px; padding:9px 10px; border:1px solid var(--line); border-radius:10px; font-family:inherit; line-height:1.4; resize:none; overflow:hidden; display:block; }
-  .skQ textarea.ni.fold { height:42px; white-space:pre; }                       /* 접힘: 한 줄만 보임 */
-  .skQ .nTog { align-self:flex-end; border:0; background:none; color:var(--pri); font-size:13px; font-weight:700; padding:4px 2px; }
-  .skIt.miss { background:#fff5f4; }
-  .skIt input { margin-top:6px; font-size:15px; padding:9px 10px; }
-  #sk textarea { width:100%; font-size:15px; padding:10px; border:1px solid var(--line); border-radius:10px; margin-top:6px; font-family:inherit; }
-  .skChecks { display:grid; grid-template-columns:repeat(3, 1fr); gap:4px 8px; margin-top:6px; }
-  .skChecks label { display:flex; align-items:center; gap:5px; font-size:14px; color:var(--text); }
-  .skChecks input { width:18px; height:18px; margin:0; accent-color:var(--pri); flex:none; }
-  .skQ { display:flex; flex-direction:column; } .skQ .qi, .skQ .ni { width:100%; min-width:0; }   /* 수량 한 줄 · 비고 다음 줄 */
-  .skQ input::placeholder { color:#98a2b3; }
-  /* 체크리스트 모양 (점검자 최종 확인 · 팀장 확인) */
-  .skPaper { background:#fff; border:1px solid #c9ced8; border-radius:6px; padding:10px; color:#111; font-size:12px; }
-  .skPaper .pT { text-align:center; font-size:17px; font-weight:800; margin:2px 0 8px; }
-  .skPaper table { width:100%; border-collapse:collapse; table-layout:fixed; }
-  .skPaper th, .skPaper td { border:1px solid #888; padding:4px 3px; vertical-align:middle; text-align:center; word-break:keep-all; overflow-wrap:anywhere; }
-  .skPaper th { background:#f1f1f1; font-weight:700; }
-  .skPaper .pHead td { font-weight:700; } .skPaper .pSign { height:46px; } .skPaper .pSign img { max-width:100%; max-height:44px; display:block; margin:0 auto; }
-  .skPaper .pNote { font-size:11px; margin:6px 0 4px; }
-  .skPaper .pi { text-align:left; } .skPaper .pr { font-weight:800; font-size:14px; } .skPaper .pr.x { color:#c0392b; }
-  .skPaper .pn { font-size:11px; }
-  .skPaper tr.chg td { background:#fff3c4; }
-  .skPaper td.ck { background:#fff3c4; }   /* 팀장 보기: 수량 바뀜·비고·불량 칸 */
-  .skPaper .was { display:block; font-size:10.5px; color:#b45309; font-weight:700; margin-top:2px; }
-  .skPaper .pChg { font-size:12px; font-weight:700; color:#b45309; margin-bottom:6px; } .skPaper .pChg.none { color:var(--sub); }
-  /* 팀장 내용 보기: 전체 화면 (역마다 체크리스트, 이전·다음 역) */
-  .skView { position:fixed; top:var(--vvt, 0px); left:0; right:0; height:var(--vvh, 100%); z-index:40; background:#e9edf4; display:flex; flex-direction:column; }
-  body.skLock { overflow:hidden; }
-  .lvTop { flex:none; display:flex; align-items:center; gap:8px; padding:8px 10px; background:#fff; border-bottom:2px solid var(--pri); }
-  .lvTop b { flex:1; min-width:0; font-size:15px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-  .lvTop span { font-size:13px; font-weight:700; color:var(--pri); white-space:nowrap; }
-  .lvTop select { flex:none; max-width:44%; height:36px; font-size:15px; border:1px solid var(--line); border-radius:8px; padding:0 6px; background:#fff; color:var(--text); }
-  .lvPage { flex:1; overflow-y:auto; -webkit-overflow-scrolling:touch; overscroll-behavior:contain; padding:10px; }
-  .lvPage > .skPaper, .lvPage > .hint, .lvPage > .lvHint, .lvPage > .lvNav, .lvPage > .card { max-width:794px; margin-left:auto; margin-right:auto; }   /* A4 폭(794px)까지만, 가운데 */
-  .lvPage > .skPaper { aspect-ratio:210 / 297; box-sizing:border-box; }   /* A4 비율 (내용이 길면 아래로 늘어남) */
-  /* 가운데 로딩 표시 (서버를 부르는 동안, 0.3초 넘으면) */
-  .busyOver { position:fixed; inset:0; z-index:9999; display:flex; align-items:center; justify-content:center; background:rgba(15,23,42,.28); }
-  .busyOver.hidden { display:none; }
-  .busyBox { display:flex; flex-direction:column; align-items:center; gap:12px; min-width:170px; padding:22px 26px; border-radius:16px; background:#fff; box-shadow:0 8px 30px rgba(0,0,0,.25); }
-  .busyBox b { font-size:15px; color:var(--text); }
-  .busySpin { width:42px; height:42px; border:4px solid #dbe3f4; border-top-color:var(--pri); border-radius:50%; animation:busySp .8s linear infinite; }
-  @keyframes busySp { to { transform:rotate(360deg); } }
-  .lvHint { text-align:center; font-size:12px; color:var(--sub); padding:8px 0; }
-  .lvNav { margin:6px 0 30px; }
-  /* PDF 서명지 */
-  .pdfTag { display:inline-block; font-size:12px; font-weight:800; color:#fff; background:#6d28d9; border-radius:6px; padding:1px 6px; margin-right:6px; vertical-align:2px; }
-  .person.closed .pdfTag { background:#9aa3af; }
-  .pdfNames { display:block; font-size:13px; margin-top:3px; color:var(--sub); line-height:1.5; }
-  .pdfNames .ok { color:#12833b; font-weight:700; }
-  .eswAct .pdfdl { background:var(--pri); }
-  .puHits { display:flex; flex-wrap:wrap; gap:6px; margin-top:8px; }
-  .puHit { border:1px solid var(--line); background:#fff; border-radius:8px; padding:8px 10px; font:inherit; font-size:14px; }
-  .puSigners { margin:8px 0 0; padding-left:22px; }
-  .puSigners li { padding:6px 0; border-bottom:1px solid var(--line); font-size:15px; }
-  .puSigners li span { margin-right:8px; }
-  .puDel { float:right; border:0; background:none; color:#b42318; font:inherit; font-size:13px; font-weight:700; }
-  .puPg { position:relative; margin-top:12px; border:1px solid var(--line); background:#fff; }
-  .puPg canvas { display:block; width:100%; height:100%; }
-  .puLayer { position:absolute; inset:0; }
-  .puBox { position:absolute; border:2px solid #d92d20; background:rgba(217,45,32,.12); border-radius:3px; box-sizing:border-box; }
-  .puBox span { position:absolute; left:0; top:0; max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; background:#d92d20; color:#fff; font-size:10px; line-height:12px; font-weight:800; padding:0 3px; border-radius:0 0 3px 0; }
-  .puBox.extra { border-color:#9aa3af; background:rgba(154,163,175,.15); } .puBox.extra span { background:#9aa3af; }
-  .puNo { position:absolute; right:4px; bottom:4px; font-size:11px; color:#fff; background:rgba(0,0,0,.45); border-radius:4px; padding:0 5px; }
-  .puCount { font-size:14px; font-weight:700; margin-bottom:8px; }
-  .pvBar { position:sticky; bottom:8px; z-index:5; box-shadow:0 -2px 12px rgba(0,0,0,.08); }
-</style>
-</head>
-<body>
-<header>
-  <div class="brand" id="brand">
-    <img id="logo" alt="부산-김해경전철" referrerpolicy="no-referrer"
-      src="https://www.bglrt.com/_res/english/img/inc/logo_bgl%28k%29.png"
-      onerror="if(!this.dataset.alt){this.dataset.alt=1;this.src='https://www.bglrt.com/_res/default/img/sub/p00563_img05_04.png';}else{document.getElementById('brand').className='brand noimg';}">
-    <span class="wm"><i>BGL</i>부산-김해경전철</span>
-  </div>
-  <h1>e-싸인</h1>
-  <div class="appSw hidden" id="appSw" role="tablist"><a class="sw on" data-k="sign" href="#" role="tab" aria-selected="true">e-싸인</a><a class="sw" data-k="car" href="#" target="_top" role="tab" aria-selected="false">차량관리</a><a class="sw" data-k="kiosk" href="#" role="tab" aria-selected="false">DID</a></div>
-</header>
-
-<!-- 첫 화면 그림 (교육 선택 화면에서만) -->
-<div class="hero" id="hero">
-  <div class="txt">
-    <div class="k">BUSAN · GIMHAE LRT</div>
-    <h2>BGL e-싸인</h2>
-    <p id="heroText">사번과 개인 코드로 로그인하세요.</p>
-  </div>
-  <button class="qrBtn hidden" id="qrBtn" type="button" aria-label="QR 크게 보기"><span id="qrSmall"></span><b>QR</b></button>
-  <svg viewBox="0 0 400 120" aria-hidden="true">
-    <!-- 먼 산 -->
-    <path d="M0 88 L40 62 L70 76 L110 44 L150 70 L190 52 L230 74 L270 40 L310 66 L350 50 L400 72 L400 120 L0 120Z" fill="#fff" opacity=".08"/>
-    <!-- 도시 -->
-    <g fill="#fff" opacity=".13">
-      <rect x="18" y="58" width="16" height="40"/><rect x="38" y="48" width="12" height="50"/><rect x="54" y="66" width="18" height="32"/>
-      <rect x="300" y="54" width="14" height="44"/><rect x="318" y="40" width="12" height="58"/><rect x="334" y="62" width="20" height="36"/><rect x="358" y="50" width="12" height="48"/>
-    </g>
-    <!-- 고가 궤도 -->
-    <rect x="0" y="92" width="400" height="7" fill="#dfe5f7"/>
-    <rect x="0" y="99" width="400" height="3" fill="#9fa9aa"/>
-    <g fill="#c9d1e8"><rect x="34" y="102" width="9" height="18"/><rect x="134" y="102" width="9" height="18"/><rect x="234" y="102" width="9" height="18"/><rect x="334" y="102" width="9" height="18"/></g>
-    <!-- 경전철 2량 (실제 열차처럼: 흰·회색 차체, 주황 지붕띠가 양 끝에서 아래로 내려옴, 검은 창, 가운데 연결막) -->
-    <g id="trainDrag"><g class="run" id="train">
-      <!-- 지붕 장비 -->
-      <g fill="#eef0f2" stroke="#c3c8ce" stroke-width=".6">
-        <rect x="22" y="53.5" width="20" height="5" rx="1"/><rect x="60" y="54.5" width="10" height="4" rx="1"/><rect x="88" y="53.5" width="20" height="5" rx="1"/>
-        <rect x="132" y="53.5" width="20" height="5" rx="1"/><rect x="170" y="54.5" width="10" height="4" rx="1"/><rect x="198" y="53.5" width="20" height="5" rx="1"/>
-      </g>
-      <!-- 차체 -->
-      <rect x="6" y="58" width="112" height="32" rx="4" fill="#f3f4f6"/>
-      <rect x="122" y="58" width="112" height="32" rx="4" fill="#f3f4f6"/>
-      <!-- 아래쪽 회색 -->
-      <rect x="6" y="86" width="112" height="4" fill="#c9ced4"/><rect x="122" y="86" width="112" height="4" fill="#c9ced4"/>
-      <!-- 주황 지붕띠 (양 끝은 아래로 둥글게 내려옴) -->
-      <path d="M10 58 H118 V65 H26 Q15 65 8 80 H6 V62 Q6 58 10 58 Z" fill="#f26b1d"/>
-      <path d="M122 58 H230 Q234 58 234 62 V80 H232 Q225 65 214 65 H122 Z" fill="#f26b1d"/>
-      <!-- 연결막 -->
-      <rect x="118" y="60" width="4" height="28" fill="#8b9198"/>
-      <!-- 양 끝 앞유리 -->
-      <path d="M7.5 70 Q10 67 15 67 V80 H7.5 Z" fill="#1d2127"/>
-      <path d="M232.5 70 Q230 67 225 67 V80 H232.5 Z" fill="#1d2127"/>
-      <!-- 창문·출입문 -->
-      <g fill="#1d2127">
-        <rect x="21" y="67" width="24" height="11" rx="1.5"/><rect x="70" y="67" width="18" height="11" rx="1.5"/><rect x="108" y="67" width="7" height="11" rx="1.5"/>
-        <rect x="125" y="67" width="7" height="11" rx="1.5"/><rect x="152" y="67" width="18" height="11" rx="1.5"/><rect x="195" y="67" width="24" height="11" rx="1.5"/>
-      </g>
-      <g fill="#e4e7ea" stroke="#b8bec5" stroke-width=".6">
-        <rect x="50" y="66" width="15" height="21"/><rect x="92" y="66" width="13" height="21"/>
-        <rect x="135" y="66" width="13" height="21"/><rect x="175" y="66" width="15" height="21"/>
-      </g>
-      <g fill="#1d2127">
-        <rect x="52" y="68" width="5" height="9" rx="1"/><rect x="58" y="68" width="5" height="9" rx="1"/><rect x="94" y="68" width="4" height="9" rx="1"/><rect x="99" y="68" width="4" height="9" rx="1"/>
-        <rect x="137" y="68" width="4" height="9" rx="1"/><rect x="142" y="68" width="4" height="9" rx="1"/><rect x="177" y="68" width="5" height="9" rx="1"/><rect x="183" y="68" width="5" height="9" rx="1"/>
-      </g>
-      <!-- 앞등 -->
-      <rect x="230" y="82" width="3" height="2" rx="1" fill="#ffd27a"/>
-    </g></g>
-    <rect id="trainHit" x="0" y="50" width="400" height="42" fill="transparent"/>
-  </svg>
-</div>
-
-<!-- 진행 단계 -->
-<div class="steps" id="steps">
-  <div class="st1"><b>1</b>서명지 선택</div>
-  <div class="st1"><b>2</b>서명</div>
-  <div class="st1"><b>3</b>완료</div>
-</div>
-
-<main>
-  <!-- 로그인: 사번 + 개인 코드 (외부 참석자는 배포용 아이디만) -->
-  <section id="sl">
-    <div class="card">
-      <div id="lgFields">
-      <div class="field"><label>사번</label><input type="tel" id="lgPin" placeholder="사번" autocomplete="off" inputmode="numeric" pattern="[0-9]*" maxlength="20" enterkeyhint="next"></div>
-      <div class="field"><label>개인 코드</label><input type="text" id="lgCode" class="secret" placeholder="숫자 6자리" autocomplete="off" inputmode="numeric" maxlength="6" enterkeyhint="go"></div>
-      </div>
-      <div class="msg" id="lgMsg"></div>
-      <div class="row"><button class="btn pri" id="lgOk" type="button">로그인</button></div>
-      <div class="hint" id="lgHintStaff">처음이면 사번만 입력하고 [로그인]을 눌러 사내 메일 인증으로 직원 등록하세요.<br>개인 코드 분실시 관리자(2등급 이상)에게 문의하세요.<br>외부 참석자는 담당자에게 받은 아이디와 코드를 입력하세요.</div>
-    </div>
-  </section>
-
-  <!-- 1단계: 서명지 선택 + 접속 코드 -->
-  <section id="s1" class="hidden">
-    <div class="card">
-      <div class="meBar"><b id="meName"></b><button class="btn gray sbtn" id="meOut" type="button">로그아웃</button></div>
-    </div>
-    <div class="card">
-      <b>서명지를 선택하세요</b>
-      <div class="eTabs"><button type="button" id="edTabOpen"></button><button type="button" id="edTabClosed"></button></div>
-      <div class="list" id="edus"><div class="hint">불러오는 중…</div></div>
-      <div class="msg" id="msg1"></div>
-    </div>
-    <div class="card hidden" id="newCard">
-      <div class="nhead" id="nHead"><b>새 서명지 열기</b></div>
-      <div class="nbody">
-      <div class="field" id="nKindRow"><div class="vRow"><label class="vchk"><input type="checkbox" id="nVerify" checked> <b>본인 확인</b></label>
-        <label class="vchk" id="nRosterRow"><input type="checkbox" id="nUseRoster"> <b>명단 지정</b></label></div>
-        <div class="note hidden" id="nNoVerify">본인 확인 없음: 서명자가 소속·직위·성명을 직접 입력합니다. 서명지를 연 뒤에는 바꿀 수 없습니다.</div></div>
-      <div class="field"><label>양식</label><select id="nTpl"></select><div class="tprev hidden" id="nTplPrev"></div></div>
-      <div class="field hidden" id="nRosterBox"><textarea id="nRoster" rows="5" placeholder="이름을 한 번에 입력 (줄바꿈·쉼표·띄어쓰기로 구분)&#10;예) 홍길동, 김철수, 이영희&#10;동명이인은 서명지를 열 때 고릅니다"></textarea>
-        <div class="pickBox hidden" id="nPick"></div>
-        <div class="note">명단에 넣은 사람도 이 서명지를 볼 수 있습니다. 이름은 서명한 순서대로 서명지에 들어갑니다. 직원DB에 있는 직원만 넣을 수 있고, 서명지를 연 뒤에는 바꿀 수 없습니다.</div></div>
-      <div class="field hidden" id="nSkBox"><label>점검할 역</label>
-        <label class="vchk" style="margin-top:6px"><input type="checkbox" id="nSkAll" checked> <b>전체 선택</b></label>
-        <div class="skChecks" id="nSkList"></div>
-        <div class="note">안전점검: 제목은 "안전점검의 날 체크리스트"로 고정, 부서명은 서명지를 연 관리자의 부서(그 부서 직원에게만 보임), 접속 코드 없이 서명지 목록에 점검자·팀장 박스로 보입니다. 점검자는 역을 골라 입력하고 서명, 팀장(직책에 '팀장')은 역마다 확인하고 서명합니다. 역은 서명지를 연 뒤에는 바꿀 수 없습니다.</div></div>
-      <div class="field" id="nTitleRow"><label id="nTitleLabel">교육명</label><input type="text" id="nTitle" placeholder="예: 4분기 비상대응 훈련" autocomplete="off"></div>
-      <div class="fRow"><div class="field" id="nDeptRow"><label>부서명</label><select id="nDept"></select></div>
-      <div class="field" id="nTeamRow"><label>팀</label><select id="nTeam"></select></div></div>
-      <div class="note" id="nDeptNote">부서명·팀을 고르면 해당하는 사람에게만 서명지가 보입니다. 명단도 지정하면 명단에 있는 사람까지 보입니다. 모두 [전체]이고 명단이 없으면 모든 직원에게 보입니다.</div>
-      <div class="field" id="nDateRow"><label>날짜</label><input type="text" id="nDate" autocomplete="off"></div>
-      <div class="field" id="nCodeRow"><label>접속 코드 (숫자 4자리, 서명지마다 다르게)</label><input type="text" id="nCode" placeholder="예: 1024" autocomplete="off" inputmode="numeric" maxlength="4" pattern="[0-9]*"></div>
-      <div class="field hidden" id="nRfMinRow"><label>고객용 QR 접수 시간</label>
-        <div class="rfMins" id="nRfMins"><button type="button" data-m="10" class="on">10분</button><input type="tel" id="nRfMin" placeholder="직접(분)" inputmode="numeric" maxlength="3" autocomplete="off"></div>
-        <div class="note">이 시간이 지나면 고객용 QR로는 등록할 수 없고, 직원 등록은 마감할 때까지 됩니다. 다시 열면 이 시간만큼 다시 받습니다.</div></div>
-      <div class="note hidden" id="nRfNote">환불 등록: 접속 코드 없이 첫 화면 맨 위에 보이고, QR로 바로 들어옵니다. 제목은 "년.월.일.(요일) 운행 장애 환불 신청"으로 자동으로 정해집니다.</div>
-      <div class="note hidden" id="nPdfNote">PDF 파일을 올리고 서명할 사람과 서명 칸을 정합니다.</div>
-      <div class="row"><button class="btn pri" id="nCreate">서명지 열기</button></div>
-      <div class="msg" id="nMsg"></div>
-      </div>
-    </div>
-    <div class="card" id="chgCard">
-      <div class="nhead" id="chgHead"><b>개인정보 변경</b></div>
-      <div class="ebody">
-        <div class="note">개인정보 등록 시 사용한 본인 메일로 인증 코드를 보냅니다. 코드를 확인 후 입력하면 개인정보 변경이 가능합니다. 사번과 개인 코드, 메일은 바꿀 수 없습니다. 개인 코드 분실 시 관리자(2등급 이상)에게 문의 바랍니다.</div>
-        <div class="row"><button class="btn gray" id="chgMailSend" type="button">메일로 인증 코드 받기</button></div>
-        <div class="codeRow hidden" id="chgCodeRow">
-          <div style="flex:1"><input type="tel" id="chgMailCode" placeholder="인증 코드 6자리" autocomplete="one-time-code" inputmode="numeric" pattern="[0-9]*" maxlength="6"></div>
-          <button class="btn gray sbtn" id="chgCodeOk" type="button" style="flex:none">확인</button>
-        </div>
-        <div class="hidden" id="chgForm">
-          <div class="field"><label>이름</label><input type="text" id="chgName" autocomplete="off" maxlength="20"></div>
-          <div class="field"><label>사번 (변경 불가)</label><input type="text" id="chgPinShow" readonly></div>
-          <div class="fRow"><div class="field"><label>부서명</label><input type="text" id="chgDept" autocomplete="off" maxlength="30"></div>
-          <div class="field"><label>팀 (선택)</label><input type="text" id="chgTeam" autocomplete="off" maxlength="30"></div></div>
-          <div class="fRow"><div class="field"><label>직책 (선택)</label><input type="text" id="chgPost" autocomplete="off" maxlength="20"></div>
-          <div class="field"><label>직위</label><input type="text" id="chgRank" autocomplete="off" maxlength="20"></div></div>
-          <div class="row"><button class="btn pri" id="chgSend" type="button">변경</button></div>
-        </div>
-        <div class="msg" id="chgMsg"></div>
-      </div>
-    </div>
-    <div class="card hidden" id="gstCard">
-      <div class="nhead" id="gstHead"><b>배포용 아이디</b></div>
-      <div class="ebody">
-        <div class="note">외부 참석자가 함께 쓰는 아이디입니다. 사번 칸에 이 아이디만 넣으면 로그인되고(개인 코드 없음), 본인 확인 없는 서명지만 보입니다. 아이디를 바꾸면 기존 로그인은 끊깁니다. 비우고 저장하면 사용하지 않습니다.</div>
-        <div class="field"><label>아이디 (숫자 4자리 이상)</label><input type="tel" id="gstId" autocomplete="off" inputmode="numeric" pattern="[0-9]*" maxlength="20"></div>
-        <div class="row"><button class="btn pri" id="gstSave" type="button">저장</button></div>
-        <div class="msg" id="gstMsg"></div>
-      </div>
-    </div>
-    <div class="card hidden" id="pcCard">
-      <div class="nhead" id="pcHead"><b>개인 코드 관리</b></div>
-      <div class="ebody">
-        <div class="note">코드는 암호화 돼 관리자도 볼 수 없습니다.<br>초기화하면 직원DB에서도 삭제되고, 다음 로그인 때 미등록으로 나와 메일 인증으로 다시 등록합니다.</div>
-        <div class="codeRow">
-          <div style="flex:1"><input type="tel" id="pcPin" placeholder="초기화할 직원의 사번" autocomplete="off" inputmode="numeric" pattern="[0-9]*"></div>
-          <button class="btn del sbtn" id="pcReset" style="flex:none">초기화</button>
-        </div>
-        <div class="msg" id="pcMsg"></div>
-      </div>
-    </div>
-    <div class="card hidden" id="gdCard">
-      <div class="nhead" id="gdHead"><b>관리자 지정</b></div>
-      <div class="ebody">
-        <div class="note" id="gdNote">2등급은 자기 부서 직원을 1등급으로 지정할 수 있습니다. 휴가 등으로 자리를 비우기 전에 미리 지정해 두세요. 지정·해제는 그 직원이 다시 로그인하면 반영됩니다.</div>
-        <div class="codeRow">
-          <div style="flex:1"><input type="tel" id="gdPin" placeholder="직원 사번" autocomplete="off" inputmode="numeric" pattern="[0-9]*"></div>
-          <select id="gdLv" style="flex:none;width:auto"></select>
-        </div>
-        <div class="codeRow" style="margin-top:8px">
-          <button class="btn pri sbtn" id="gdSet" style="flex:1 !important">지정</button>
-          <button class="btn sbtn" id="gdOff" style="flex:1 !important">해제</button>
-        </div>
-        <div class="msg" id="gdMsg"></div>
-        <button class="btn sbtn" id="gdShow" style="margin-top:8px">관리자 명단 보기</button>
-        <div id="gdList" class="gdList hidden"></div>
-      </div>
-    </div>
-  </section>
-
-  <!-- DID (오른쪽 위 [DID]): 역 안내 화면 관리 (관리자) · 우리 역 안내 이미지 (근무자) -->
-  <section id="sq" class="hidden">
-    <div class="card hidden" id="smCard">
-      <div class="nhead" id="smHead"><b>우리 역 안내 이미지</b></div>
-      <div class="ebody">
-        <div class="note">역 코드를 넣으면 그 역 안내 이미지를 바꿀 수 있습니다. 관리자가 환불 등록 QR을 띄우면 이미지보다 QR이 먼저 나옵니다. 약 1분 뒤 역 화면에 나타납니다.</div>
-        <div class="codeRow">
-          <div style="flex:1"><input type="password" id="smCode" placeholder="역 코드" aria-label="역 코드" autocomplete="off" maxlength="40"></div>
-          <button class="btn pri sbtn" id="smLoad" style="flex:none" type="button">불러오기</button>
-        </div>
-        <div class="hidden" id="smBody">
-          <div class="stNow"><div><b id="smName"></b><small id="smNow"></small></div><button class="btn gray sbtn" id="smPrev" type="button">미리보기</button></div>
-          <div id="smEd"></div>
-          <button class="btn pri" id="smSave" type="button">우리 역에 보내기</button>
-        </div>
-        <div class="msg" id="smMsg"></div>
-      </div>
-    </div>
-    <div class="card hidden" id="stCard">
-      <div class="nhead" id="stHead"><b>역 안내 화면</b></div>
-      <div class="ebody">
-        <div class="stNow"><div><b>지금 역 화면</b><small id="stNow">불러오는 중…</small></div><button class="btn gray sbtn" id="stPrev" type="button">미리보기</button></div>
-        <div class="stSub">보낼 역</div>
-        <div class="stTo"><span class="stPill" id="stTo"></span><button class="btn gray sbtn" id="stPickBtn" type="button" aria-expanded="false">역 고르기 ▸</button></div>
-        <div class="stPick hidden" id="stPick">
-          <div class="stTools"><b id="stPickN"></b><button class="btn gray sbtn" id="stAll" type="button">전체</button><button class="btn gray sbtn" id="stNone" type="button">해제</button></div>
-          <div class="stList" id="stList"></div>
-          <div class="hidden" id="stCodeBox">
-            <div class="stSub">역 코드 바꾸기 (<span id="stCodeName"></span>)</div>
-            <div class="note">추측하기 어렵게 6자 이상. 비우고 저장하면 그 역 화면이 꺼집니다.</div>
-            <div class="codeRow">
-              <div style="flex:1"><input type="text" id="stCode" placeholder="새 역 코드" aria-label="새 역 코드" autocomplete="off" maxlength="40"></div>
-              <button class="btn pri sbtn" id="stCodeSave" style="flex:none" type="button">저장</button>
-            </div>
-          </div>
-          <button class="btn pri" id="stPickOk" type="button">선택 완료</button>
-        </div>
-        <div class="stSub">환불 등록 QR</div>
-        <div class="field"><select id="stRf" aria-label="띄울 환불 등록"></select></div>
-        <div class="row"><button class="btn pri" id="stQrOn" type="button">QR 띄우기</button><button class="btn gray" id="stQrOff" type="button">QR 내리기</button></div>
-        <div class="hint">QR이 떠 있는 동안 역 화면에는 이미지 대신 QR이 나옵니다.</div>
-        <div class="note hidden" id="stDiff"></div>
-        <div id="stEd"></div>
-        <button class="btn pri" id="stImgSave" type="button">고른 역에 보내기</button>
-        <div class="msg" id="stMsg"></div>
-        <div class="hint">역 PC 크롬에서 <b id="stPage"></b> 를 열고 역 코드를 넣은 뒤 주소창의 [설치]를 누르세요. 바꾼 내용은 약 1분 뒤 역 화면에 나타납니다.</div>
-      </div>
-    </div>
-  </section>
-  <!-- DID 미리보기: 이미지 목록을 역 화면처럼 넘겨 봄 (누르면 다음, X 닫기) -->
-  <div class="stPrevOver hidden" id="stPrevOver" role="dialog" aria-label="역 화면 미리보기">
-    <img id="stPrevImg" alt="">
-    <div class="stPrevCap" id="stPrevCap"></div>
-    <button class="stPrevX" id="stPrevX" type="button" aria-label="미리보기 닫기">✕</button>
-  </div>
-
-  <!-- 본인 확인 없는 서명지: 양식에 있는 칸 직접 입력 -->
-  <section id="sp" class="hidden">
-    <div class="card">
-      <div class="who" id="eduName"></div>
-      <div class="edu" id="eduDate"></div>
-      <div class="gnote hidden" id="gNote">이 서명지는 개인 코드가 필요 없습니다. 아래 칸을 입력하고 [확인]을 누르세요.</div>
-      <div class="field hidden" id="gDeptRow"><label>소속</label><input type="text" id="gDept" placeholder="예: ○○역, △△회사" autocomplete="off" maxlength="30" enterkeyhint="next"></div>
-      <div class="field hidden" id="gRankRow"><label>직위</label><input type="text" id="gRank" placeholder="예: 대리" autocomplete="off" maxlength="20" enterkeyhint="next"></div>
-      <div class="field"><label id="nameLabel">이름</label><input type="text" id="name" placeholder="이름" autocomplete="off" maxlength="20"></div>
-      <div class="field hidden" id="gRoleRow"><label><span id="gRoleLabel">임무·역할</span> <span class="hint">(선택)</span></label><input type="text" id="gRole" autocomplete="off" maxlength="100" enterkeyhint="next"></div>
-      <div class="field hidden" id="gNoteRow"><label>비고 <span class="hint">(선택)</span></label><input type="text" id="gNoteIn" autocomplete="off" maxlength="100" enterkeyhint="go"></div>
-      <div class="msg" id="msgp"></div>
-      <div class="row">
-        <button class="btn gray" id="pback">처음으로</button>
-        <button class="btn pri" id="pok">확인</button>
-      </div>
-      <div class="hint">서명 시 접속 기기 정보(기종·OS·브라우저)가 함께 기록됩니다.</div>
-    </div>
-  </section>
-
-  <!-- 3단계: 서명 -->
-  <section id="s2" class="hidden">
-    <div class="card">
-      <div class="whoRow"><div class="who" id="who"></div><span class="lsTag"></span></div>
-      <div class="edu" id="eduT"></div>
-      <div class="roleT hidden" id="roleT"></div>
-      <div class="warn hidden" id="warn">이미 서명한 기록이 있습니다. 새로 제출하면 이전 서명이 교체됩니다.</div>
-      <div class="padarea">
-        <div class="padwrap"><canvas id="pad"></canvas></div>
-        <div class="actions">
-          <div class="row">
-            <button class="btn gray" id="clear">지우기</button>
-            <button class="btn gray" id="back">뒤로</button>
-          </div>
-          <div class="row sub">
-            <button class="btn pri" id="submit" disabled>서명 제출</button>
-          </div>
-          <div class="msg" id="msg2"></div>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- PDF 서명지 만들기 -->
-  <section id="su" class="hidden">
-    <div class="card">
-      <b>PDF 서명지 만들기</b>
-      <div class="note" style="margin-top:6px">한글은 [파일 → PDF로 저장하기], 엑셀은 [다른 이름으로 저장 → PDF]로 저장한 파일을 올리세요. 스캔·사진으로 만든 PDF는 서명란을 자동으로 찾지 못합니다.</div>
-      <div class="field"><label>PDF 파일 (10MB · 30쪽까지)</label><input type="file" id="puFile" accept="application/pdf,.pdf"></div>
-      <div class="field"><label>제목</label><input type="text" id="puTitle" maxlength="60" autocomplete="off"></div>
-      <div class="msg" id="puMsg"></div>
-    </div>
-    <div class="card">
-      <b>서명자</b> <span class="hint">넣은 순서 = 서명 순서 = 서명란 번호</span>
-      <div class="codeRow" style="margin-top:8px">
-        <div style="flex:1"><input type="text" id="puFind" placeholder="이름" autocomplete="off" maxlength="20" enterkeyhint="search"></div>
-        <button class="btn gray sbtn" id="puFindBtn" type="button" style="flex:none">찾기</button>
-      </div>
-      <div class="puHits" id="puHits"></div>
-      <ol class="puSigners" id="puSigners"></ol>
-    </div>
-    <div class="card hidden" id="puPrevCard">
-      <b>서명란 확인</b>
-      <div class="hint">빨간 칸 = 서명이 들어갈 자리 (번호·서명자), 회색 칸 = 서명자 없음. 칸을 누르면 지우고, 빈 곳을 누르면 추가합니다.</div>
-      <div class="puPages" id="puPages"></div>
-    </div>
-    <div class="card">
-      <div class="puCount" id="puCount"></div>
-      <div class="row"><button class="btn gray" id="puBack" type="button">뒤로</button><button class="btn pri" id="puSave" type="button">만들기</button></div>
-      <div class="msg" id="puMsg2"></div>
-    </div>
-  </section>
-
-  <!-- PDF 서명지 미리보기 -->
-  <section id="sv" class="hidden">
-    <div class="card">
-      <div><span class="pdfTag">PDF 서명</span><b id="pvTitle"></b></div>
-      <div class="hint" id="pvInfo" style="white-space:pre-line;margin-top:4px"></div>
-      <div class="puPages" id="pvPages"></div>
-      <div class="msg" id="pvMsg"></div>
-    </div>
-    <div class="card pvBar">
-      <div class="row"><button class="btn gray" id="pvBack" type="button">뒤로</button><button class="btn pri hidden" id="pvSign" type="button">서명하기</button></div>
-    </div>
-  </section>
-
-  <!-- 4단계: 완료 -->
-  <section id="s3" class="hidden">
-    <div class="card center">
-      <div class="check">✓</div>
-      <div class="who" id="doneWho"></div>
-      <div class="hint" id="doneMsg"></div>
-      <div class="doneClose hidden" id="doneClose">이제 이 창을 닫으셔도 됩니다.</div>
-      <div class="row" id="nextRow"><button class="btn pri" id="nextPerson">같은 서명지 · 다음 사람 서명</button></div>
-      <div class="row" id="againRow"><button class="btn gray" id="again">서명지 목록 보기</button></div>
-    </div>
-  </section>
-
-  <!-- 안내만 보이는 화면: 마감된 환불 등록 QR, 입력 시간 지남 -->
-  <section id="sx" class="hidden">
-    <div class="card center">
-      <div class="who" id="sxTitle"></div>
-      <div class="hint" id="sxMsg" style="margin-top:8px"></div>
-    </div>
-  </section>
-
-  <!-- 비상: 운행 장애 환불 승객 등록 (접속 코드 없음) -->
-  <section id="sf" class="hidden">
-    <div class="card">
-      <div class="rfHead"><span class="rfTag">운행 장애 · 환불 등록</span><button type="button" class="rfQrMini hidden" id="rfQrBtn">고객용 QR<span class="hidden"></span></button></div>
-      <div class="who" id="rfTitle" style="margin-top:6px"></div>
-      <div class="edu" id="rfDate"></div>
-      <div class="rfTime hidden" id="rfTime"></div>
-      <div id="rfFields"></div>
-      <div id="rfAccBox" class="hidden">
-        <label class="consent"><span>[선택] 환불 계좌 입력</span><input type="checkbox" id="rfAccOn"></label>
-        <div class="hidden" id="rfAccForm"><div class="rfStRow" id="rfAcc"></div><div class="rfConsent" id="rfAccText"></div></div>
-      </div>
-      <label class="consent"><span>[필수] 개인정보 수집·이용에 동의합니다.</span><input type="checkbox" id="rfAgree"></label>
-      <div class="rfConsent" id="rfConsentText"></div>
-      <div id="rfLocBox" class="hidden">
-        <label class="consent"><span>[필수] 위치정보 수집·이용에 동의합니다.</span><input type="checkbox" id="rfLocAgree"></label>
-        <div class="rfConsent" id="rfLocText"></div>
-      </div>
-      <div class="msg" id="rfMsg"></div>
-      <div class="row">
-        <button class="btn gray" id="rfBack">처음으로</button>
-        <button class="btn pri" id="rfOk">등록하기</button>
-      </div>
-    </div>
-  </section>
-
-  <!-- 서명자 순서 보기 · 수정 (관리자) -->
-  <section id="so" class="hidden">
-    <div class="card">
-      <div class="adm-top">
-        <span class="who">서명자 순서</span>
-        <button class="btn gray sbtn" id="oBack">← 서명지 목록</button>
-      </div>
-      <div class="t" id="oTitle" style="font-weight:700;font-size:16px;margin-top:8px"></div>
-      <div class="d hint" id="oSub"></div>
-      <div class="hint" id="oHint"></div>
-      <div class="slist" id="oList"></div>
-      <div class="row"><button class="btn gray" id="oDb">직원DB 순서로 정렬</button><button class="btn pri" id="oSave" disabled>순서 저장</button></div>
-      <div class="msg" id="oMsg"></div>
-    </div>
-  </section>
-
-  <!-- 임무·역할 지정 (관리자) -->
-  <section id="sr" class="hidden">
-    <div class="card">
-      <div class="adm-top">
-        <span class="who">임무·역할 지정</span>
-        <button class="btn gray sbtn" id="rBack">← 서명지 목록</button>
-      </div>
-      <div style="font-weight:700;font-size:16px;margin-top:8px" id="rTitle"></div>
-      <div class="warn hidden" id="rNoCol">이 서명지의 양식에는 임무·역할 칸이 없어 서명지에는 들어가지 않습니다. (서명 화면과 로그에는 표시)</div>
-    </div>
-    <div class="card" id="rHeadCard">
-      <b>머릿글</b> <span class="hint" id="rHeadAt"></span>
-      <input type="text" id="rHead" maxlength="30" autocomplete="off" placeholder="예: 임무, 역할">
-      <div class="note">서명지의 임무·역할 칸 제목입니다. 바꾸고 저장하면 이 서명지(모든 페이지)에 바로 반영됩니다. 양식은 그대로입니다.</div>
-    </div>
-    <div class="card">
-      <b>여러 명 한 번에 붙여넣기</b>
-      <textarea id="rPaste" rows="6" placeholder="한 줄에 한 명: 이름 임무·역할&#10;예) 홍길동 현장지휘, 상황전파&#10;동명이인은 직책도: 대리 김철수 승객안내"></textarea>
-      <div class="note">이름 뒤에 적은 글자가 쉼표까지 그대로 임무·역할로 표시됩니다. 이미 지정된 사람을 다시 적으면 새 내용으로 바뀝니다.</div>
-      <div class="row"><button class="btn gray" id="rApply">붙여넣은 내용 적용</button></div>
-      <div class="codeRow" id="rFromRow">
-        <select id="rFrom"></select>
-        <button class="btn gray sbtn" id="rLoad">불러오기</button>
-      </div>
-    </div>
-    <div class="card">
-      <b>지정 현황</b> <span class="hint" id="rCount"></span>
-      <div class="slist" id="rList"></div>
-    </div>
-    <div class="card">
-      <div class="row" style="margin-top:0"><button class="btn pri" id="rSave">저장</button></div>
-      <div class="msg" id="rMsg"></div>
-    </div>
-  </section>
-  <!-- 안전점검의 날: 점검자 (역 선택 → 체크리스트 → 최종 확인 → 서명), 팀장 (역 선택 화면에서 진행 상황 → 일괄 서명) -->
-  <section id="sk" class="hidden">
-    <div class="card">
-      <div class="rfHead"><span class="skTag">안전점검의 날</span></div>
-      <div class="who" id="skTitle" style="margin-top:6px"></div>
-      <div class="edu" id="skDate"></div>
-      <div id="skPick">
-        <div class="hint">점검할 역을 고르세요. ✓ 표시는 점검자 서명이 끝난 역이고, 다시 고르면 고쳐서 다시 서명합니다. 팀장 확인까지 끝난 역은 수정할 수 없고 PDF를 받아 출력·보관할 수 있습니다.</div>
-        <div class="skGrid" id="skGrid"></div>
-        <div class="skLead hidden" id="skLead">
-          <div class="who">팀장 확인</div>
-          <div class="hint" id="skLeadSt"></div>
-          <div class="row"><button class="btn gray" id="skLeadView" type="button">역별 내용 보기</button><button class="btn pri" id="skLeadSign" type="button">일괄 서명</button></div>
-          <div class="row hidden" id="skLeadCRow"><button class="btn del" id="skLeadCancel" type="button">일괄 서명 취소</button></div>
-        </div>
-        <div class="row"><button class="btn gray" id="skHome" type="button">서명지 목록</button></div>
-      </div>
-      <div id="skForm" class="hidden">
-        <div class="who" id="skStName" style="margin-top:10px;color:var(--pri)"></div>
-        <div class="hint" id="skDefNote"></div>
-        <div id="skItems"></div>
-        <div class="row"><button class="btn gray" id="skFormBack" type="button">역 목록</button><button class="btn pri" id="skDone" type="button">완료</button></div>
-      </div>
-      <div id="skRev" class="hidden">
-        <div class="hint" style="margin-bottom:8px">입력한 내용을 확인하세요. 맞으면 [최종 확인]을 누르고 서명합니다.</div>
-        <div id="skPaperBox"></div>
-        <div class="row"><button class="btn gray" id="skRevBack" type="button">수정</button><button class="btn pri" id="skRevOk" type="button">최종 확인</button></div>
-      </div>
-      <div id="skSig" class="hidden">
-        <div class="whoRow"><div class="who" id="skSigName"></div><span class="lsTag"></span></div>
-        <div class="edu" id="skSigEdu"></div>
-        <div class="padarea">
-          <div class="padwrap"><canvas id="skPad"></canvas></div>
-          <div class="actions">
-            <div class="row"><button class="btn gray" id="skClear" type="button">지우기</button><button class="btn gray" id="skSigBack" type="button">뒤로</button></div>
-            <div class="row sub"><button class="btn pri" id="skSend" type="button" disabled>다음</button></div>
-          </div>
-        </div>
-      </div>
-      <div class="msg" id="skMsg"></div>
-    </div>
-  </section>
-</main>
-<!-- 안전점검의 날: 팀장 내용 보기 (역마다 체크리스트, 이전·다음 역. 서명은 역 선택 화면의 [일괄 서명]) -->
-<div class="skView hidden" id="skView" role="dialog" aria-label="팀장 내용 보기">
-  <div class="lvTop"><button class="btn gray sbtn" id="lvClose" type="button">닫기</button><b id="lvTitle"></b><select id="lvSel" aria-label="역 바로 보기"></select><span id="lvProg"></span></div>
-  <div class="lvPage" id="lvPage"></div>
-</div>
-<!-- 접속 코드 (첫 화면에서 교육을 누르면 열림) -->
-<div class="qrOver hidden" id="codeOver" role="dialog" aria-label="접속 코드">
-  <div class="qrBox admBox">
-    <p id="codeTitle"></p>
-    <div class="hint" id="codeSub"></div>
-    <div class="field"><input type="text" id="code" placeholder="접속 코드 (숫자 4자리)" autocomplete="off" inputmode="numeric" pattern="[0-9]*" enterkeyhint="go"></div>
-    <div class="msg" id="codeMsg"></div>
-    <div class="row"><button class="btn gray" id="codeCancel" type="button">취소</button><button class="btn pri" id="codeOk" type="button">확인</button></div>
-  </div>
-</div>
-<!-- QR 크게 보기 (누르면 닫힘) -->
-<div class="qrOver hidden" id="qrOver" role="dialog" aria-label="접속 QR">
-  <div class="qrBox">
-    <div id="qrBig"></div>
-    <p id="qrCap">휴대폰 카메라로 찍으면 이 서명 화면으로 들어옵니다</p>
-    <p class="u" id="qrUrl"></p>
-    <span class="close">아무 곳이나 누르면 닫힙니다</span>
-  </div>
-</div>
-<!-- 직원 등록: 미등록 안내 → 입력 → 다시 확인 -->
-<div class="qrOver hidden" id="admOver" role="dialog" aria-label="서명지 관리">
-  <div class="qrBox admBox">
-    <div class="adm-top"><b id="admOverT"></b><button class="btn gray sbtn" id="admOverClose" type="button">닫기</button></div>
-    <div id="admOverBody"></div>
-  </div>
-</div>
-
-<div class="qrOver hidden" id="regOver" role="dialog" aria-label="직원 등록">
-  <div class="qrBox admBox regBox">
-    <div class="regHead">
-      <span class="regIco"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2.5"></rect><path d="m4 7.5 8 6 8-6"></path></svg></span>
-      <div><b id="regHeadT"></b><small id="regHeadS"></small></div>
-    </div>
-    <ol class="regSteps hidden" id="regSteps"><li><i>1</i>메일</li><li><i>2</i>인증 코드</li><li><i>3</i>정보 입력</li></ol>
-    <div class="regBody">
-    <div id="regAsk">
-      <div class="regAskText">사번 <b id="regAskPin"></b>은(는) 아직 등록되지 않았습니다.<br>사내 메일로 본인을 확인한 뒤 직접 등록할 수 있습니다.</div>
-      <div class="row"><button class="btn gray" id="regNo" type="button">취소</button><button class="btn pri" id="regGo" type="button">등록 시작</button></div>
-    </div>
-    <div id="regMailStep" class="hidden">
-      <div class="field" style="margin-top:0"><label>사내 메일</label><div class="mailRow"><input type="text" id="regMail" placeholder="메일 아이디" autocomplete="off" autocapitalize="off" spellcheck="false" inputmode="email" maxlength="60" enterkeyhint="send"><span id="regMailDom"></span></div></div>
-      <div class="note">입력한 메일로 인증 코드를 보냅니다. 메일은 직원DB에 기록됩니다.</div>
-      <div class="msg" id="regMsgM"></div>
-      <div class="row"><button class="btn gray" id="regMailNo" type="button">취소</button><button class="btn pri" id="regMailSend" type="button">인증 코드 받기</button></div>
-    </div>
-    <div id="regCodeStep" class="hidden">
-      <div class="regMailTo" id="regMailShow"></div>
-      <div class="codeCells" id="regCells"><input type="tel" id="regMailCode" aria-label="인증 코드 6자리" autocomplete="one-time-code" inputmode="numeric" pattern="[0-9]*" maxlength="6"><i></i><i></i><i></i><i></i><i></i><i></i></div>
-      <div class="msg" id="regMsgC"></div>
-      <div class="row"><button class="btn gray" id="regMailAgain" type="button">메일 다시 입력</button><button class="btn pri" id="regCodeOk" type="button">확인</button></div>
-    </div>
-    <div id="regForm" class="hidden">
-      <div class="fRow"><div class="field" style="margin-top:0"><label>이름</label><input type="text" id="regName" placeholder="예: 홍길동" autocomplete="off" maxlength="20"></div>
-      <div class="field" style="margin-top:0"><label>사번</label><input type="tel" id="regPin" autocomplete="off" inputmode="numeric" maxlength="20" readonly></div></div>
-      <div class="fRow"><div class="field"><label>부서명</label><input type="text" id="regDept" placeholder="예: 역무처" autocomplete="off" maxlength="30"></div>
-      <div class="field"><label>팀 (선택)</label><input type="text" id="regTeam" placeholder="예: 1팀" autocomplete="off" maxlength="30"></div></div>
-      <div class="fRow"><div class="field"><label>직책 (선택)</label><input type="text" id="regPost" placeholder="예: 팀장" autocomplete="off" maxlength="20"></div>
-      <div class="field"><label>직위</label><input type="text" id="regRank" placeholder="예: 과장" autocomplete="off" maxlength="20"></div></div>
-      <div class="fRow"><div class="field"><label>개인 코드</label><input type="text" id="regC1" class="secret" placeholder="숫자 6자리" autocomplete="off" inputmode="numeric" maxlength="6"></div>
-      <div class="field"><label>한 번 더</label><input type="text" id="regC2" class="secret" placeholder="숫자 6자리" autocomplete="off" inputmode="numeric" maxlength="6"></div></div>
-      <div class="note">같은 숫자 반복(111111), 연속 숫자(123456·654321), 사번 앞·뒤 6자리는 쓸 수 없습니다. 꼭 기억해 두세요.</div>
-      <div class="regInfo">수집 항목: 이름, 사번, 사내 메일, 부서명, 팀, 직책, 직위, 개인 코드
-이용 목적: 서명·차량 운행 시 본인 확인, 서명지 작성
-보유 기간: 퇴직 또는 초기화 때까지
-개인 코드는 암호화되어 관리자도 알 수 없습니다.</div>
-      <div class="msg" id="regMsg"></div>
-      <div class="row"><button class="btn gray" id="regCancel" type="button">취소</button><button class="btn pri" id="regNext" type="button">다음</button></div>
-    </div>
-    <div id="regCheck" class="hidden">
-      <div class="regChk" id="regShow" style="margin-top:0"></div>
-      <div class="msg" id="regMsg2"></div>
-      <div class="row"><button class="btn gray" id="regBack" type="button">수정</button><button class="btn pri" id="regSend" type="button">등록 완료</button></div>
-    </div>
-    </div>
-  </div>
-</div>
-<footer id="foot">부산-김해경전철(주) · e-싸인</footer>
-
-<script>
-/* ▼▼▼ 여기만 고치세요: 전자서명 웹 앱 배포 주소 (…/exec 로 끝남, 업무차량관리 car.html과 같은 주소) ▼▼▼ */
+/* ▼▼▼ 여기만 고치세요: 서버(Apps Script 웹 앱) 배포 주소 (…/exec 로 끝남) ▼▼▼ */
 var API = 'https://script.google.com/macros/s/AKfycbwjudREVuPqSxXknvG5XClW_tQKbD-4wkCJkyeZt0KKY-spuDCymTt9O5j_6L28Z9QK/exec';
 /* ▲▲▲ */
-/* GitHub Pages용 전자서명 화면: 구글 웹 앱 화면 위의 '구글 사용자가 만든 앱' 알림 없이 열림.
-   화면은 여기, 저장·조회는 전자서명 Apps Script(doPost {fn:'sign'})가 처리 */
+/* e-싸인 화면 (GitHub Pages). 화면은 여기, 저장·조회는 Apps Script(Api.js의 doPost {fn, args})가 처리.
+   아래 api()·errText()·busyOn()은 차량 화면(src/car/car.js)도 같이 씀 */
 var SIGN_HOME = location.origin + location.pathname;
-/** 서버 함수 호출 (text/plain POST: 다른 주소에서도 사전 요청 없이) */
-function signCall(name, args) {
-  return fetch(API, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ fn: 'sign', name: name, args: args }) })
+/** 서버 함수 호출 → Promise (text/plain POST: 다른 주소에서도 사전 요청 없이) */
+function api(name, args) {
+  return fetch(API, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ fn: name, args: args || [] }) })
     .then(function (r) { if (!r.ok) throw new Error('서버 응답 오류 (' + r.status + ')'); return r.json(); },
           function () { throw new Error('서버에 연결할 수 없습니다. 인터넷 연결을 확인하세요.'); })
     .then(function (j) { if (!j.ok) throw new Error(j.error || '오류가 났습니다.'); return j.data; });
 }
-/** google.script.run 흉내: 화면 코드는 그대로 두고 서버 호출만 fetch로 */
-function signRunner(ok, fail) {
-  return new Proxy({}, { get: function (_, k) {
-    if (k === 'withSuccessHandler') return function (f) { return signRunner(f, fail); };
-    if (k === 'withFailureHandler') return function (f) { return signRunner(ok, f); };
-    if (typeof k !== 'string') return undefined;
-    return function () {
-      signCall(k, [].slice.call(arguments)).then(function (d) { if (ok) ok(d); }, function (e) { if (fail) fail(e); });
-    };
-  } });
+function errText(e) { return String(e && e.message ? e.message : e || '오류가 났습니다.').replace(/^(Error|Exception):s*/, ''); }
+/** 가운데 로딩 표시: 도는 동그라미 + 문구 (0.3초 넘게 걸릴 때만). 돌려준 함수를 부르면 끔 (여러 개가 겹치면 마지막에 끔) */
+var BUSY = { n: 0, t: null, el: null };
+function busyOn(text) {
+  if (!BUSY.el) {
+    BUSY.el = document.createElement('div'); BUSY.el.className = 'busyOver hidden'; BUSY.el.setAttribute('role', 'status'); BUSY.el.setAttribute('aria-live', 'polite');
+    BUSY.el.innerHTML = '<div class="busyBox"><span class="busySpin"></span><b></b></div>'; document.body.appendChild(BUSY.el);
+  }
+  BUSY.n++; BUSY.el.querySelector('b').textContent = text;
+  if (!BUSY.t && BUSY.el.classList.contains('hidden')) BUSY.t = setTimeout(function () { BUSY.t = null; if (BUSY.n > 0) BUSY.el.classList.remove('hidden'); }, 300);
+  var done = false;
+  return function () {
+    if (done) return; done = true;
+    if (--BUSY.n > 0) return;
+    BUSY.n = 0; clearTimeout(BUSY.t); BUSY.t = null; BUSY.el.classList.add('hidden');
+  };
 }
-window.google = { script: { get run() { return signRunner(null, null); } } };
+/** Promise가 끝나면(성공·실패 모두) 로딩 표시 끔 */
+function busyWrap(pr, text) {
+  var off = busyOn(text);
+  return pr.then(function (d) { off(); return d; }, function (e) { off(); throw e; });
+}
 
 function START(INIT) {
 /** 오른쪽 위 전환 버튼 [e-싸인][차량관리][DID]: 누른 쪽에 불이 들어오며 그 화면으로 이동
@@ -1100,16 +60,14 @@ function appSwitch(sw, urls) {
     });
   });
 }
-var CAR_PAGE = (INIT && INIT.carPage) || '';     // INIT는 첫 화면을 그린 뒤 지워지므로 따로 보관
-if (CAR_PAGE) appSwitch(document.getElementById('appSw'), { car: CAR_PAGE, sign: function () { SWF.sign(); }, kiosk: function () { SWF.kiosk(); } });
+appSwitch(document.getElementById('appSw'), { car: function () { CARAPP.go('?car'); }, sign: function () { SWF.sign(); }, kiosk: function () { SWF.kiosk(); } });   // 차량관리: 같은 페이지 안 차량 화면
 (function () {
   var $ = function (id) { return document.getElementById(id); };
-  /* ---------- 가운데 로딩 표시: 서버를 부르는 동안 도는 동그라미 + 문구 (0.3초 넘게 걸릴 때만) ----------
-   * 화면 코드의 google.script.run을 이 안에서만 감쌈 (구글 웹 앱·GitHub 화면 둘 다). 자동으로 도는 호출은 표시 안 함 */
-  var busyN = 0, busyT = null, busyEl = null;
-  var BUSY_SKIP = { staffPing: 1, staffLogout: 1, adminLogout: 1, staffRfLeft: 1 };
+  /* ---------- 서버 호출: srv().withSuccessHandler(f).withFailureHandler(g).함수(값…) (예전 google.script.run 모양, 속은 api())
+   * 0.3초 넘게 걸리면 가운데 로딩 표시. 자동으로 도는 호출(BUSY_SKIP)은 표시 안 함 */
+  var BUSY_SKIP = { staffPing: 1, staffLogout: 1, staffRfLeft: 1 };
   var BUSY_TEXT = {
-    staffLogin: '로그인하는 중', adminLogin: '관리자 정보 불러오는 중',
+    staffLogin: '로그인하는 중',
     enterCode: '확인하는 중', verifyPerson: '확인하는 중', empMailVerify: '확인하는 중', empChangeVerify: '확인하는 중', adminPcLookup: '확인하는 중',
     empMailSend: '메일 보내는 중', empChangeSend: '메일 보내는 중',
     submitSignature: '서명 저장 중', pdfSign: '서명 저장 중', safetySubmit: '데이터 저장 중', safetyLeaderSubmit: '서명 저장 중', submitRefund: '데이터 저장 중',
@@ -1118,35 +76,18 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), { car: CAR_PAGE, sign:
     adminGradeSet: '데이터 저장 중', adminExportPdf: '파일 만드는 중', adminExportLog: '파일 만드는 중', eduPdf: '파일 만드는 중', safetyPdf: '파일 만드는 중'
   };
   function busyText(k) { return BUSY_TEXT[k] || (/^(admin(Edit|Set|Reorder|Sort|Unlock|St(Code|Imgs|Qr))|staffStImgs|staff(SetOpen|RfExtend)|emp(Change|Register)$|safetyLeaderCancel)/.test(k) ? '데이터 저장 중' : '데이터 불러오는 중'); }
-  function busyOn(text) {
-    if (!busyEl) {
-      busyEl = document.createElement('div'); busyEl.className = 'busyOver hidden'; busyEl.setAttribute('role', 'status'); busyEl.setAttribute('aria-live', 'polite');
-      busyEl.innerHTML = '<div class="busyBox"><span class="busySpin"></span><b></b></div>'; document.body.appendChild(busyEl);
-    }
-    busyN++; busyEl.querySelector('b').textContent = text;
-    if (!busyT && busyEl.classList.contains('hidden')) busyT = setTimeout(function () { busyT = null; if (busyN > 0) busyEl.classList.remove('hidden'); }, 300);
-    var done = false;
-    return function () {
-      if (done) return; done = true;
-      if (--busyN > 0) return;
-      busyN = 0; clearTimeout(busyT); busyT = null; busyEl.classList.add('hidden');
-    };
-  }
-  var google = (function (G) {
-    function runner(ok, fail) {
+  function srv() { return runner(null, null); }
+  function runner(ok, fail) {
       return new Proxy({}, { get: function (_, k) {
         if (k === 'withSuccessHandler') return function (f) { return runner(f, fail); };
         if (k === 'withFailureHandler') return function (f) { return runner(ok, f); };
         if (typeof k !== 'string') return undefined;
         return function () {
           var off = BUSY_SKIP[k] ? function () {} : busyOn(busyText(k));
-          var r = G.script.run.withSuccessHandler(function (d) { try { if (ok) ok(d); } finally { off(); } }).withFailureHandler(function (e) { try { if (fail) fail(e); } finally { off(); } });   // 처리 뒤에 끔: 이어서 부르는 호출이 있으면 로딩창이 꺼지지 않고 한 번만
-          return r[k].apply(r, arguments);
+          api(k, [].slice.call(arguments)).then(function (d) { try { if (ok) ok(d); } finally { off(); } }, function (e) { try { if (fail) fail(e); } finally { off(); } });   // 처리 뒤에 끔: 이어서 부르는 호출이 있으면 로딩창이 꺼지지 않고 한 번만
         };
       } });
-    }
-    return { script: { get run() { return runner(null, null); }, get history() { return G.script.history; }, get host() { return G.script.host; } } };
-  })(window.google);
+  }
   var drawn = 0, drawing = false, last = null, submitting = false;   // submitting: 서명 제출 중 (서명 칸·지우기·뒤로 막음)
   var edus = [], selId = '', code = '', edu = null, person = null;
   var staff = null;                      // 로그인: { token, name, disp, admin } 또는 배포용 아이디 { token, guest: true } (이 탭에서만 기억, 개인 코드는 저장 안 함)
@@ -1174,7 +115,7 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), { car: CAR_PAGE, sign:
       el.querySelector('b').textContent = (i < at || id === 's3') ? '✓' : String(i + 1);
     });
     document.querySelector('header h1').textContent = adminScr ? '관리자' : DIRECT || NOQR ? '환불 등록' : 'e-싸인';
-    var swOn = !!(CAR_PAGE && (id === 's1' || id === 'sl' || id === 'sq') && !adminScr && !(typeof DIALOG !== 'undefined' && DIALOG));   // 로그인·서명지 목록·DID에서 전환 버튼
+    var swOn = !!(!DIRECT && !NOQR && (id === 's1' || id === 'sl' || id === 'sq') && !adminScr);   // 로그인·서명지 목록·DID에서 전환 버튼
     swAllowed = !!(swOn && (id === 's1' || id === 'sq') && staff && staff.token && !staff.guest);
     swLight(id === 'sq' ? 'kiosk' : 'sign');
     $('appSw').classList.toggle('hidden', !swOn); document.querySelector('header h1').classList.toggle('hidden', swOn);
@@ -1182,6 +123,7 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), { car: CAR_PAGE, sign:
     if (id !== 'sk') document.body.classList.remove('skSig');
     if (id !== 's2' && id !== 'sk') landOff();
     window.scrollTo(0, 0);
+    if (id !== 'sq') DID_CAR = false;              // 차량관리에서 온 DID를 벗어나면 뒤로가기는 보통대로
     curScreen = id; saveState();
     navSync();
   }
@@ -1190,7 +132,6 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), { car: CAR_PAGE, sign:
      이 탭(창)에서만 기억 (sessionStorage): 탭을 닫으면 지워짐. 처음으로·나가기·서명 완료 시 필요한 것만 남김 */
   var curScreen = 'sl', KEEP = 'bglSign.v2';
   function saveState() {
-    if (typeof DIALOG !== 'undefined' && DIALOG) return;   // 시트 메뉴 창에서는 기억하지 않음
     try {
       var st = { s: curScreen, edTab: edTab };
       if (edu && code && ['sp', 's2', 's3'].indexOf(curScreen) > -1) { st.edu = edu; st.code = code; st.name = $('name').value; st.gd = $('gDept').value; st.gr = $('gRank').value; st.go = $('gRole').value; st.gn = $('gNoteIn').value; }
@@ -1211,7 +152,6 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), { car: CAR_PAGE, sign:
   function loadState() { try { return JSON.parse(sessionStorage.getItem(KEEP) || 'null'); } catch (x) { return null; } }
   function restoreState() {
     var st = loadState() || {};
-    if (SIGN_WANT && st.s === 'sq') st.s = 's1';    // 차량관리 [e-싸인]으로 옴: DID 대신 서명지 목록
     edTab = st.edTab === 'closed' ? 'closed' : 'open';
     if (st.admTok && isAdm()) {      // 관리자: 직원 로그인 토큰을 그대로 씀
       admTok = staff.token; admOrder = st.admOrder || {}; admMe = st.admMe || null;
@@ -1237,10 +177,10 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), { car: CAR_PAGE, sign:
       return;
     }
     if (!staff) { show('sl'); return; }              // 로그인 전
-    refreshInit(st.s === 'sq' || KIOSK_WANT || SIGN_WANT);   // 차량관리 [e-싸인]으로 와도 조용히 (목록 칸에 '불러오는 중…')       // DID로 열면 목록은 뒤에서 조용히 (차량관리 [DID]로 새로 열 때)
+    refreshInit(st.s === 'sq' || window.APP_CAR);   // DID·차량 화면으로 열었으면 목록은 뒤에서 조용히
     if (st.skL) { enterList(); skOpen(st.skL); skLeadOpen(st.skL, st.skLi); return; }   // 팀장 내용 보기 중이었으면 그 역
     if (st.s === 'sk' && st.sk) { enterList(); skOpen(st.sk, false, st.skSt); return; }
-    if (st.s === 'sq' || KIOSK_WANT) { kioskOpen(); return; }   // DID 화면이었거나 차량관리에서 [DID]로 옴
+    if (st.s === 'sq') { kioskOpen(); return; }   // DID 화면이었으면
     if (!st.edu || !st.code) { enterList(); return; }
     edu = st.edu; code = st.code; selId = edu.id; renderEdus();
     $('eduName').textContent = edu.title; $('eduDate').textContent = [edu.dept, edu.date].filter(Boolean).join(' · ');
@@ -1255,13 +195,12 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), { car: CAR_PAGE, sign:
     if (st.s === 's3' && st.done) { $('doneWho').textContent = st.done.who; $('doneMsg').textContent = st.done.msg; show('s3'); return; }
     if (edu.guest) show('sp'); else enterList();
   }
-  function errText(e) { return (e && e.message ? e.message : String(e)).replace(/^Error:\s*/, ''); }
   function msg(el, text, color) { el.style.color = color || ''; el.textContent = text || ''; }
 
   /* ---------- 1단계: 교육 목록 + 접속 코드 ---------- */
-  /** 환불 등록 QR 주소: GitHub 화면은 refund.html, 구글 웹 앱 주소는 그대로 */
+  /** 환불 등록 QR 주소: 이 화면 주소?e=건 */
   function rfUrl(id) {
-    var u = qrUrl.replace(/sign\.html(?=$|[?#])/, 'refund.html');
+    var u = qrUrl;
     return u ? u + (u.indexOf('?') > -1 ? '&' : '?') + 'e=' + encodeURIComponent(id) : '';
   }
   /* ---------- 고객용 환불 QR (20초마다 바뀜) ----------
@@ -1324,9 +263,9 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), { car: CAR_PAGE, sign:
    * 목록·직원 대리 등록 화면에 진행 중 환불 건이 있으면 1분마다, QR 시간이 끝나는 순간에도 한 번 */
   var RFL = { busy: false, at: 0 };
   function rfLeftAsk() {
-    if (RFL.busy || !staff || !staff.token || staff.guest || (typeof DIALOG !== 'undefined' && DIALOG)) return;
+    if (RFL.busy || !staff || !staff.token || staff.guest) return;
     RFL.busy = true; RFL.at = Date.now();
-    google.script.run.withSuccessHandler(function (r) { RFL.busy = false; rfLeftApply(r); })
+    srv().withSuccessHandler(function (r) { RFL.busy = false; rfLeftApply(r); })
       .withFailureHandler(function (x) { RFL.busy = false; if (/로그인이 필요/.test(errText(x)) && !signingNow()) logout(errText(x)); })
       .staffRfLeft(staff.token);
   }
@@ -1392,7 +331,7 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), { car: CAR_PAGE, sign:
   function eduPdfGet(e) {
     if (edPdfBusy) return;
     edPdfBusy = true; msg($('msg1'), e.title + ' PDF 만드는 중… (10초 이상 걸릴 수 있습니다)', '#6b7686');
-    google.script.run.withSuccessHandler(function (r) {
+    srv().withSuccessHandler(function (r) {
       edPdfBusy = false;
       if (r.pdf) saveFile(r.base + '.pdf', b64Blob(r.pdf, 'application/pdf'));
       else (r.pdfs || []).forEach(function (b64, i) { setTimeout(function () { saveFile(r.base + '_' + (i + 1) + '.pdf', b64Blob(b64, 'application/pdf')); }, i * 700); });
@@ -1508,7 +447,7 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), { car: CAR_PAGE, sign:
     if (k === 'ext') {                                // 5분 연장: 한 번 누르면 바로 (되돌릴 위험 없음)
       eswArm(null, false); eswBusy = true;
       msg($('msg1'), e.title + ' QR 접수 연장 중…', '#6b7686');
-      google.script.run.withSuccessHandler(function (r) { eswBusy = false; loadInit(r); saveState(); msg($('msg1'), r.note || '', '#12833b'); })
+      srv().withSuccessHandler(function (r) { eswBusy = false; loadInit(r); saveState(); msg($('msg1'), r.note || '', '#12833b'); })
         .withFailureHandler(function (x) { eswBusy = false; if (/로그인이 필요/.test(errText(x))) { logout(errText(x)); return; } eswClose(); msg($('msg1'), errText(x), '#c0392b'); })
         .staffRfExtend(staff && staff.token || '', e.id);
       return;
@@ -1518,9 +457,9 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), { car: CAR_PAGE, sign:
     msg($('msg1'), e.title + (k === 'del' ? ' 삭제 중…' : k === 'close' ? ' 마감 중…' : ' 다시 여는 중…'), '#6b7686');
     var ok = function (r) { eswBusy = false; if (k === 'reopen') edTab = 'open'; loadInit(r); saveState(); msg($('msg1'), r.note || '', '#12833b'); };
     var fail = function (x) { eswBusy = false; if (/로그인이 필요/.test(errText(x))) { logout(errText(x)); return; } eswClose(); msg($('msg1'), errText(x), '#c0392b'); };
-    if (k === 'del' && e.pdfSign) google.script.run.withSuccessHandler(ok).withFailureHandler(fail).pdfDelete(staff && staff.token || '', e.id);
-    else if (k === 'del') google.script.run.withSuccessHandler(ok).withFailureHandler(fail).staffDeleteEdu(staff && staff.token || '', e.id);
-    else google.script.run.withSuccessHandler(ok).withFailureHandler(fail).staffSetOpen(staff && staff.token || '', e.id, k === 'reopen');
+    if (k === 'del' && e.pdfSign) srv().withSuccessHandler(ok).withFailureHandler(fail).pdfDelete(staff && staff.token || '', e.id);
+    else if (k === 'del') srv().withSuccessHandler(ok).withFailureHandler(fail).staffDeleteEdu(staff && staff.token || '', e.id);
+    else srv().withSuccessHandler(ok).withFailureHandler(fail).staffSetOpen(staff && staff.token || '', e.id, k === 'reopen');
   }
   function eswClose(except) { [].forEach.call(document.querySelectorAll('#edus .esw.open, #edus .esw.openR'), function (x) { if (x !== except) x.classList.remove('open', 'openR'); }); }
   (function () {                                     // 밀기: 손가락·마우스 모두. 민 직후의 누르기와 열린 카드 누르기는 닫기만
@@ -1732,17 +671,16 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), { car: CAR_PAGE, sign:
   var NAV = { n: 0, skip: 0, t: null, q: false };   // n: 지금 쌓아 둔 칸 수, skip: 우리가 되돌려서 올 popstate 수
   function anyPop() { return POPS.some(function (id) { return !$(id).classList.contains('hidden'); }); }
   function navDepth() {                    // 지금 화면이 원하는 칸 수
-    if (typeof DIALOG !== 'undefined' && DIALOG) return 0;   // 시트 메뉴 창
     var id = curScreen;
     if (rfEdu && rfDirect && (id === 'sf' || id === 's3')) return 0;   // 환불 등록 QR로 바로 들어온 승객은 제외
-    return ({ sp: 1, s2: edu && (edu.guest || edu.pdf) ? 2 : 1, s3: 1, sf: 1, so: 1, sr: 1, sk: 1, su: 1, sv: 1, sq: 1 })[id] || 0;
+    return ({ sp: 1, s2: edu && (edu.guest || edu.pdf) ? 2 : 1, s3: 1, sf: 1, so: 1, sr: 1, sk: 1, su: 1, sv: 1, sq: DID_CAR ? 0 : 1 })[id] || 0;   // 차량관리에서 온 DID: 뒤로가기 = 차량관리
   }
   function navApply() {                    // 쌓아 둔 칸을 지금 화면에 맞춤 (같은 순간의 여러 변화는 한 번에)
-    if (NAV.q) return;
+    if (NAV.q || window.APP_CAR) return;   // 차량 화면이 켜져 있으면 기록은 차량 화면이 씀 (돌아올 때 맞춤)
     NAV.q = true;
     setTimeout(function () {
       NAV.q = false;
-      if (NAV.skip > 0) return;            // 되돌리는 중이면 끝난 뒤 다시
+      if (NAV.skip > 0 || window.APP_CAR) return;   // 되돌리는 중이면 끝난 뒤 다시
       var want = navDepth() + (anyPop() ? 1 : 0);
       while (NAV.n < want) { try { history.pushState({ nav: NAV.n + 1 }, ''); NAV.n++; } catch (x) { break; } }
       if (NAV.n > want) {
@@ -1781,8 +719,7 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), { car: CAR_PAGE, sign:
     navApply();
   }
   try {
-    if (window.google && google.script && google.script.history) google.script.history.setChangeHandler(onBack);
-    else window.addEventListener('popstate', onBack);
+    window.addEventListener('popstate', function (e) { if (window.CARAPP && CARAPP.pop(e)) return; onBack(); });   // 차량 화면 기록이면 차량 화면이 처리
   } catch (x) {}
 
   /** QR 크게 보기 (누르면 닫힘) */
@@ -1810,9 +747,8 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), { car: CAR_PAGE, sign:
   /** 서명지 목록 받기. quiet: 목록이 안 보이는 화면(DID)이면 가운데 로딩 표시 없이 */
   function refreshInit(quiet) {
     BUSY_SKIP.getInit = quiet ? 1 : 0;
-    google.script.run.withSuccessHandler(loadInit).withFailureHandler(function (e) { msg($('msg1'), errText(e), '#c0392b'); }).getInit(staff && staff.token || '');
+    srv().withSuccessHandler(loadInit).withFailureHandler(function (e) { msg($('msg1'), errText(e), '#c0392b'); }).getInit(staff && staff.token || '');
   }
-  window.SIGN_RELOAD = loadInit;     // 저장해 둔 목록으로 먼저 그린 뒤 서버 최신 목록으로 바꿈
 
   /* ---------- 접속 코드 창: 교육을 누르면 열림 ---------- */
   function openCode(e) {
@@ -1849,7 +785,7 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), { car: CAR_PAGE, sign:
       $('codeOver').classList.add('hidden'); $('code').blur(); msg($('codeMsg'), ''); popSync();
       enterSp(v, { id: local.id, title: local.title, date: local.date, dept: local.dept, guest: true, fields: local.fields });
     } else { $('codeOk').disabled = true; msg($('codeMsg'), '확인 중…', '#6b7686'); }
-    google.script.run.withSuccessHandler(function (r) {
+    srv().withSuccessHandler(function (r) {
       $('codeOk').disabled = false;
       if (seq !== codeSeq) return;                 // 그사이 다른 교육을 고른 경우
       if (r.person) {                              // 본인 확인 서명지: 로그인으로 확인됨 → 바로 서명
@@ -1912,7 +848,6 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), { car: CAR_PAGE, sign:
   function idleOver() { return !!(staff && staff.ttl && Date.now() - lastAct > staff.ttl * 1000); }
   function staffExpire() {
     if (!idleOver() || signingNow()) return;
-    if (typeof DIALOG !== 'undefined' && DIALOG) return;   // 시트 메뉴 창은 관리자 표시로만
     var mins = Math.round(staff.ttl / 60);
     landOff();
     if (!$('skView').classList.contains('hidden')) { $('skView').classList.add('hidden'); document.body.classList.remove('skLock'); }
@@ -1926,7 +861,7 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), { car: CAR_PAGE, sign:
     if (now - lastSave > 15000) { lastSave = now; try { sessionStorage.setItem(ACT_KEY, String(now)); } catch (x) {} }
     if (staff && staff.token && now - lastPing > 300000) {
       lastPing = now;
-      google.script.run.withFailureHandler(function (e) { if (/로그인이 필요/.test(errText(e)) && !signingNow()) logout(errText(e)); }).staffPing(staff.token);
+      srv().withFailureHandler(function (e) { if (/로그인이 필요/.test(errText(e)) && !signingNow()) logout(errText(e)); }).staffPing(staff.token);
     }
   }
   ['pointerdown', 'keydown', 'input', 'scroll'].forEach(function (t) { document.addEventListener(t, markAct, { capture: true, passive: true }); });
@@ -1945,7 +880,7 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), { car: CAR_PAGE, sign:
     if (KIOSK_WANT && !g) kioskOpen();             // 차량관리의 [DID]로 왔으면 로그인 뒤 DID 화면
   }
   function logout(text) {
-    if (staff && staff.token) google.script.run.staffLogout(staff.token);
+    if (staff && staff.token) srv().staffLogout(staff.token);
     admTok = null; admData = null; admMe = null; admExp = {}; admOrder = {}; admOverHide(); $('nDept').innerHTML = '';
     ['newCard', 'gstCard', 'stCard', 'smCard', 'pcCard', 'gdCard'].forEach(function (id) { $(id).classList.remove('open'); });
     try { localStorage.removeItem('bglStInfo'); } catch (x) {} stD = null; stPicked = false; stSel = {};   // DID 역 정보 저장본
@@ -1957,7 +892,7 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), { car: CAR_PAGE, sign:
     var pin = $('lgPin').value.trim(), pc = $('lgCode').value.trim();
     if (!pin) { msg($('lgMsg'), '사번을 입력하세요.', '#c0392b'); $('lgPin').focus(); return; }
     $('lgOk').disabled = true; msg($('lgMsg'), '확인 중…', '#6b7686');
-    google.script.run.withSuccessHandler(function (r) {
+    srv().withSuccessHandler(function (r) {
       $('lgOk').disabled = false; msg($('lgMsg'), '');
       if (r.unregistered) {
         openReg(pin, r.mailDomain); return;
@@ -2025,7 +960,7 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), { car: CAR_PAGE, sign:
     var mailId = $('regMail').value.trim().split('@')[0];
     if (!mailId) { msg($('regMsgM'), '메일 아이디를 입력하세요.', '#c0392b'); $('regMail').focus(); return; }
     $('regMailSend').disabled = true; msg($('regMsgM'), '보내는 중…', '#6b7686');
-    google.script.run.withSuccessHandler(function (r) {
+    srv().withSuccessHandler(function (r) {
       $('regMailSend').disabled = false; msg($('regMsgM'), ''); msg($('regMsgC'), '');
       $('regMailShow').textContent = r.mail + ' 로 보냈습니다. 10분 안에 입력하세요.';
       regCodeSet(''); regStage('regCodeStep'); setTimeout(function () { $('regMailCode').focus(); }, 50);
@@ -2035,7 +970,7 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), { car: CAR_PAGE, sign:
   };
   $('regCodeOk').onclick = function () {
     $('regCodeOk').disabled = true; msg($('regMsgC'), '확인 중…', '#6b7686');
-    google.script.run.withSuccessHandler(function (r) {
+    srv().withSuccessHandler(function (r) {
       $('regCodeOk').disabled = false; msg($('regMsgC'), '');
       regTicket = r.ticket; regTicketAt = Date.now(); regStage('regForm'); setTimeout(function () { $('regName').focus(); }, 50);
     }).withFailureHandler(function (e) {
@@ -2063,7 +998,7 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), { car: CAR_PAGE, sign:
   $('regSend').onclick = function () {
     $('regSend').disabled = true; msg($('regMsg2'), '등록 중…', '#6b7686');
     var pin = $('regPin').value.trim();
-    google.script.run.withSuccessHandler(function () {
+    srv().withSuccessHandler(function () {
       $('regSend').disabled = false; closeReg();
       try { localStorage.setItem('bglPin', pin); } catch (x) {}
       $('lgPin').value = pin; $('lgCode').value = '';
@@ -2080,7 +1015,7 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), { car: CAR_PAGE, sign:
   $('chgMailSend').onclick = function () {
     $('chgForm').classList.add('hidden'); chgTicket = '';
     $('chgMailSend').disabled = true; msg($('chgMsg'), '보내는 중…', '#6b7686');
-    google.script.run.withSuccessHandler(function (r) {
+    srv().withSuccessHandler(function (r) {
       $('chgMailSend').disabled = false; $('chgMailSend').textContent = '인증 코드 다시 받기';
       $('chgCodeRow').classList.remove('hidden'); $('chgMailCode').value = ''; $('chgMailCode').focus();
       msg($('chgMsg'), r.mail + ' 로 인증 코드를 보냈습니다. 10분 안에 입력하세요.', '#12833b');
@@ -2090,7 +1025,7 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), { car: CAR_PAGE, sign:
   };
   $('chgCodeOk').onclick = function () {
     $('chgCodeOk').disabled = true; msg($('chgMsg'), '확인 중…', '#6b7686');
-    google.script.run.withSuccessHandler(function (r) {
+    srv().withSuccessHandler(function (r) {
       $('chgCodeOk').disabled = false; msg($('chgMsg'), '');
       chgTicket = r.ticket; $('chgCodeRow').classList.add('hidden');
       $('chgName').value = r.info.name; $('chgPinShow').value = r.info.pin; $('chgDept').value = r.info.dept; $('chgTeam').value = r.info.team || ''; $('chgPost').value = r.info.post; $('chgRank').value = r.info.rank;
@@ -2102,7 +1037,7 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), { car: CAR_PAGE, sign:
   $('chgSend').onclick = function () {
     if (!chgTicket) return;
     $('chgSend').disabled = true; msg($('chgMsg'), '저장 중…', '#6b7686');
-    google.script.run.withSuccessHandler(function (r) {
+    srv().withSuccessHandler(function (r) {
       $('chgSend').disabled = false; chgTicket = ''; $('chgForm').classList.add('hidden');
       $('chgMailSend').textContent = '메일로 인증 코드 받기';
       setStaff({ token: staff.token, name: r.name, disp: r.disp, admin: staff.admin, lv: staff.lv });
@@ -2152,7 +1087,7 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), { car: CAR_PAGE, sign:
       var guest = { dept: f.dept ? gd : '', rank: f.rank ? gr : '', name: n,
         role: f.role ? $('gRole').value.trim() : '', note: f.note ? $('gNoteIn').value.trim() : '' };
       busy();
-      google.script.run.withSuccessHandler(function (r) {
+      srv().withSuccessHandler(function (r) {
         $('pok').disabled = false; msg($('msgp'), '');
         goSign(r, { name: n, guest: guest });
       }).withFailureHandler(function (e) {
@@ -2350,7 +1285,7 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), { car: CAR_PAGE, sign:
     submitting = true; drawing = false;
     $('submit').disabled = true; $('clear').disabled = true; $('back').disabled = true; $('pad').classList.add('locked');
     msg($('msg2'), '제출 중…', '#6b7686');
-    var run = google.script.run.withSuccessHandler(function (res) {
+    var run = srv().withSuccessHandler(function (res) {
       $('doneWho').textContent = ((res.disp ? res.disp + ' ' : '') + res.name).trim();
       $('doneMsg').textContent = res.title + (res.role ? ' · ' + res.role : '') + ' — ' + (res.resigned ? '재서명이 정상적으로 제출되었습니다.' : '서명이 정상적으로 제출되었습니다.') + (res.done ? ' 모든 서명자가 서명을 마쳤습니다.' : '');
       person = null; unlockPad();
@@ -2571,7 +1506,7 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), { car: CAR_PAGE, sign:
   }
   function sendRefund(vals, loc) {
     msg($('rfMsg'), '등록 중…', '#6b7686');
-    google.script.run.withSuccessHandler(function (r) {
+    srv().withSuccessHandler(function (r) {
       $('rfOk').disabled = false; msg($('rfMsg'), '');
       $('doneWho').textContent = r.name;
       $('doneMsg').textContent = r.title + ' — 환불 등록이 완료되었습니다.';
@@ -2615,7 +1550,7 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), { car: CAR_PAGE, sign:
   function skOpen(id, again, stName, done) {
     if (skOpening) return;
     skOpening = true; msg($('msg1'), '불러오는 중…', '#6b7686');
-    google.script.run.withSuccessHandler(function (d) {
+    srv().withSuccessHandler(function (d) {
       skOpening = false; if (done) done();
       msg($('msg1'), ''); msg($('skMsg'), ''); sk = d;
       $('skTitle').textContent = d.title; $('skDate').textContent = d.date || '';
@@ -2638,7 +1573,7 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), { car: CAR_PAGE, sign:
   function skPdfGet(st) {
     if (skPdfBusy) return;
     skPdfBusy = true; msg($('skMsg'), 'PDF 만드는 중… (10초 이상 걸릴 수 있습니다)', '#6b7686');
-    google.script.run.withSuccessHandler(function (r) {
+    srv().withSuccessHandler(function (r) {
       skPdfBusy = false;
       if (r.pdf) saveFile(r.base + '.pdf', b64Blob(r.pdf, 'application/pdf'));
       else r.pdfs.forEach(function (b64, i) { setTimeout(function () { saveFile(r.base + '_' + (r.names[i] || i + 1) + '.pdf', b64Blob(b64, 'application/pdf')); }, i * 700); });
@@ -2701,10 +1636,10 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), { car: CAR_PAGE, sign:
     if (!$('skLeadCancel').classList.contains('armed')) { skCancelArm(true); return; }
     skCancelArm(false); skBusy = true; $('skLeadCancel').disabled = true; msg($('skMsg'), '취소 중…', '#6b7686');
     var end = function (t, c) {
-      google.script.run.withSuccessHandler(function (d) { sk = d; skBusy = false; $('skLeadCancel').disabled = false; skStage('pick'); msg($('skMsg'), t, c); })
+      srv().withSuccessHandler(function (d) { sk = d; skBusy = false; $('skLeadCancel').disabled = false; skStage('pick'); msg($('skMsg'), t, c); })
         .withFailureHandler(function () { skBusy = false; $('skLeadCancel').disabled = false; msg($('skMsg'), t, c); }).safetyOpen(staff && staff.token || '', sk.id);
     };
-    google.script.run.withSuccessHandler(function (r) { end('팀장 서명 ' + r.n + '개 역을 취소했습니다. 점검자가 다시 고칠 수 있습니다.', '#12833b'); })
+    srv().withSuccessHandler(function (r) { end('팀장 서명 ' + r.n + '개 역을 취소했습니다. 점검자가 다시 고칠 수 있습니다.', '#12833b'); })
       .withFailureHandler(function (e) { skBusy = false; $('skLeadCancel').disabled = false; msg($('skMsg'), errText(e), '#c0392b'); })
       .safetyLeaderCancel({ token: staff && staff.token || '', eduId: sk.id });
   };
@@ -2785,16 +1720,16 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), { car: CAR_PAGE, sign:
     skBusy = true; skPad.locked = true; $('skPad').classList.add('locked'); $('skSend').disabled = true; $('skClear').disabled = true; $('skSigBack').disabled = true; msg($('skMsg'), '제출 중…', '#6b7686');
     var unlock = function () { skBusy = false; skPad.locked = false; $('skPad').classList.remove('locked'); $('skSend').disabled = skPad.n < 6; $('skClear').disabled = false; $('skSigBack').disabled = false; };
     var reload = function (done) {                   // 제출 뒤 역 목록을 다시 받아 역 선택 화면 (화면이 바뀐 뒤에 서명 칸 잠금을 풂)
-      google.script.run.withSuccessHandler(function (d) { sk = d; skStage('pick'); unlock(); msg($('skMsg'), done, '#12833b'); })
+      srv().withSuccessHandler(function (d) { sk = d; skStage('pick'); unlock(); msg($('skMsg'), done, '#12833b'); })
         .withFailureHandler(function () { skStage('pick'); unlock(); msg($('skMsg'), done, '#12833b'); }).safetyOpen(staff && staff.token || '', sk.id);
     };
     if (skSigMode === 'lead') {
-      google.script.run.withSuccessHandler(function (r) { skSigMode = ''; reload('팀장 서명을 ' + r.n + '개 역에 저장했습니다.'); })
+      srv().withSuccessHandler(function (r) { skSigMode = ''; reload('팀장 서명을 ' + r.n + '개 역에 저장했습니다.'); })
         .withFailureHandler(function (e) { unlock(); msg($('skMsg'), errText(e), '#c0392b'); })
         .safetyLeaderSubmit({ token: staff && staff.token || '', eduId: sk.id, sign: skPad.png(), device: devInfo });
       return;
     }
-    google.script.run.withSuccessHandler(function (r) {
+    srv().withSuccessHandler(function (r) {
       lsSet(skDraftKey(), null);
       reload(r.st + ' 점검 서명을 ' + (r.resigned ? '다시 ' : '') + '제출했습니다.');
     }).withFailureHandler(function (e) {
@@ -2918,7 +1853,7 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), { car: CAR_PAGE, sign:
     if (skLBusy) return;
     skLBusy = true; $('skLeadView').disabled = true; msg($('skMsg'), '불러오는 중…', '#6b7686');
     var end = function () { skLBusy = false; $('skLeadView').disabled = false; };
-    google.script.run.withSuccessHandler(function (d) {
+    srv().withSuccessHandler(function (d) {
       end(); msg($('skMsg'), '');
       skL = { id: id, data: d, idx: Math.max(0, Math.min(Number(idx) || 0, d.stations.length - 1)) };
       lvOpen();
@@ -3014,7 +1949,8 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), { car: CAR_PAGE, sign:
       if (/로그인이 필요/.test(errText(e))) { logout(errText(e)); return; }
       ms.forEach(function (x) { msg(x, errText(e), '#c0392b'); }); fs.forEach(function (f) { f(e); });
     };
-    google.script.run.withSuccessHandler(function (d) { admMe = d.me || admMe; renderAdmin(d, true); done(); })
+    BUSY_SKIP.adminRefresh = quiet ? 1 : 0;           // 미리 받기는 가운데 로딩창 없이 (목록이 뜬 뒤 도는 로딩창 없앰)
+    srv().withSuccessHandler(function (d) { admMe = d.me || admMe; renderAdmin(d, true); done(); })
       .withFailureHandler(fail).adminRefresh(admTok);
   }
   function admCall(fn, args, onOk, m, onFail) {
@@ -3022,7 +1958,7 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), { car: CAR_PAGE, sign:
     if (!isAdm()) { msg(m, '관리자로 지정된 직원만 할 수 있습니다.', '#c0392b'); if (onFail) onFail(); return; }
     admTok = staff.token;
     msg(m, '처리 중…', '#6b7686');
-    var run = google.script.run.withSuccessHandler(function (r) { msg(m, ''); onOk(r); })
+    var run = srv().withSuccessHandler(function (r) { msg(m, ''); onOk(r); })
       .withFailureHandler(function (e) {
         if (/로그인이 필요/.test(errText(e))) { logout(errText(e)); return; }
         msg(m, errText(e), '#c0392b'); if (onFail) onFail(e);
@@ -3600,7 +2536,7 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), { car: CAR_PAGE, sign:
     var old = stD || stSaved(), same = function (d) { return old && JSON.stringify(Object.assign({}, d, { note: '' })) === JSON.stringify(Object.assign({}, old, { note: '' })); };
     if (old && !stD) stRender(old);
     BUSY_SKIP.staffStInfo = old ? 1 : 0;             // 저장본이 없을 때만 가운데 로딩 표시
-    google.script.run.withSuccessHandler(function (d) { if (same(d)) stSave(d); else stRender(d); })
+    srv().withSuccessHandler(function (d) { if (same(d)) stSave(d); else stRender(d); })
       .withFailureHandler(function (e) { if (/로그인이 필요/.test(errText(e))) { logout(errText(e)); return; } msg($('stMsg'), (old ? '최신 정보를 받지 못해 지난 정보를 보여 줍니다: ' : '') + errText(e), '#c0392b'); })
       .staffStInfo(staff && staff.token || '');
   }
@@ -3654,7 +2590,7 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), { car: CAR_PAGE, sign:
     if (!code) { msg($('smMsg'), '역 코드를 넣으세요.', '#c0392b'); return; }
     if (smEd.dirty && !confirm('보내지 않은 변경이 있습니다. 버리고 다시 불러올까요?')) return;
     msg($('smMsg'), '');
-    google.script.run.withSuccessHandler(function (r) { smGot(r); }).withFailureHandler(smFail).staffStGet(staff && staff.token || '', code);
+    srv().withSuccessHandler(function (r) { smGot(r); }).withFailureHandler(smFail).staffStGet(staff && staff.token || '', code);
   };
   $('smCode').onkeydown = function (ev) { if (ev.key === 'Enter') $('smLoad').click(); };
   $('smPrev').onclick = function () { smEd.preview(); };
@@ -3665,14 +2601,12 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), { car: CAR_PAGE, sign:
     var sent = smEd.items.slice();
     smEd.payload().then(function (p) {
       msg($('smMsg'), '올리는 중…', '#6b7686');
-      google.script.run.withSuccessHandler(function (r) { smGot(r, sent); }).withFailureHandler(smFail).staffStImgs(staff && staff.token || '', code, p);
+      srv().withSuccessHandler(function (r) { smGot(r, sent); }).withFailureHandler(smFail).staffStImgs(staff && staff.token || '', code, p);
     }).catch(function (e) { msg($('smMsg'), e.message, '#c0392b'); });
   };
 
   /* ---------- DID 화면 (오른쪽 위 [DID]): 관리자 → [역 안내 화면], 근무자 → [우리 역 안내 이미지] ---------- */
-  var KIOSK_WANT = location.hash === '#kiosk';      // 차량관리 화면의 [DID]로 들어옴 (로그인 뒤 DID로)
-  var SIGN_WANT = location.hash === '#sign';        // 차량관리 화면의 [e-싸인]으로 들어옴 (기억된 DID 화면 무시하고 목록)
-  if (KIOSK_WANT || SIGN_WANT) try { history.replaceState(history.state, '', location.pathname + location.search); } catch (x) {}
+  var KIOSK_WANT = false;                           // 차량관리의 [DID]를 로그인 전에 누름: 로그인 뒤 DID로
   function kioskOpen() {
     KIOSK_WANT = false;
     if (!staff || !staff.token || staff.guest) { enterList(); return; }
@@ -3930,11 +2864,11 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), { car: CAR_PAGE, sign:
         X.err = true; q('.b-exp').disabled = false; msg(q('.m'), errText(err), '#c0392b');
       };
       var both = function () { if (X.log && (X.pdf || e.refund)) q('.b-exp').disabled = false; expMsg(); };
-      google.script.run.withSuccessHandler(function (r) {
+      srv().withSuccessHandler(function (r) {
         X.log = r; setBtn('.b-csv', 'CSV 저장', true); setBtn('.b-html', 'HTML 저장', true); both();
       }).withFailureHandler(fail).adminExportLog(staff.token, e.id);
       if (e.refund) return;                           // 비상 등록: PDF·HTML 없이 CSV만
-      google.script.run.withSuccessHandler(function (r) {
+      srv().withSuccessHandler(function (r) {
         X.pdf = r; if (r.missing) setBtn('.b-pdf', 'PDF 없음 (탭 없음)', false); else setBtn('.b-pdf', 'PDF 저장', true); both();
       }).withFailureHandler(fail).adminExportPdf(staff.token, e.id);
       setTimeout(function () { q('.b-exp').disabled = false; }, 60000);
@@ -4250,7 +3184,7 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), { car: CAR_PAGE, sign:
     var q = $('puFind').value.trim();
     if (!q) { msg($('puMsg2'), '찾을 이름을 입력하세요.', '#c0392b'); return; }
     $('puFindBtn').disabled = true; msg($('puMsg2'), '찾는 중…', '#6b7686');
-    google.script.run.withSuccessHandler(function (list) {
+    srv().withSuccessHandler(function (list) {
       $('puFindBtn').disabled = false; msg($('puMsg2'), list.length ? '' : '"' + q + '" 직원을 찾지 못했습니다.', '#c0392b');
       var box = $('puHits'); box.innerHTML = '';
       list.forEach(function (p) {
@@ -4292,7 +3226,7 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), { car: CAR_PAGE, sign:
     if (PU.fields.length !== PU.signers.length) return bad('서명란(' + PU.fields.length + '개)과 서명자(' + PU.signers.length + '명) 수를 맞추세요.');
     PU.busy = true; $('puSave').disabled = true; msg($('puMsg2'), '올리는 중…', '#6b7686');
     var done = function () { PU.busy = false; $('puSave').disabled = false; };
-    google.script.run.withSuccessHandler(function (r) {
+    srv().withSuccessHandler(function (r) {
       done(); edTab = 'open'; resetAll(); loadInit(r); msg($('msg1'), r.note || '', '#12833b');
     }).withFailureHandler(function (x) {
       done();
@@ -4334,7 +3268,7 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), { car: CAR_PAGE, sign:
     $('pvPages').innerHTML = ''; msg($('pvMsg'), '문서를 불러오는 중…', '#6b7686');
     show('sv');
     var got = PV.last && PV.last.id === e.id ? Promise.resolve(PV.last.d) : new Promise(function (ok, no) {
-      google.script.run.withSuccessHandler(ok).withFailureHandler(no).pdfView(staff && staff.token || '', e.id);
+      srv().withSuccessHandler(ok).withFailureHandler(no).pdfView(staff && staff.token || '', e.id);
     });
     got.then(function (d) {
       PV.last = { id: e.id, d: d };
@@ -4396,7 +3330,7 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), { car: CAR_PAGE, sign:
       if (/로그인이 필요/.test(errText(x))) { logout(errText(x)); return; }
       msg($('msg1'), errText(x), '#c0392b');
     };
-    google.script.run.withSuccessHandler(function (r) {
+    srv().withSuccessHandler(function (r) {
       loadJs(PDFLIB_SRC).then(function () { return pdfStamp(r); }).then(function (bytes) {
         pdfDlBusy = false;
         saveFile(r.base + '_서명.pdf', new Blob([bytes], { type: 'application/pdf' }));
@@ -4419,6 +3353,23 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), { car: CAR_PAGE, sign:
       });
     });
   }
+  /* ---------- 업무차량관리 화면과 연결 (차량 화면은 src/car/, 같은 페이지 안의 CARAPP) ----------
+   * APP_CAR: 지금 차량 화면이 켜져 있는지 (켜져 있으면 e-싸인의 뒤로가기 기록 쌓기를 멈춤)
+   * 처음 주소가 ?car·?car=차량번호·?rec=차량번호면 차량 화면으로 시작 */
+  var DID_CAR = false;                               // 차량관리의 [DID]로 들어온 DID 화면: 뒤로가기 = 차량관리로 (뒤로가기 칸을 쌓지 않음)
+  window.APP_CAR = (function () { var q = new URLSearchParams(location.search); return q.has('car') || q.has('rec'); })();
+  if (window.APP_CAR) document.body.classList.add('carOn');
+  /** 차량 화면에서 e-싸인으로 (kind: 'sign' 서명지 목록, 'kiosk' DID / how: 'push'·'replace' 버튼·링크, 'pop' 뒤로가기, st: 그 기록 칸) */
+  window.SIGN_LINK = {
+    show: function (kind, how, st) {
+      if (typeof NAV !== 'undefined') NAV.skip = 0, NAV.n = how === 'pop' ? (st && st.nav) || 0 : 0;   // 이 기록 칸 위에 쌓인 e-싸인 칸 수
+      if (how === 'pop') { if (typeof navApply === 'function') navApply(); }
+      else if (!staff || !staff.token) { if (kind === 'kiosk') KIOSK_WANT = true; show('sl'); }   // 로그인 전: 로그인 화면 (로그인 뒤 DID)
+      else if (kind === 'kiosk') { kioskOpen(); DID_CAR = true; }   // kioskOpen이 목록을 거쳐 가므로 뒤에 (show가 sq 아닌 화면에서 끔)
+      else enterList();
+      if (staff && staff.token && !staff.guest) refreshInit(true);   // 목록은 뒤에서 조용히 새로 (예전에 페이지를 새로 열 때처럼)
+    }
+  };
   /* ---------- 개인 코드 관리 ---------- */
   $('gstHead').onclick = function () { if ($('gstCard').classList.toggle('open')) admEnsure(function () {}, $('gstMsg')); };   // 지금 아이디는 펼칠 때 받음
   $('gstSave').onclick = function () {
@@ -4508,7 +3459,6 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), { car: CAR_PAGE, sign:
   })();
 
   /* ---------- 시작 ---------- */
-  var DIALOG = false;               // 예전 시트 메뉴 '관리자 페이지' 창 (없앰)
   {
     var DIRECT = typeof INIT !== 'undefined' && INIT && INIT.direct;     // 환불 등록 QR(주소?e=…)로 들어온 경우
     var NOQR = typeof INIT !== 'undefined' && INIT && INIT.noQr;         // 환불 주소에 건 번호가 없는 경우
@@ -4535,13 +3485,13 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), { car: CAR_PAGE, sign:
    환불 등록 QR(주소?e=…)은 입력 화면을 다 받은 뒤에 보여 줌 */
 (function () {
   var q = new URLSearchParams(location.search), e = String(q.get('e') || '').replace(/[^\w]/g, '').slice(0, 20);
-  var base = { url: SIGN_HOME, carPage: SIGN_HOME.replace(/[^\/]*$/, '') + 'car.html', educations: [] };   // QR은 이 화면 주소로, 업무차량관리는 같은 저장소의 car.html
-  var onRefund = /refund\.html$/.test(location.pathname);               // 환불 등록 QR은 refund.html, e-싸인은 sign.html
-  if (e && !onRefund) { location.replace('refund.html' + location.search); return; }
+  var base = { url: SIGN_HOME, educations: [] };      // QR은 이 화면 주소로
+  var onRefund = !!e || q.has('rf');                 // 환불 등록 QR(?e=건&k=…), 그 탭을 새로고침(?rf)
+  if (onRefund) document.title = '환불 등록';
   var k = String(q.get('k') || '').replace(/[^\w.]/g, '').slice(0, 40), re = '';   // k: 20초마다 바뀌는 QR의 시각·서명
   if (onRefund) {
     // 주소창에서 환불 건 번호를 지움: 주소를 복사해 보내도 QR 없이는 못 들어옴. 이 탭에서 새로고침하면 입력 시간 안(또는 완료 화면)일 때만 이어서
-    if (e) { try { history.replaceState(null, '', location.pathname); } catch (x) {} }
+    if (e) { try { history.replaceState(null, '', location.pathname + '?rf'); } catch (x) {} }
     else {
       var kept = null; try { kept = JSON.parse(sessionStorage.getItem('bglSign.v2') || 'null'); } catch (x) {}
       if (kept && kept.rf && kept.rfd && (kept.s === 's3' || Number(kept.rz) > Date.now())) { e = String(kept.rf).replace(/[^\w]/g, '').slice(0, 20); re = String(kept.re || ''); }
@@ -4551,14 +3501,9 @@ if (CAR_PAGE) appSwitch(document.getElementById('appSw'), { car: CAR_PAGE, sign:
   if (!e) { START(base); return; }
   document.documentElement.classList.add('rfBoot');
   var go = function (d) {
-    d.url = base.url; d.carPage = base.carPage; d.direct = e;
+    d.url = base.url; d.direct = e;
     START(d);
     document.documentElement.classList.remove('rfBoot');
   };
-  fetch(API + '?api=sign&e=' + encodeURIComponent(e) + (k ? '&k=' + encodeURIComponent(k) : '') + (re ? '&re=' + encodeURIComponent(re) : '')).then(function (r) { return r.json(); })
-    .then(function (j) { go(j.ok ? j.data : { error: j.error || '불러오기 실패', educations: [] }); })
-    .catch(function () { go({ error: '서버에 연결할 수 없습니다. 인터넷 연결을 확인하세요.', educations: [] }); });
+  api('refundInit', [e, k, re]).then(go, function (x) { go({ error: errText(x) || '불러오기 실패', educations: [] }); });
 })();
-</script>
-</body>
-</html>

@@ -24,7 +24,8 @@
       if (/로그인이 필요/.test(errText(e))) { logout(errText(e)); return; }
       ms.forEach(function (x) { msg(x, errText(e), '#c0392b'); }); fs.forEach(function (f) { f(e); });
     };
-    google.script.run.withSuccessHandler(function (d) { admMe = d.me || admMe; renderAdmin(d, true); done(); })
+    BUSY_SKIP.adminRefresh = quiet ? 1 : 0;           // 미리 받기는 가운데 로딩창 없이 (목록이 뜬 뒤 도는 로딩창 없앰)
+    srv().withSuccessHandler(function (d) { admMe = d.me || admMe; renderAdmin(d, true); done(); })
       .withFailureHandler(fail).adminRefresh(admTok);
   }
   function admCall(fn, args, onOk, m, onFail) {
@@ -32,7 +33,7 @@
     if (!isAdm()) { msg(m, '관리자로 지정된 직원만 할 수 있습니다.', '#c0392b'); if (onFail) onFail(); return; }
     admTok = staff.token;
     msg(m, '처리 중…', '#6b7686');
-    var run = google.script.run.withSuccessHandler(function (r) { msg(m, ''); onOk(r); })
+    var run = srv().withSuccessHandler(function (r) { msg(m, ''); onOk(r); })
       .withFailureHandler(function (e) {
         if (/로그인이 필요/.test(errText(e))) { logout(errText(e)); return; }
         msg(m, errText(e), '#c0392b'); if (onFail) onFail(e);

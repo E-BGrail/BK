@@ -194,7 +194,7 @@
   }
   function sendRefund(vals, loc) {
     msg($('rfMsg'), '등록 중…', '#6b7686');
-    google.script.run.withSuccessHandler(function (r) {
+    srv().withSuccessHandler(function (r) {
       $('rfOk').disabled = false; msg($('rfMsg'), '');
       $('doneWho').textContent = r.name;
       $('doneMsg').textContent = r.title + ' — 환불 등록이 완료되었습니다.';

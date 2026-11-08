@@ -37,7 +37,7 @@
       var guest = { dept: f.dept ? gd : '', rank: f.rank ? gr : '', name: n,
         role: f.role ? $('gRole').value.trim() : '', note: f.note ? $('gNoteIn').value.trim() : '' };
       busy();
-      google.script.run.withSuccessHandler(function (r) {
+      srv().withSuccessHandler(function (r) {
         $('pok').disabled = false; msg($('msgp'), '');
         goSign(r, { name: n, guest: guest });
       }).withFailureHandler(function (e) {
@@ -235,7 +235,7 @@
     submitting = true; drawing = false;
     $('submit').disabled = true; $('clear').disabled = true; $('back').disabled = true; $('pad').classList.add('locked');
     msg($('msg2'), '제출 중…', '#6b7686');
-    var run = google.script.run.withSuccessHandler(function (res) {
+    var run = srv().withSuccessHandler(function (res) {
       $('doneWho').textContent = ((res.disp ? res.disp + ' ' : '') + res.name).trim();
       $('doneMsg').textContent = res.title + (res.role ? ' · ' + res.role : '') + ' — ' + (res.resigned ? '재서명이 정상적으로 제출되었습니다.' : '서명이 정상적으로 제출되었습니다.') + (res.done ? ' 모든 서명자가 서명을 마쳤습니다.' : '');
       person = null; unlockPad();

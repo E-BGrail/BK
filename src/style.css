@@ -225,9 +225,15 @@
   /* 컴퓨터처럼 넓은 화면: 서명 화면을 휴대폰 폭(430px)으로 가운데에 (관리자 화면은 넓게 그대로) */
   @media (min-width: 600px) and (min-height: 601px) {
     html { background:#cfd5e1; }
-    body:not([data-s="sa"]):not([data-s="so"]):not([data-s="sr"]) { max-width:430px; margin:0 auto; min-height:100vh;
+    body:not([data-s="sa"]):not([data-s="so"]):not([data-s="sr"]), body.carOn { max-width:430px; margin:0 auto; min-height:100vh;
       box-shadow:0 0 0 1px #c3cad8, 0 10px 40px rgba(16,24,48,.18); }
+    body.carOn { position:relative; }
   }
+  /* 차량관리 화면 (src/car/): 이 화면 안의 칸 #carApp (Shadow DOM). 켜져 있으면 e-싸인 화면은 모두 숨김 */
+  #carApp { display:none; }
+  body.carOn { padding:0; }
+  body.carOn > #carApp { display:block; }
+  body.carOn > :not(#carApp):not(script):not(template):not(.busyOver) { display:none !important; }   /* 가운데 로딩 표시는 차량 화면도 같이 씀 */
   /* v2 추가 */
   .person.sel { border:2px solid var(--pri); background:#eef3ff; }
   .person.sel .badge { color:var(--pri); }

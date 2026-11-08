@@ -1,0 +1,209 @@
+<!-- ===== 1. 카메라 (QR로 들어오면 바로) ===== -->
+<section id="cam" class="hidden">
+  <div class="camTop">
+    <b id="camTitle">운행 시작 · 탑승 km</b>
+    <button class="dnBtn" id="dayNight" type="button" aria-label="주간·야간 모드 바꾸기">주간</button>
+    <button class="round hidden" id="torch" type="button" aria-label="플래시 켜기">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 2 4 14h7l-1 8 9-12h-7z"/></svg>
+    </button>
+  </div>
+  <div class="view" id="view">
+    <video id="video" playsinline muted autoplay></video>
+    <p class="camHint" id="camHint">계기판 주행거리를 박스 안에 맞춰주세요</p>
+    <div class="guide" id="guide"></div>
+    <div class="live" id="live"></div>
+    <div class="camCtl" id="camCtl">
+      <div class="ctlRow">
+      <div class="exp hidden" id="expRow" role="group" aria-label="밝기 조절">
+        <button type="button" id="expDn" aria-label="더 어둡게">−</button><span>밝기 <b id="expVal">0</b><small id="expAuto"></small></span><button type="button" id="expUp" aria-label="더 밝게">＋</button>
+      </div>
+      <div class="zoom" id="zoom" role="group" aria-label="줌">
+        <button type="button" data-z="1" aria-label="줌 1배">1×</button><button type="button" data-z="2" aria-label="줌 2배">2×</button><button type="button" data-z="3" aria-label="줌 3배">3×</button><button type="button" data-z="5" aria-label="줌 5배">5×</button>
+      </div>
+      </div>
+      <span class="pill" id="ocrState">숫자 인식 준비 중 · 가운데 버튼으로 바로 촬영 가능</span>
+      <div class="shRow">
+        <span style="width:72px"></span>
+        <button class="shutter" id="shutter" type="button" aria-label="지금 촬영"></button>
+        <span style="width:72px"></span>
+      </div>
+    </div>
+    <div class="fallback hidden" id="fallback">
+      <p id="fbText">이 화면에서 카메라를 바로 열 수 없습니다.<br>아래 버튼으로 계기판 주행거리를 찍어 주세요.</p>
+      <label class="btn pri" style="max-width:280px;display:block;text-align:center">카메라로 촬영<input type="file" id="fileKm" accept="image/*" capture="environment" hidden></label>
+      <button class="txtBtn" id="camRetry" type="button">실시간 카메라 다시 시도</button>
+      <button class="txtBtn" id="manual2" type="button">숫자 직접 입력</button>
+      <p class="why" id="fbWhy"></p>
+    </div>
+    <div class="cropper hidden" id="cropper">
+      <p class="camHint" style="top:12px">주행거리 숫자에 박스를 맞춰 주세요 · 끌어서 이동</p>
+      <div class="cropStage" id="cropStage"><img id="cropImg" alt="찍은 계기판 사진"><div class="cbox" id="cbox"></div></div>
+      <div class="cropCtl">
+        <label class="sz">박스 크기<input type="range" id="cSize" min="10" max="95" value="55"></label>
+        <div class="two">
+          <label class="btn gray" style="display:block;text-align:center;padding:14px 6px">다시 찍기<input type="file" id="fileKm2" accept="image/*" capture="environment" hidden></label>
+          <button class="btn pri" id="cropUse" type="button" style="padding:14px 6px">이 영역 사용</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="sheet" id="sheet">
+    <div class="grab"></div>
+    <div class="top"><span class="no" id="shCar"></span><span class="pill" id="shState"></span></div>
+    <div id="shRows" style="display:flex; flex-direction:column; gap:6px"></div>
+  </div>
+</section>
+
+<!-- 확인·완료 화면 공통 머리 -->
+<div id="chrome" class="hidden">
+  <header>
+    <div class="brand" id="brand">
+      <img alt="부산-김해경전철" referrerpolicy="no-referrer" src="https://www.bglrt.com/_res/english/img/inc/logo_bgl%28k%29.png"
+        onerror="if(!this.dataset.alt){this.dataset.alt=1;this.src='https://www.bglrt.com/_res/default/img/sub/p00563_img05_04.png';}else{this.parentNode.className='brand noimg';}">
+      <span class="wm"><i>BGL</i>부산-김해경전철</span>
+    </div>
+    <div class="appSw" id="appSw" role="tablist"><a class="sw" data-k="sign" href="#" role="tab" aria-selected="false">e-싸인</a><a class="sw on" data-k="car" href="?" role="tab" aria-selected="true">차량관리</a><a class="sw" data-k="kiosk" href="#" role="tab" aria-selected="false">DID</a></div>
+  </header>
+  <div class="band"><b id="bandTitle">운행 시작</b><span class="carChip" id="bandCar"></span></div>
+</div>
+
+<!-- ===== 2. 확인 ===== -->
+<section id="cf" class="hidden">
+  <div class="steps"><div class="st1 done"><b>1</b><span id="st1Label">탑승 km</span></div><div class="st1 on"><b>2</b>확인</div></div>
+  <main>
+    <div class="note hidden" id="cfNote"></div>
+    <div class="card">
+      <h2 id="cfTitle">운행 시작 확인</h2>
+      <div class="box kmBox">
+        <div class="photos" id="photos"></div>
+        <div id="kmInputs" class="hidden" style="display:flex;flex-direction:column;gap:8px">
+          <div class="kmRow"><label for="km0">탑승 km</label><input type="text" id="km0" class="kmIn" inputmode="numeric" autocomplete="off" maxlength="9"><span>km</span></div>
+          <div class="kmRow"><label for="km">하차 km</label><input type="text" id="km" class="kmIn" inputmode="numeric" autocomplete="off" maxlength="9"><span>km</span></div>
+          <div class="cmp" id="kmCmp"></div>
+        </div>
+        <button class="link" id="retake" type="button">사진 다시 촬영</button>
+      </div>
+
+      <div class="grid2 hidden" id="idBox" style="margin-top:4px">
+        <div class="fld"><label for="nm">사번</label><input type="tel" id="nm" autocomplete="off" inputmode="numeric" pattern="[0-9]*" maxlength="20"></div>
+        <div class="fld"><label for="pc">개인 코드</label><input type="text" id="pc" class="secret" inputmode="numeric" maxlength="6" autocomplete="off"></div>
+      </div>
+      <a class="btn gray hidden" id="regLink" href="sign.html" style="display:block;text-align:center;margin-top:10px;text-decoration:none">e-싸인에서 직원 등록</a>
+
+      <div id="endBox" class="hidden">
+        <div class="sec"><span class="lbl">행선지<small>이 차량에서 자주 쓰는 곳 자동 선택</small></span><div class="chips" id="routes" role="group" aria-label="행선지"></div>
+          <input type="text" id="routeEtc" class="hidden" placeholder="행선지 입력" maxlength="30" style="margin-top:8px" aria-label="기타 행선지"></div>
+        <div class="sec"><span class="lbl">운행목적<small>이 차량에서 자주 쓰는 항목 자동 선택</small></span><div class="chips" id="reasons" role="group" aria-label="운행목적"></div>
+          <input type="text" id="reasonEtc" class="hidden" placeholder="운행목적 입력" maxlength="30" style="margin-top:8px" aria-label="기타 운행목적"></div>
+        <div class="sec"><span class="lbl"><label for="memo">특이사항</label><small>차량 관련 내용이 있으면 입력 (선택)</small></span>
+          <input type="text" id="memo" placeholder="예: 타이어 공기압 경고등 켜짐" maxlength="100" autocomplete="off"></div>
+      </div>
+      <div class="msg" id="msg"></div>
+    </div>
+    <button class="btn pri" id="submit" type="button">운행 시작</button>
+  </main>
+</section>
+
+<!-- ===== 3. 완료 ===== -->
+<section id="done" class="hidden">
+  <main>
+    <div class="card center">
+      <div class="check"><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5 10 17.5 19 7"/></svg></div>
+      <h2 id="doneTitle" style="margin:0">운행이 시작되었습니다</h2>
+      <div class="rows" id="doneRows"></div>
+      <button class="btn pri hidden" id="doneHome" type="button" style="margin-top:18px">차량 목록으로</button>
+      <p style="font-size:13px;color:var(--sub);margin:12px 0 0">이 화면은 닫아도 됩니다.</p>
+    </div>
+  </main>
+</section>
+
+<!-- ===== 업무차량관리 첫 화면 (주소만 열면): 차량 목록 (차량마다 주행거리 촬영 · 운행 기록) ===== -->
+<section id="home" class="hidden">
+  <main>
+    <div class="card">
+      <div class="carHead"><h2>차량 목록</h2></div>
+      <div class="carHint" style="margin:-6px 0 10px">카드 밀기: 왼쪽 운행 기록·전표 등록, 오른쪽 차량 삭제</div>
+      <div class="carPanel hidden" id="carDelBox">
+        <b id="carDelNo"></b> 차량을 삭제합니다. 운행 기록은 남습니다. 관리자만 삭제할 수 있습니다.
+        <div class="carDelRow"><input type="tel" id="carDelPin" placeholder="관리자 사번" inputmode="numeric" maxlength="20" autocomplete="off"><input type="text" id="carDelPw" class="secret" placeholder="개인 코드 6자리" inputmode="numeric" maxlength="6" autocomplete="off"></div>
+        <div class="carPanelBtns"><button type="button" class="btn gray" id="carDelNoBtn">취소</button><button type="button" class="btn del" id="carDelOk">삭제</button></div>
+        <div class="msg" id="carDelMsg"></div>
+      </div>
+      <div class="carPanel hidden" id="carRcBox">
+        <b id="crcTitle"></b>
+        <div class="crcList" id="crcList"></div>
+        <div class="crcPdf"><select id="crcMonth" aria-label="관리일지 월"></select><button type="button" class="sbtn" id="crcPdf">관리일지 PDF</button></div>
+        <div class="hidden" id="crcForm">
+          <div class="crcGrid">
+            <label>구분<select id="crcKind"><option>주유</option><option>수리</option><option>기타</option></select></label>
+            <label>계기판 km<input type="text" id="crcKm" inputmode="numeric" maxlength="9" autocomplete="off"></label>
+            <label>세부내용<input type="text" id="crcDetail" placeholder="예: 20.5L" maxlength="40" autocomplete="off"></label>
+            <label>금액(원)<input type="text" id="crcAmt" inputmode="numeric" maxlength="10" autocomplete="off"></label>
+          </div>
+          <input type="text" id="crcNote" placeholder="비고 (선택)" maxlength="40" autocomplete="off">
+          <img id="crcThumb" class="hidden" alt="전표 사진">
+          <div class="crcShots"><label class="btn gray crcShot" id="crcShot">전표 촬영<input type="file" id="crcFile" accept="image/*" capture="environment" hidden></label>
+            <label class="btn gray crcShot">사진 선택<input type="file" id="crcFile2" accept="image/*" hidden></label></div>
+          <input type="tel" id="crcPin" placeholder="사번" autocomplete="off" inputmode="numeric" pattern="[0-9]*" maxlength="20">
+          <input type="text" id="crcPc" class="secret" placeholder="개인 코드 6자리" autocomplete="off" inputmode="numeric" maxlength="6">
+        </div>
+        <div class="carPanelBtns"><button type="button" class="btn gray" id="crcNo">취소</button><button type="button" class="btn pri" id="crcOk" disabled>등록</button></div>
+        <div class="msg" id="crcMsg"></div>
+      </div>
+      <div class="msg" id="carNote"></div>
+      <div class="carList" id="carList2"><div style="padding:14px;color:var(--sub);font-size:14px">불러오는 중…</div></div>
+    </div>
+    <div class="card" id="carAddBox">
+      <div class="carHead"><h2>차량 등록</h2></div>
+      <div class="carAddRow"><input type="text" id="carNo" placeholder="예: 12가1234 스타리아" autocomplete="off" maxlength="40"><button type="button" class="btn pri" id="carAddOk">등록</button></div>
+      <div class="msg" id="carAddMsg"></div>
+    </div>
+  </main>
+</section>
+
+<!-- ===== 운행기록 (차량별 보기 · 엑셀 · 운행일지 PDF) ===== -->
+<section id="rec" class="hidden">
+  <main>
+    <div class="card">
+      <div class="recTool">
+        <button class="mBtn" id="rPrev" type="button" aria-label="이전 달">◀</button>
+        <select id="rMonth" aria-label="조회 월"></select>
+        <button class="mBtn" id="rNext" type="button" aria-label="다음 달">▶</button>
+        <button class="sbtn" id="rXlsx" type="button">엑셀</button>
+        <button class="sbtn" id="rPdf" type="button">PDF</button>
+      </div>
+    </div>
+    <div class="card">
+      <div id="rRows"><div style="padding:14px 0;color:var(--sub);font-size:14px">불러오는 중…</div></div>
+    </div>
+  </main>
+</section>
+
+
+<!-- ===== 차량 선택 / 오류 ===== -->
+<section id="need" class="hidden">
+  <main>
+    <div class="card">
+      <h2>처음 한 번 로그인이 필요합니다</h2>
+      <div style="font-size:14px;color:var(--sub)">이 휴대폰으로 운행을 시작하려면 사번과 개인 코드를 한 번 입력하세요. 다음부터는 QR만 찍으면 바로 운행을 시작합니다.</div>
+      <div class="hidden" id="needIos" style="font-size:13.5px;margin-top:10px;padding:10px 12px;border-radius:10px;background:#fff6e5;color:#7a4b00;line-height:1.5"><b>아이폰 안내</b><br>사파리는 이 화면을 오래(사파리를 쓴 날로 7일 넘게) 열지 않으면 로그인 기록을 지울 수 있습니다. 그때는 이 화면에서 사번과 개인 코드를 한 번 더 입력하면 됩니다.</div>
+      <div class="grid2" style="margin-top:4px">
+        <div class="fld"><label for="ndPin">사번</label><input type="tel" id="ndPin" autocomplete="off" inputmode="numeric" pattern="[0-9]*" maxlength="20"></div>
+        <div class="fld"><label for="ndPc">개인 코드</label><input type="text" id="ndPc" class="secret" inputmode="numeric" maxlength="6" autocomplete="off" enterkeyhint="go"></div>
+      </div>
+      <button class="btn pri" id="ndOk" type="button" style="width:100%;margin-top:12px">확인</button>
+      <div id="ndMsg" style="font-size:14px;color:#c0392b;margin-top:8px;min-height:1em"></div>
+      <a class="btn gray hidden" id="ndReg" href="sign.html" style="display:block;text-align:center;margin-top:8px;text-decoration:none">e-싸인에서 직원 등록</a>
+    </div>
+  </main>
+</section>
+
+<section id="pick" class="hidden">
+  <main>
+    <div class="card">
+      <h2>차량을 확인할 수 없습니다</h2>
+      <div style="font-size:14px;color:var(--sub)" id="pickText">차량에 붙은 QR을 다시 찍거나, 아래에서 차량을 고르세요.</div>
+      <div class="carList" id="carList"></div>
+    </div>
+  </main>
+</section>

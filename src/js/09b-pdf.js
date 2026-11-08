@@ -283,7 +283,7 @@
     var q = $('puFind').value.trim();
     if (!q) { msg($('puMsg2'), '찾을 이름을 입력하세요.', '#c0392b'); return; }
     $('puFindBtn').disabled = true; msg($('puMsg2'), '찾는 중…', '#6b7686');
-    google.script.run.withSuccessHandler(function (list) {
+    srv().withSuccessHandler(function (list) {
       $('puFindBtn').disabled = false; msg($('puMsg2'), list.length ? '' : '"' + q + '" 직원을 찾지 못했습니다.', '#c0392b');
       var box = $('puHits'); box.innerHTML = '';
       list.forEach(function (p) {
@@ -325,7 +325,7 @@
     if (PU.fields.length !== PU.signers.length) return bad('서명란(' + PU.fields.length + '개)과 서명자(' + PU.signers.length + '명) 수를 맞추세요.');
     PU.busy = true; $('puSave').disabled = true; msg($('puMsg2'), '올리는 중…', '#6b7686');
     var done = function () { PU.busy = false; $('puSave').disabled = false; };
-    google.script.run.withSuccessHandler(function (r) {
+    srv().withSuccessHandler(function (r) {
       done(); edTab = 'open'; resetAll(); loadInit(r); msg($('msg1'), r.note || '', '#12833b');
     }).withFailureHandler(function (x) {
       done();
@@ -367,7 +367,7 @@
     $('pvPages').innerHTML = ''; msg($('pvMsg'), '문서를 불러오는 중…', '#6b7686');
     show('sv');
     var got = PV.last && PV.last.id === e.id ? Promise.resolve(PV.last.d) : new Promise(function (ok, no) {
-      google.script.run.withSuccessHandler(ok).withFailureHandler(no).pdfView(staff && staff.token || '', e.id);
+      srv().withSuccessHandler(ok).withFailureHandler(no).pdfView(staff && staff.token || '', e.id);
     });
     got.then(function (d) {
       PV.last = { id: e.id, d: d };
@@ -429,7 +429,7 @@
       if (/로그인이 필요/.test(errText(x))) { logout(errText(x)); return; }
       msg($('msg1'), errText(x), '#c0392b');
     };
-    google.script.run.withSuccessHandler(function (r) {
+    srv().withSuccessHandler(function (r) {
       loadJs(PDFLIB_SRC).then(function () { return pdfStamp(r); }).then(function (bytes) {
         pdfDlBusy = false;
         saveFile(r.base + '_서명.pdf', new Blob([bytes], { type: 'application/pdf' }));

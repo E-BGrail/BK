@@ -1,7 +1,7 @@
   /* ---------- 1단계: 교육 목록 + 접속 코드 ---------- */
-  /** 환불 등록 QR 주소: GitHub 화면은 refund.html, 구글 웹 앱 주소는 그대로 */
+  /** 환불 등록 QR 주소: 이 화면 주소?e=건 */
   function rfUrl(id) {
-    var u = qrUrl.replace(/sign\.html(?=$|[?#])/, 'refund.html');
+    var u = qrUrl;
     return u ? u + (u.indexOf('?') > -1 ? '&' : '?') + 'e=' + encodeURIComponent(id) : '';
   }
   /* ---------- 고객용 환불 QR (20초마다 바뀜) ----------
@@ -64,9 +64,9 @@
    * 목록·직원 대리 등록 화면에 진행 중 환불 건이 있으면 1분마다, QR 시간이 끝나는 순간에도 한 번 */
   var RFL = { busy: false, at: 0 };
   function rfLeftAsk() {
-    if (RFL.busy || !staff || !staff.token || staff.guest || (typeof DIALOG !== 'undefined' && DIALOG)) return;
+    if (RFL.busy || !staff || !staff.token || staff.guest) return;
     RFL.busy = true; RFL.at = Date.now();
-    google.script.run.withSuccessHandler(function (r) { RFL.busy = false; rfLeftApply(r); })
+    srv().withSuccessHandler(function (r) { RFL.busy = false; rfLeftApply(r); })
       .withFailureHandler(function (x) { RFL.busy = false; if (/로그인이 필요/.test(errText(x)) && !signingNow()) logout(errText(x)); })
       .staffRfLeft(staff.token);
   }
@@ -132,7 +132,7 @@
   function eduPdfGet(e) {
     if (edPdfBusy) return;
     edPdfBusy = true; msg($('msg1'), e.title + ' PDF 만드는 중… (10초 이상 걸릴 수 있습니다)', '#6b7686');
-    google.script.run.withSuccessHandler(function (r) {
+    srv().withSuccessHandler(function (r) {
       edPdfBusy = false;
       if (r.pdf) saveFile(r.base + '.pdf', b64Blob(r.pdf, 'application/pdf'));
       else (r.pdfs || []).forEach(function (b64, i) { setTimeout(function () { saveFile(r.base + '_' + (i + 1) + '.pdf', b64Blob(b64, 'application/pdf')); }, i * 700); });
@@ -248,7 +248,7 @@
     if (k === 'ext') {                                // 5분 연장: 한 번 누르면 바로 (되돌릴 위험 없음)
       eswArm(null, false); eswBusy = true;
       msg($('msg1'), e.title + ' QR 접수 연장 중…', '#6b7686');
-      google.script.run.withSuccessHandler(function (r) { eswBusy = false; loadInit(r); saveState(); msg($('msg1'), r.note || '', '#12833b'); })
+      srv().withSuccessHandler(function (r) { eswBusy = false; loadInit(r); saveState(); msg($('msg1'), r.note || '', '#12833b'); })
         .withFailureHandler(function (x) { eswBusy = false; if (/로그인이 필요/.test(errText(x))) { logout(errText(x)); return; } eswClose(); msg($('msg1'), errText(x), '#c0392b'); })
         .staffRfExtend(staff && staff.token || '', e.id);
       return;
@@ -258,9 +258,9 @@
     msg($('msg1'), e.title + (k === 'del' ? ' 삭제 중…' : k === 'close' ? ' 마감 중…' : ' 다시 여는 중…'), '#6b7686');
     var ok = function (r) { eswBusy = false; if (k === 'reopen') edTab = 'open'; loadInit(r); saveState(); msg($('msg1'), r.note || '', '#12833b'); };
     var fail = function (x) { eswBusy = false; if (/로그인이 필요/.test(errText(x))) { logout(errText(x)); return; } eswClose(); msg($('msg1'), errText(x), '#c0392b'); };
-    if (k === 'del' && e.pdfSign) google.script.run.withSuccessHandler(ok).withFailureHandler(fail).pdfDelete(staff && staff.token || '', e.id);
-    else if (k === 'del') google.script.run.withSuccessHandler(ok).withFailureHandler(fail).staffDeleteEdu(staff && staff.token || '', e.id);
-    else google.script.run.withSuccessHandler(ok).withFailureHandler(fail).staffSetOpen(staff && staff.token || '', e.id, k === 'reopen');
+    if (k === 'del' && e.pdfSign) srv().withSuccessHandler(ok).withFailureHandler(fail).pdfDelete(staff && staff.token || '', e.id);
+    else if (k === 'del') srv().withSuccessHandler(ok).withFailureHandler(fail).staffDeleteEdu(staff && staff.token || '', e.id);
+    else srv().withSuccessHandler(ok).withFailureHandler(fail).staffSetOpen(staff && staff.token || '', e.id, k === 'reopen');
   }
   function eswClose(except) { [].forEach.call(document.querySelectorAll('#edus .esw.open, #edus .esw.openR'), function (x) { if (x !== except) x.classList.remove('open', 'openR'); }); }
   (function () {                                     // 밀기: 손가락·마우스 모두. 민 직후의 누르기와 열린 카드 누르기는 닫기만

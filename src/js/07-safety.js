@@ -27,7 +27,7 @@
   function skOpen(id, again, stName, done) {
     if (skOpening) return;
     skOpening = true; msg($('msg1'), '불러오는 중…', '#6b7686');
-    google.script.run.withSuccessHandler(function (d) {
+    srv().withSuccessHandler(function (d) {
       skOpening = false; if (done) done();
       msg($('msg1'), ''); msg($('skMsg'), ''); sk = d;
       $('skTitle').textContent = d.title; $('skDate').textContent = d.date || '';
@@ -50,7 +50,7 @@
   function skPdfGet(st) {
     if (skPdfBusy) return;
     skPdfBusy = true; msg($('skMsg'), 'PDF 만드는 중… (10초 이상 걸릴 수 있습니다)', '#6b7686');
-    google.script.run.withSuccessHandler(function (r) {
+    srv().withSuccessHandler(function (r) {
       skPdfBusy = false;
       if (r.pdf) saveFile(r.base + '.pdf', b64Blob(r.pdf, 'application/pdf'));
       else r.pdfs.forEach(function (b64, i) { setTimeout(function () { saveFile(r.base + '_' + (r.names[i] || i + 1) + '.pdf', b64Blob(b64, 'application/pdf')); }, i * 700); });
@@ -113,10 +113,10 @@
     if (!$('skLeadCancel').classList.contains('armed')) { skCancelArm(true); return; }
     skCancelArm(false); skBusy = true; $('skLeadCancel').disabled = true; msg($('skMsg'), '취소 중…', '#6b7686');
     var end = function (t, c) {
-      google.script.run.withSuccessHandler(function (d) { sk = d; skBusy = false; $('skLeadCancel').disabled = false; skStage('pick'); msg($('skMsg'), t, c); })
+      srv().withSuccessHandler(function (d) { sk = d; skBusy = false; $('skLeadCancel').disabled = false; skStage('pick'); msg($('skMsg'), t, c); })
         .withFailureHandler(function () { skBusy = false; $('skLeadCancel').disabled = false; msg($('skMsg'), t, c); }).safetyOpen(staff && staff.token || '', sk.id);
     };
-    google.script.run.withSuccessHandler(function (r) { end('팀장 서명 ' + r.n + '개 역을 취소했습니다. 점검자가 다시 고칠 수 있습니다.', '#12833b'); })
+    srv().withSuccessHandler(function (r) { end('팀장 서명 ' + r.n + '개 역을 취소했습니다. 점검자가 다시 고칠 수 있습니다.', '#12833b'); })
       .withFailureHandler(function (e) { skBusy = false; $('skLeadCancel').disabled = false; msg($('skMsg'), errText(e), '#c0392b'); })
       .safetyLeaderCancel({ token: staff && staff.token || '', eduId: sk.id });
   };
@@ -197,16 +197,16 @@
     skBusy = true; skPad.locked = true; $('skPad').classList.add('locked'); $('skSend').disabled = true; $('skClear').disabled = true; $('skSigBack').disabled = true; msg($('skMsg'), '제출 중…', '#6b7686');
     var unlock = function () { skBusy = false; skPad.locked = false; $('skPad').classList.remove('locked'); $('skSend').disabled = skPad.n < 6; $('skClear').disabled = false; $('skSigBack').disabled = false; };
     var reload = function (done) {                   // 제출 뒤 역 목록을 다시 받아 역 선택 화면 (화면이 바뀐 뒤에 서명 칸 잠금을 풂)
-      google.script.run.withSuccessHandler(function (d) { sk = d; skStage('pick'); unlock(); msg($('skMsg'), done, '#12833b'); })
+      srv().withSuccessHandler(function (d) { sk = d; skStage('pick'); unlock(); msg($('skMsg'), done, '#12833b'); })
         .withFailureHandler(function () { skStage('pick'); unlock(); msg($('skMsg'), done, '#12833b'); }).safetyOpen(staff && staff.token || '', sk.id);
     };
     if (skSigMode === 'lead') {
-      google.script.run.withSuccessHandler(function (r) { skSigMode = ''; reload('팀장 서명을 ' + r.n + '개 역에 저장했습니다.'); })
+      srv().withSuccessHandler(function (r) { skSigMode = ''; reload('팀장 서명을 ' + r.n + '개 역에 저장했습니다.'); })
         .withFailureHandler(function (e) { unlock(); msg($('skMsg'), errText(e), '#c0392b'); })
         .safetyLeaderSubmit({ token: staff && staff.token || '', eduId: sk.id, sign: skPad.png(), device: devInfo });
       return;
     }
-    google.script.run.withSuccessHandler(function (r) {
+    srv().withSuccessHandler(function (r) {
       lsSet(skDraftKey(), null);
       reload(r.st + ' 점검 서명을 ' + (r.resigned ? '다시 ' : '') + '제출했습니다.');
     }).withFailureHandler(function (e) {
@@ -330,7 +330,7 @@
     if (skLBusy) return;
     skLBusy = true; $('skLeadView').disabled = true; msg($('skMsg'), '불러오는 중…', '#6b7686');
     var end = function () { skLBusy = false; $('skLeadView').disabled = false; };
-    google.script.run.withSuccessHandler(function (d) {
+    srv().withSuccessHandler(function (d) {
       end(); msg($('skMsg'), '');
       skL = { id: id, data: d, idx: Math.max(0, Math.min(Number(idx) || 0, d.stations.length - 1)) };
       lvOpen();

@@ -5,11 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>e-싸인</title>
 <script>
-/* 첫 주소: e-싸인(sign.html)으로. 예전 차량 QR(주소?car=차량번호)·운행 기록(주소?rec=)은 업무차량관리(car.html)로 */
-(function () {
-  var q = new URLSearchParams(location.search);
-  location.replace((q.has('car') || q.has('rec') ? 'car.html' : 'sign.html') + location.search + location.hash);
-})();
+/* 첫 주소: e-싸인(sign.html)으로. 예전 차량 QR(주소?car=차량번호)·운행 기록(주소?rec=)도 sign.html 안 업무차량관리 화면으로 (주소 그대로) */
+location.replace('sign.html' + location.search + location.hash);
 </script>
 </head>
 <body>

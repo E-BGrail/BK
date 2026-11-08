@@ -33,7 +33,7 @@
       $('codeOver').classList.add('hidden'); $('code').blur(); msg($('codeMsg'), ''); popSync();
       enterSp(v, { id: local.id, title: local.title, date: local.date, dept: local.dept, guest: true, fields: local.fields });
     } else { $('codeOk').disabled = true; msg($('codeMsg'), '확인 중…', '#6b7686'); }
-    google.script.run.withSuccessHandler(function (r) {
+    srv().withSuccessHandler(function (r) {
       $('codeOk').disabled = false;
       if (seq !== codeSeq) return;                 // 그사이 다른 교육을 고른 경우
       if (r.person) {                              // 본인 확인 서명지: 로그인으로 확인됨 → 바로 서명
@@ -96,7 +96,6 @@
   function idleOver() { return !!(staff && staff.ttl && Date.now() - lastAct > staff.ttl * 1000); }
   function staffExpire() {
     if (!idleOver() || signingNow()) return;
-    if (typeof DIALOG !== 'undefined' && DIALOG) return;   // 시트 메뉴 창은 관리자 표시로만
     var mins = Math.round(staff.ttl / 60);
     landOff();
     if (!$('skView').classList.contains('hidden')) { $('skView').classList.add('hidden'); document.body.classList.remove('skLock'); }
@@ -110,7 +109,7 @@
     if (now - lastSave > 15000) { lastSave = now; try { sessionStorage.setItem(ACT_KEY, String(now)); } catch (x) {} }
     if (staff && staff.token && now - lastPing > 300000) {
       lastPing = now;
-      google.script.run.withFailureHandler(function (e) { if (/로그인이 필요/.test(errText(e)) && !signingNow()) logout(errText(e)); }).staffPing(staff.token);
+      srv().withFailureHandler(function (e) { if (/로그인이 필요/.test(errText(e)) && !signingNow()) logout(errText(e)); }).staffPing(staff.token);
     }
   }
   ['pointerdown', 'keydown', 'input', 'scroll'].forEach(function (t) { document.addEventListener(t, markAct, { capture: true, passive: true }); });
@@ -129,7 +128,7 @@
     if (KIOSK_WANT && !g) kioskOpen();             // 차량관리의 [DID]로 왔으면 로그인 뒤 DID 화면
   }
   function logout(text) {
-    if (staff && staff.token) google.script.run.staffLogout(staff.token);
+    if (staff && staff.token) srv().staffLogout(staff.token);
     admTok = null; admData = null; admMe = null; admExp = {}; admOrder = {}; admOverHide(); $('nDept').innerHTML = '';
     ['newCard', 'gstCard', 'stCard', 'smCard', 'pcCard', 'gdCard'].forEach(function (id) { $(id).classList.remove('open'); });
     try { localStorage.removeItem('bglStInfo'); } catch (x) {} stD = null; stPicked = false; stSel = {};   // DID 역 정보 저장본
@@ -141,7 +140,7 @@
     var pin = $('lgPin').value.trim(), pc = $('lgCode').value.trim();
     if (!pin) { msg($('lgMsg'), '사번을 입력하세요.', '#c0392b'); $('lgPin').focus(); return; }
     $('lgOk').disabled = true; msg($('lgMsg'), '확인 중…', '#6b7686');
-    google.script.run.withSuccessHandler(function (r) {
+    srv().withSuccessHandler(function (r) {
       $('lgOk').disabled = false; msg($('lgMsg'), '');
       if (r.unregistered) {
         openReg(pin, r.mailDomain); return;
@@ -209,7 +208,7 @@
     var mailId = $('regMail').value.trim().split('@')[0];
     if (!mailId) { msg($('regMsgM'), '메일 아이디를 입력하세요.', '#c0392b'); $('regMail').focus(); return; }
     $('regMailSend').disabled = true; msg($('regMsgM'), '보내는 중…', '#6b7686');
-    google.script.run.withSuccessHandler(function (r) {
+    srv().withSuccessHandler(function (r) {
       $('regMailSend').disabled = false; msg($('regMsgM'), ''); msg($('regMsgC'), '');
       $('regMailShow').textContent = r.mail + ' 로 보냈습니다. 10분 안에 입력하세요.';
       regCodeSet(''); regStage('regCodeStep'); setTimeout(function () { $('regMailCode').focus(); }, 50);
@@ -219,7 +218,7 @@
   };
   $('regCodeOk').onclick = function () {
     $('regCodeOk').disabled = true; msg($('regMsgC'), '확인 중…', '#6b7686');
-    google.script.run.withSuccessHandler(function (r) {
+    srv().withSuccessHandler(function (r) {
       $('regCodeOk').disabled = false; msg($('regMsgC'), '');
       regTicket = r.ticket; regTicketAt = Date.now(); regStage('regForm'); setTimeout(function () { $('regName').focus(); }, 50);
     }).withFailureHandler(function (e) {
@@ -247,7 +246,7 @@
   $('regSend').onclick = function () {
     $('regSend').disabled = true; msg($('regMsg2'), '등록 중…', '#6b7686');
     var pin = $('regPin').value.trim();
-    google.script.run.withSuccessHandler(function () {
+    srv().withSuccessHandler(function () {
       $('regSend').disabled = false; closeReg();
       try { localStorage.setItem('bglPin', pin); } catch (x) {}
       $('lgPin').value = pin; $('lgCode').value = '';
@@ -264,7 +263,7 @@
   $('chgMailSend').onclick = function () {
     $('chgForm').classList.add('hidden'); chgTicket = '';
     $('chgMailSend').disabled = true; msg($('chgMsg'), '보내는 중…', '#6b7686');
-    google.script.run.withSuccessHandler(function (r) {
+    srv().withSuccessHandler(function (r) {
       $('chgMailSend').disabled = false; $('chgMailSend').textContent = '인증 코드 다시 받기';
       $('chgCodeRow').classList.remove('hidden'); $('chgMailCode').value = ''; $('chgMailCode').focus();
       msg($('chgMsg'), r.mail + ' 로 인증 코드를 보냈습니다. 10분 안에 입력하세요.', '#12833b');
@@ -274,7 +273,7 @@
   };
   $('chgCodeOk').onclick = function () {
     $('chgCodeOk').disabled = true; msg($('chgMsg'), '확인 중…', '#6b7686');
-    google.script.run.withSuccessHandler(function (r) {
+    srv().withSuccessHandler(function (r) {
       $('chgCodeOk').disabled = false; msg($('chgMsg'), '');
       chgTicket = r.ticket; $('chgCodeRow').classList.add('hidden');
       $('chgName').value = r.info.name; $('chgPinShow').value = r.info.pin; $('chgDept').value = r.info.dept; $('chgTeam').value = r.info.team || ''; $('chgPost').value = r.info.post; $('chgRank').value = r.info.rank;
@@ -286,7 +285,7 @@
   $('chgSend').onclick = function () {
     if (!chgTicket) return;
     $('chgSend').disabled = true; msg($('chgMsg'), '저장 중…', '#6b7686');
-    google.script.run.withSuccessHandler(function (r) {
+    srv().withSuccessHandler(function (r) {
       $('chgSend').disabled = false; chgTicket = ''; $('chgForm').classList.add('hidden');
       $('chgMailSend').textContent = '메일로 인증 코드 받기';
       setStaff({ token: staff.token, name: r.name, disp: r.disp, admin: staff.admin, lv: staff.lv });

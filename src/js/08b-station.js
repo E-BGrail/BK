@@ -238,7 +238,7 @@
     var old = stD || stSaved(), same = function (d) { return old && JSON.stringify(Object.assign({}, d, { note: '' })) === JSON.stringify(Object.assign({}, old, { note: '' })); };
     if (old && !stD) stRender(old);
     BUSY_SKIP.staffStInfo = old ? 1 : 0;             // 저장본이 없을 때만 가운데 로딩 표시
-    google.script.run.withSuccessHandler(function (d) { if (same(d)) stSave(d); else stRender(d); })
+    srv().withSuccessHandler(function (d) { if (same(d)) stSave(d); else stRender(d); })
       .withFailureHandler(function (e) { if (/로그인이 필요/.test(errText(e))) { logout(errText(e)); return; } msg($('stMsg'), (old ? '최신 정보를 받지 못해 지난 정보를 보여 줍니다: ' : '') + errText(e), '#c0392b'); })
       .staffStInfo(staff && staff.token || '');
   }
@@ -292,7 +292,7 @@
     if (!code) { msg($('smMsg'), '역 코드를 넣으세요.', '#c0392b'); return; }
     if (smEd.dirty && !confirm('보내지 않은 변경이 있습니다. 버리고 다시 불러올까요?')) return;
     msg($('smMsg'), '');
-    google.script.run.withSuccessHandler(function (r) { smGot(r); }).withFailureHandler(smFail).staffStGet(staff && staff.token || '', code);
+    srv().withSuccessHandler(function (r) { smGot(r); }).withFailureHandler(smFail).staffStGet(staff && staff.token || '', code);
   };
   $('smCode').onkeydown = function (ev) { if (ev.key === 'Enter') $('smLoad').click(); };
   $('smPrev').onclick = function () { smEd.preview(); };
@@ -303,14 +303,12 @@
     var sent = smEd.items.slice();
     smEd.payload().then(function (p) {
       msg($('smMsg'), '올리는 중…', '#6b7686');
-      google.script.run.withSuccessHandler(function (r) { smGot(r, sent); }).withFailureHandler(smFail).staffStImgs(staff && staff.token || '', code, p);
+      srv().withSuccessHandler(function (r) { smGot(r, sent); }).withFailureHandler(smFail).staffStImgs(staff && staff.token || '', code, p);
     }).catch(function (e) { msg($('smMsg'), e.message, '#c0392b'); });
   };
 
   /* ---------- DID 화면 (오른쪽 위 [DID]): 관리자 → [역 안내 화면], 근무자 → [우리 역 안내 이미지] ---------- */
-  var KIOSK_WANT = location.hash === '#kiosk';      // 차량관리 화면의 [DID]로 들어옴 (로그인 뒤 DID로)
-  var SIGN_WANT = location.hash === '#sign';        // 차량관리 화면의 [e-싸인]으로 들어옴 (기억된 DID 화면 무시하고 목록)
-  if (KIOSK_WANT || SIGN_WANT) try { history.replaceState(history.state, '', location.pathname + location.search); } catch (x) {}
+  var KIOSK_WANT = false;                           // 차량관리의 [DID]를 로그인 전에 누름: 로그인 뒤 DID로
   function kioskOpen() {
     KIOSK_WANT = false;
     if (!staff || !staff.token || staff.guest) { enterList(); return; }

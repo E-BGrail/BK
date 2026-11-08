@@ -245,11 +245,11 @@
         X.err = true; q('.b-exp').disabled = false; msg(q('.m'), errText(err), '#c0392b');
       };
       var both = function () { if (X.log && (X.pdf || e.refund)) q('.b-exp').disabled = false; expMsg(); };
-      google.script.run.withSuccessHandler(function (r) {
+      srv().withSuccessHandler(function (r) {
         X.log = r; setBtn('.b-csv', 'CSV 저장', true); setBtn('.b-html', 'HTML 저장', true); both();
       }).withFailureHandler(fail).adminExportLog(staff.token, e.id);
       if (e.refund) return;                           // 비상 등록: PDF·HTML 없이 CSV만
-      google.script.run.withSuccessHandler(function (r) {
+      srv().withSuccessHandler(function (r) {
         X.pdf = r; if (r.missing) setBtn('.b-pdf', 'PDF 없음 (탭 없음)', false); else setBtn('.b-pdf', 'PDF 저장', true); both();
       }).withFailureHandler(fail).adminExportPdf(staff.token, e.id);
       setTimeout(function () { q('.b-exp').disabled = false; }, 60000);

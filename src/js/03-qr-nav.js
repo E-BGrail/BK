@@ -151,17 +151,16 @@
   var NAV = { n: 0, skip: 0, t: null, q: false };   // n: 지금 쌓아 둔 칸 수, skip: 우리가 되돌려서 올 popstate 수
   function anyPop() { return POPS.some(function (id) { return !$(id).classList.contains('hidden'); }); }
   function navDepth() {                    // 지금 화면이 원하는 칸 수
-    if (typeof DIALOG !== 'undefined' && DIALOG) return 0;   // 시트 메뉴 창
     var id = curScreen;
     if (rfEdu && rfDirect && (id === 'sf' || id === 's3')) return 0;   // 환불 등록 QR로 바로 들어온 승객은 제외
-    return ({ sp: 1, s2: edu && (edu.guest || edu.pdf) ? 2 : 1, s3: 1, sf: 1, so: 1, sr: 1, sk: 1, su: 1, sv: 1, sq: 1 })[id] || 0;
+    return ({ sp: 1, s2: edu && (edu.guest || edu.pdf) ? 2 : 1, s3: 1, sf: 1, so: 1, sr: 1, sk: 1, su: 1, sv: 1, sq: DID_CAR ? 0 : 1 })[id] || 0;   // 차량관리에서 온 DID: 뒤로가기 = 차량관리
   }
   function navApply() {                    // 쌓아 둔 칸을 지금 화면에 맞춤 (같은 순간의 여러 변화는 한 번에)
-    if (NAV.q) return;
+    if (NAV.q || window.APP_CAR) return;   // 차량 화면이 켜져 있으면 기록은 차량 화면이 씀 (돌아올 때 맞춤)
     NAV.q = true;
     setTimeout(function () {
       NAV.q = false;
-      if (NAV.skip > 0) return;            // 되돌리는 중이면 끝난 뒤 다시
+      if (NAV.skip > 0 || window.APP_CAR) return;   // 되돌리는 중이면 끝난 뒤 다시
       var want = navDepth() + (anyPop() ? 1 : 0);
       while (NAV.n < want) { try { history.pushState({ nav: NAV.n + 1 }, ''); NAV.n++; } catch (x) { break; } }
       if (NAV.n > want) {
@@ -200,8 +199,7 @@
     navApply();
   }
   try {
-    if (window.google && google.script && google.script.history) google.script.history.setChangeHandler(onBack);
-    else window.addEventListener('popstate', onBack);
+    window.addEventListener('popstate', function (e) { if (window.CARAPP && CARAPP.pop(e)) return; onBack(); });   // 차량 화면 기록이면 차량 화면이 처리
   } catch (x) {}
 
   /** QR 크게 보기 (누르면 닫힘) */
@@ -229,7 +227,6 @@
   /** 서명지 목록 받기. quiet: 목록이 안 보이는 화면(DID)이면 가운데 로딩 표시 없이 */
   function refreshInit(quiet) {
     BUSY_SKIP.getInit = quiet ? 1 : 0;
-    google.script.run.withSuccessHandler(loadInit).withFailureHandler(function (e) { msg($('msg1'), errText(e), '#c0392b'); }).getInit(staff && staff.token || '');
+    srv().withSuccessHandler(loadInit).withFailureHandler(function (e) { msg($('msg1'), errText(e), '#c0392b'); }).getInit(staff && staff.token || '');
   }
-  window.SIGN_RELOAD = loadInit;     // 저장해 둔 목록으로 먼저 그린 뒤 서버 최신 목록으로 바꿈
 
