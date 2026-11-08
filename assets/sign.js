@@ -3377,11 +3377,11 @@ appSwitch(document.getElementById('appSw'), { car: function () { CARAPP.go('?car
   }
   /* ---------- 업무차량관리 화면과 연결 (차량 화면은 src/car/, 같은 페이지 안의 CARAPP) ----------
    * APP_CAR: 지금 차량 화면이 켜져 있는지 (켜져 있으면 e-싸인의 뒤로가기 기록 쌓기를 멈춤)
-   * 처음 주소가 ?car·?car=차량번호·?rec=차량번호면 차량 화면으로 시작
+   * 처음 주소가 ?car·?car=차량번호·?rec=·?mgr=차량번호면 차량 화면으로 시작
    * e-싸인 화면은 하나라서, 차량 화면으로 떠날 때 그 기록 칸에 그때 화면(sv)을 적어 두고 뒤로가기로 오면 그 화면으로 되돌림
    *   (e-싸인 목록 → 차량관리 → DID → 뒤로 → 뒤로 = 목록) */
   var DID_CAR = false;                               // 차량관리의 [DID]로 들어온 DID 화면: 뒤로가기 = 차량관리로 (뒤로가기 칸을 쌓지 않음)
-  window.APP_CAR = (function () { var q = new URLSearchParams(location.search); return q.has('car') || q.has('rec'); })();
+  window.APP_CAR = (function () { var q = new URLSearchParams(location.search); return q.has('car') || q.has('rec') || q.has('mgr'); })();
   if (window.APP_CAR) document.body.classList.add('carOn');
   window.SIGN_LINK = {
     /** 차량 화면으로 떠나기 직전 (CARAPP.go): 지금 e-싸인 기록 칸에 화면 이름을 적음 */

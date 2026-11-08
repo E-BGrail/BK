@@ -692,7 +692,7 @@
   .appSw .sw.on { background:var(--pri); color:#fff; box-shadow:0 1px 4px rgba(50,78,179,.35); }
   .appSw:not(.go) .sw:not(.on):active { background:#e3e7ef; }
   header .brand img { max-width:130px; height:26px; }
-  /* 업무차량관리 첫 화면: 차량 카드 [주행거리 촬영]. 카드를 왼쪽으로 밀면 [운행 기록]·[전표 등록], 오른쪽으로 밀면 [차량 삭제]. 목록 아래 [차량 등록] 박스 */
+  /* 업무차량관리 첫 화면: 차량 카드 [주행거리 촬영]. 카드를 왼쪽으로 밀면 [운행일지]·[관리일지], 오른쪽으로 밀면 [차량 삭제]. 목록 아래 [차량 등록] 박스 */
   .sbtn:disabled { opacity:.5; }
   .carBtns { flex:none; display:flex; flex-direction:column; gap:6px; }
   .carHead { display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:12px; } .carHead h2 { margin:0; }
@@ -703,7 +703,7 @@
   .carDelRow { display:flex; gap:8px; } .carDelRow input { flex:1; }
   .carPanelBtns { display:flex; gap:8px; margin-top:8px; } .carPanelBtns .btn { flex:1; padding:12px; font-size:15px; }
   .carPanel .btn.gray { background:#e4e7ec; color:var(--text); } .carPanel .btn.del { background:#b42318; color:#fff; }
-  .carSw { position:relative; border-radius:12px; overflow:hidden; }   /* 카드 뒤에 버튼: 왼쪽으로 밀면 오른쪽 [운행 기록]·[전표 등록], 오른쪽으로 밀면 왼쪽 [차량 삭제] */
+  .carSw { position:relative; border-radius:12px; overflow:hidden; }   /* 카드 뒤에 버튼: 왼쪽으로 밀면 오른쪽 [운행일지]·[관리일지], 오른쪽으로 밀면 왼쪽 [차량 삭제] */
   .carSw .carAct { position:absolute; top:0; bottom:0; width:96px; display:flex; flex-direction:column; gap:6px; visibility:hidden; }   /* e-싸인 카드와 같은 모양: 카드와 8px 떨어진 둥근 따로 버튼 + 아이콘 */
   .carSw .carActR { right:0; padding-left:8px; } .carSw .carActL { left:0; padding-right:8px; }
   .carSw.open .carActR, .carSw.openR .carActL, .carSw.drag .carAct { visibility:visible; }   /* 닫힌 카드는 둥근 모서리 뒤로 색이 비치지 않게 */
@@ -730,7 +730,6 @@
   .crcShot { display:block; width:100%; margin-top:8px; padding:12px; font-size:15px; text-align:center; background:#e4e7ec; color:var(--text); }
   .crcShots { display:flex; gap:8px; } .crcShots .crcShot { flex:1; min-width:0; }
   .rcBtns { display:flex; flex-direction:column; gap:6px; flex:none; } .rcBtns .sbtn { justify-content:center; } .sbtn.alt { background:#e4e7ec; color:var(--text); }
-  .crcPdf { display:flex; gap:8px; margin-top:8px; } .crcPdf select { flex:1; min-width:0; height:38px; border:1px solid var(--line); border-radius:8px; padding:0 8px; font-size:15px; background:#fff; color:var(--text); }
   .crcGrid { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:8px; } .crcGrid label { display:flex; flex-direction:column; gap:4px; font-size:13px; font-weight:700; color:var(--sub); }
   .crcGrid select, .crcGrid input { width:100%; height:44px; margin-top:0; font-size:16px; padding:0 10px; border:1px solid var(--line); border-radius:10px; background:#fff; color:var(--text); }
   #crcThumb { display:block; max-width:100%; max-height:180px; margin:8px auto 0; border-radius:8px; }
@@ -739,13 +738,13 @@
   .carList a.camBtn.big { flex-direction:column; justify-content:center; gap:4px; width:116px; height:90px; padding:0 8px; font-size:15px; }   /* 주행거리 촬영: 두 줄 높이 */
   .camBtn { flex:none; display:flex; align-items:center; gap:6px; height:44px; padding:0 14px; border-radius:12px; text-decoration:none;
     background:linear-gradient(180deg, #3b58c0, var(--pri)); color:#fff; font-size:14px; font-weight:800; box-shadow:0 2px 6px rgba(50,78,179,.3); }
-  /* 운행기록 페이지 */
+  /* 운행일지·관리일지 페이지 */
   .recTool { display:flex; gap:8px; }
   .recTool select { flex:1; min-width:0; font-size:15px; padding:0 10px; height:44px; border:1px solid var(--line); border-radius:10px; background:#fff; font-family:inherit; }
   .recTool .sbtn { flex:none; }
   .recTool .mBtn { flex:none; width:40px; height:44px; border:1px solid var(--line); border-radius:10px; background:#fff; color:var(--pri); font-size:14px; }
   .recTool .mBtn:disabled { opacity:.35; }
-  /* 운행기록 표: 폰 폭에서는 표만 가로 스크롤, 날짜 열 고정 */
+  /* 운행일지·관리일지 표: 폰 폭에서는 표만 가로 스크롤, 날짜 열 고정 */
   .recTbl { overflow-x:auto; -webkit-overflow-scrolling:touch; border:1px solid #c8ced9; border-radius:8px; }
   .recTbl table { border-collapse:collapse; width:100%; font-size:13px; white-space:nowrap; }
   .recTbl th, .recTbl td { border:1px solid #d5dae3; padding:8px 8px; text-align:left; }
@@ -759,6 +758,8 @@
   .recTbl tbody tr:last-child td { border-bottom:0; }
   .recTbl .n { text-align:right; font-variant-numeric:tabular-nums; } .recTbl .n b { color:var(--pri2); }
   .recTbl .c { text-align:center; }
+  .recTbl tfoot td, .recTbl tfoot td:first-child { background:#e9edf5; color:var(--pri2); font-weight:800; border-bottom:0; }   /* 관리일지 그 해 합계 */
+  .recTbl .crcPic { display:inline-flex; padding:4px 8px; }   /* 관리일지 표의 [전표] */
   .carList { display:flex; flex-direction:column; gap:8px; margin-top:10px; }
   .carItem { display:flex !important; align-items:center; justify-content:space-between; gap:10px; }
   .carItem .ci { display:flex; flex-direction:column; gap:3px; min-width:0; }
@@ -893,22 +894,43 @@
   </main>
 </section>
 
-<!-- ===== 업무차량관리 첫 화면 (주소만 열면): 차량 목록 (차량마다 주행거리 촬영 · 운행 기록) ===== -->
+<!-- ===== 업무차량관리 첫 화면 (주소만 열면): 차량 목록 (차량마다 주행거리 촬영 · 운행일지 · 관리일지) ===== -->
 <section id="home" class="hidden">
   <main>
     <div class="card">
       <div class="carHead"><h2>차량 목록</h2></div>
-      <div class="carHint" style="margin:-6px 0 10px">카드 밀기: 왼쪽 운행 기록·전표 등록, 오른쪽 차량 삭제</div>
+      <div class="carHint" style="margin:-6px 0 10px">카드 밀기: 왼쪽 운행일지·관리일지, 오른쪽 차량 삭제</div>
       <div class="carPanel hidden" id="carDelBox">
         <b id="carDelNo"></b> 차량을 삭제합니다. 운행 기록은 남습니다. 관리자만 삭제할 수 있습니다.
         <div class="carDelRow"><input type="tel" id="carDelPin" placeholder="관리자 사번" inputmode="numeric" maxlength="20" autocomplete="off"><input type="text" id="carDelPw" class="secret" placeholder="개인 코드 6자리" inputmode="numeric" maxlength="6" autocomplete="off"></div>
         <div class="carPanelBtns"><button type="button" class="btn gray" id="carDelNoBtn">취소</button><button type="button" class="btn del" id="carDelOk">삭제</button></div>
         <div class="msg" id="carDelMsg"></div>
       </div>
-      <div class="carPanel hidden" id="carRcBox">
-        <b id="crcTitle"></b>
+      <div class="msg" id="carNote"></div>
+      <div class="carList" id="carList2"><div style="padding:14px;color:var(--sub);font-size:14px">불러오는 중…</div></div>
+    </div>
+    <div class="card" id="carAddBox">
+      <div class="carHead"><h2>차량 등록</h2></div>
+      <div class="carAddRow"><input type="text" id="carNo" placeholder="예: 12가1234 스타리아" autocomplete="off" maxlength="40"><button type="button" class="btn pri" id="carAddOk">등록</button></div>
+      <div class="msg" id="carAddMsg"></div>
+    </div>
+  </main>
+</section>
+
+<!-- ===== 관리일지 (차량별 연도 단위 보기 · 전표 등록 · 관리일지 PDF) ===== -->
+<section id="mgr" class="hidden">
+  <main>
+    <div class="card">
+      <div class="recTool">
+        <button class="mBtn" id="mPrev" type="button" aria-label="이전 해">◀</button>
+        <select id="mYear" aria-label="조회 연도"></select>
+        <button class="mBtn" id="mNext" type="button" aria-label="다음 해">▶</button>
+        <button class="sbtn" id="mPdf" type="button">PDF</button>
+      </div>
+      <button type="button" class="btn pri" id="mAdd" style="width:100%;margin-top:10px">전표 등록</button>
+      <div class="carPanel hidden" id="carRcBox" style="margin:10px 0 0">
+        <b id="crcTitle">운행 고르기</b>
         <div class="crcList" id="crcList"></div>
-        <div class="crcPdf"><select id="crcMonth" aria-label="관리일지 월"></select><button type="button" class="sbtn" id="crcPdf">관리일지 PDF</button></div>
         <div class="hidden" id="crcForm">
           <div class="crcGrid">
             <label>구분<select id="crcKind"><option>주유</option><option>수리</option><option>기타</option></select></label>
@@ -926,19 +948,16 @@
         <div class="carPanelBtns"><button type="button" class="btn gray" id="crcNo">취소</button><button type="button" class="btn pri" id="crcOk" disabled>등록</button></div>
         <div class="msg" id="crcMsg"></div>
       </div>
-      <div class="crcPop hidden" id="crcPop" role="dialog" aria-label="전표 사진 (누르면 닫힘)"><img id="crcPopImg" alt="전표 사진"><span class="crcPopX">✕ 닫기</span></div>
-      <div class="msg" id="carNote"></div>
-      <div class="carList" id="carList2"><div style="padding:14px;color:var(--sub);font-size:14px">불러오는 중…</div></div>
+      <div class="msg" id="mNote"></div>
     </div>
-    <div class="card" id="carAddBox">
-      <div class="carHead"><h2>차량 등록</h2></div>
-      <div class="carAddRow"><input type="text" id="carNo" placeholder="예: 12가1234 스타리아" autocomplete="off" maxlength="40"><button type="button" class="btn pri" id="carAddOk">등록</button></div>
-      <div class="msg" id="carAddMsg"></div>
+    <div class="card">
+      <div id="mRows"><div style="padding:14px 0;color:var(--sub);font-size:14px">불러오는 중…</div></div>
     </div>
+    <div class="crcPop hidden" id="crcPop" role="dialog" aria-label="전표 사진 (누르면 닫힘)"><img id="crcPopImg" alt="전표 사진"><span class="crcPopX">✕ 닫기</span></div>
   </main>
 </section>
 
-<!-- ===== 운행기록 (차량별 보기 · 운행일지 PDF) ===== -->
+<!-- ===== 운행일지 (차량별 월 단위 보기 · 운행일지 PDF) ===== -->
 <section id="rec" class="hidden">
   <main>
     <div class="card">
@@ -984,7 +1003,7 @@
   </main>
 </section>
 </template>
-<script src="assets/sign.js?v=2caa1225da"></script>
-<script src="assets/car.js?v=f02354445c"></script>
+<script src="assets/sign.js?v=47d267c630"></script>
+<script src="assets/car.js?v=3f5e079645"></script>
 </body>
 </html>

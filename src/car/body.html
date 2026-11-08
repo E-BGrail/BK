@@ -117,22 +117,43 @@
   </main>
 </section>
 
-<!-- ===== 업무차량관리 첫 화면 (주소만 열면): 차량 목록 (차량마다 주행거리 촬영 · 운행 기록) ===== -->
+<!-- ===== 업무차량관리 첫 화면 (주소만 열면): 차량 목록 (차량마다 주행거리 촬영 · 운행일지 · 관리일지) ===== -->
 <section id="home" class="hidden">
   <main>
     <div class="card">
       <div class="carHead"><h2>차량 목록</h2></div>
-      <div class="carHint" style="margin:-6px 0 10px">카드 밀기: 왼쪽 운행 기록·전표 등록, 오른쪽 차량 삭제</div>
+      <div class="carHint" style="margin:-6px 0 10px">카드 밀기: 왼쪽 운행일지·관리일지, 오른쪽 차량 삭제</div>
       <div class="carPanel hidden" id="carDelBox">
         <b id="carDelNo"></b> 차량을 삭제합니다. 운행 기록은 남습니다. 관리자만 삭제할 수 있습니다.
         <div class="carDelRow"><input type="tel" id="carDelPin" placeholder="관리자 사번" inputmode="numeric" maxlength="20" autocomplete="off"><input type="text" id="carDelPw" class="secret" placeholder="개인 코드 6자리" inputmode="numeric" maxlength="6" autocomplete="off"></div>
         <div class="carPanelBtns"><button type="button" class="btn gray" id="carDelNoBtn">취소</button><button type="button" class="btn del" id="carDelOk">삭제</button></div>
         <div class="msg" id="carDelMsg"></div>
       </div>
-      <div class="carPanel hidden" id="carRcBox">
-        <b id="crcTitle"></b>
+      <div class="msg" id="carNote"></div>
+      <div class="carList" id="carList2"><div style="padding:14px;color:var(--sub);font-size:14px">불러오는 중…</div></div>
+    </div>
+    <div class="card" id="carAddBox">
+      <div class="carHead"><h2>차량 등록</h2></div>
+      <div class="carAddRow"><input type="text" id="carNo" placeholder="예: 12가1234 스타리아" autocomplete="off" maxlength="40"><button type="button" class="btn pri" id="carAddOk">등록</button></div>
+      <div class="msg" id="carAddMsg"></div>
+    </div>
+  </main>
+</section>
+
+<!-- ===== 관리일지 (차량별 연도 단위 보기 · 전표 등록 · 관리일지 PDF) ===== -->
+<section id="mgr" class="hidden">
+  <main>
+    <div class="card">
+      <div class="recTool">
+        <button class="mBtn" id="mPrev" type="button" aria-label="이전 해">◀</button>
+        <select id="mYear" aria-label="조회 연도"></select>
+        <button class="mBtn" id="mNext" type="button" aria-label="다음 해">▶</button>
+        <button class="sbtn" id="mPdf" type="button">PDF</button>
+      </div>
+      <button type="button" class="btn pri" id="mAdd" style="width:100%;margin-top:10px">전표 등록</button>
+      <div class="carPanel hidden" id="carRcBox" style="margin:10px 0 0">
+        <b id="crcTitle">운행 고르기</b>
         <div class="crcList" id="crcList"></div>
-        <div class="crcPdf"><select id="crcMonth" aria-label="관리일지 월"></select><button type="button" class="sbtn" id="crcPdf">관리일지 PDF</button></div>
         <div class="hidden" id="crcForm">
           <div class="crcGrid">
             <label>구분<select id="crcKind"><option>주유</option><option>수리</option><option>기타</option></select></label>
@@ -150,19 +171,16 @@
         <div class="carPanelBtns"><button type="button" class="btn gray" id="crcNo">취소</button><button type="button" class="btn pri" id="crcOk" disabled>등록</button></div>
         <div class="msg" id="crcMsg"></div>
       </div>
-      <div class="crcPop hidden" id="crcPop" role="dialog" aria-label="전표 사진 (누르면 닫힘)"><img id="crcPopImg" alt="전표 사진"><span class="crcPopX">✕ 닫기</span></div>
-      <div class="msg" id="carNote"></div>
-      <div class="carList" id="carList2"><div style="padding:14px;color:var(--sub);font-size:14px">불러오는 중…</div></div>
+      <div class="msg" id="mNote"></div>
     </div>
-    <div class="card" id="carAddBox">
-      <div class="carHead"><h2>차량 등록</h2></div>
-      <div class="carAddRow"><input type="text" id="carNo" placeholder="예: 12가1234 스타리아" autocomplete="off" maxlength="40"><button type="button" class="btn pri" id="carAddOk">등록</button></div>
-      <div class="msg" id="carAddMsg"></div>
+    <div class="card">
+      <div id="mRows"><div style="padding:14px 0;color:var(--sub);font-size:14px">불러오는 중…</div></div>
     </div>
+    <div class="crcPop hidden" id="crcPop" role="dialog" aria-label="전표 사진 (누르면 닫힘)"><img id="crcPopImg" alt="전표 사진"><span class="crcPopX">✕ 닫기</span></div>
   </main>
 </section>
 
-<!-- ===== 운행기록 (차량별 보기 · 운행일지 PDF) ===== -->
+<!-- ===== 운행일지 (차량별 월 단위 보기 · 운행일지 PDF) ===== -->
 <section id="rec" class="hidden">
   <main>
     <div class="card">

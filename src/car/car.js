@@ -1,12 +1,12 @@
 /* ===================== 업무차량관리 화면 (예전 car.html, 지금은 sign.html 안의 한 화면) =====================
- * 주소: sign.html?car = 차량 목록, ?car=차량번호 = 운행 시작·종료(차량 QR), ?rec=차량번호 = 운행기록 (예전 car.html?… 는 car.html이 여기로 넘김)
+ * 주소: sign.html?car = 차량 목록, ?car=차량번호 = 운행 시작·종료(차량 QR), ?rec=차량번호 = 운행일지, ?mgr=차량번호 = 관리일지 (예전 car.html?… 는 car.html이 여기로 넘김)
  * 화면 하나 = 예전 페이지 하나: 주소가 바뀔 때마다 #carApp 안에 Shadow DOM 칸을 새로 만들고 carMake()를 처음부터 돌림
  *   (예전 car.html을 새로 연 것과 같음, 이전 칸은 카메라·숫자 인식·이벤트를 끄고 버림). 글자 모양은 Shadow DOM이라 e-싸인과 섞이지 않음
  * e-싸인 쪽 연결: 09c-car.js (SIGN_LINK, APP_CAR), 뒤로가기는 03-qr-nav.js popstate가 먼저 CARAPP.pop을 부름
  * 서버 호출·로딩 표시·오류 글은 e-싸인과 같은 api()·busyOn()·errText() (01-core.js 맨 위) */
 var CARAPP = (function () {
   var inst = null, seq = 0, title0 = document.title;
-  function carUrl(search) { var q = new URLSearchParams(search == null ? location.search : search); return q.has('car') || q.has('rec'); }
+  function carUrl(search) { var q = new URLSearchParams(search == null ? location.search : search); return q.has('car') || q.has('rec') || q.has('mgr'); }
   function setOn(on) {
     window.APP_CAR = on;
     document.body.classList.toggle('carOn', on);
@@ -96,9 +96,9 @@ var BUSY_TEXT = { carDevLogin: '로그인하는 중', carRemove: '삭제하는 �
 /** 저장하는 서버 호출: 로딩 표시와 함께 (값 p 하나) */
 function call(fn, p) { return busyWrap(api(fn, [p]), BUSY_TEXT[fn] || '데이터 저장 중'); }
 function show(id) {
-  ['cam', 'cf', 'done', 'pick', 'home', 'rec', 'need'].forEach(function (x) { $(x).classList.toggle('hidden', x !== id); });
+  ['cam', 'cf', 'done', 'pick', 'home', 'rec', 'mgr', 'need'].forEach(function (x) { $(x).classList.toggle('hidden', x !== id); });
   $('chrome').classList.toggle('hidden', id === 'cam');
-  $('bandCar').classList.toggle('hidden', id === 'home');     // 첫 화면(차량 목록)은 오른쪽 칩 없음. 운행기록은 오른쪽 칩에 차량번호
+  $('bandCar').classList.toggle('hidden', id === 'home');     // 첫 화면(차량 목록)은 오른쪽 칩 없음. 운행일지·관리일지는 오른쪽 칩에 차량번호
   window.scrollTo(0, 0);
   CUR = id; navSync();
 }
@@ -106,12 +106,12 @@ function show(id) {
 /* ---------- 휴대폰 [뒤로가기] ----------
  * 화면 단계만큼 브라우저 기록을 쌓아 둠 → 뒤로가기를 누를 때마다 한 단계씩 앞 화면으로
  *   확인 화면 → 다시 촬영, 촬영·완료 화면 → 업무차량관리 첫 화면 (QR로 바로 들어왔을 때. 첫 화면에서 들어왔으면 첫 화면으로 돌아감)
- *   차량 목록·운행기록 화면은 브라우저 기본 동작 */
+ *   차량 목록·운행일지 화면은 브라우저 기본 동작, 관리일지는 전표 등록 칸이 열려 있으면 한 칸 (뒤로가기 = 닫기) */
 var CUR = '', NAV = { n: 0, skip: 0, t: null, q: false };
 var FROM_HOME = ctx.fromHome;                       // 차량 목록에서 들어옴 (QR로 바로 연 게 아님)
 function navDepth() {
   var base = FROM_HOME ? 0 : 1;                     // QR로 바로 들어왔으면 촬영 화면 뒤에 '첫 화면' 한 칸
-  return (CUR === 'cf' ? base + 1 : (CUR === 'cam' || CUR === 'done') ? base : 0) + (PIC_ON ? 1 : 0);   // 전표 사진 팝업: 한 칸 더 (뒤로가기 = 닫기)
+  return (CUR === 'cf' ? base + 1 : (CUR === 'cam' || CUR === 'done') ? base : 0) + (CUR === 'mgr' && RC_ON ? 1 : 0) + (PIC_ON ? 1 : 0);   // 전표 등록 칸·전표 사진 팝업: 한 칸씩 더 (뒤로가기 = 닫기)
 }
 function navSync() {
   if (NAV.q) return;
@@ -137,6 +137,7 @@ function onPop() {                                   // 뒤로가기 (CARAPP.pop
   if (NAV.n === 0) return;
   NAV.n--;
   if (PIC_ON) { crcPicClose(); return; }                 // 전표 사진 팝업 닫기
+  if (CUR === 'mgr' && RC_ON) { crcClose(); return; }    // 전표 등록 칸 닫기
   if (S.busy) { navSync(); return; }                                  // 저장 중에는 그대로
   if (CUR === 'cf') openCam();
   else if (CUR === 'cam' || CUR === 'done') { stopCam(); ctx.replace('?car'); }   // 업무차량관리 첫 화면 (로그인 안 했으면 e-싸인 로그인)
@@ -192,9 +193,10 @@ function boot() {
     sign: function () { ctx.toSign('sign', 'push'); }, car: function () { ctx.go('?car'); }, kiosk: function () { ctx.toSign('kiosk', 'push'); }   // DID: e-싸인 안의 DID 화면
   });
   var q = new URLSearchParams(ctx.search), car = q.get('car') || '';
-  ROUTE = q.has('rec') ? 'rec' : car ? 'car' : 'home';
+  ROUTE = q.has('rec') ? 'rec' : q.has('mgr') ? 'mgr' : car ? 'car' : 'home';
   if (!car && !isStaff()) { ctx.toSign('sign', 'replace'); return; }   // 차량 QR이 아니면 로그인부터
   if (q.has('rec')) return showRec(q.get('rec') || '');
+  if (q.has('mgr')) return showMgr(q.get('mgr') || '');
   if (!car) return showHome();
   $('camTitle').textContent = '차량 정보 불러오는 중…';
   $('shCar').textContent = car; $('shState').textContent = '확인 중';
@@ -221,7 +223,7 @@ function setInit(init) {
   S.mode = init.mode;
   S.reason = init.st.freq.reason; S.route = init.st.freq.route;
 }
-var ROUTE = '';                                       // 이 화면: home 차량 목록, rec 운행기록, car 운행 시작·종료
+var ROUTE = '';                                       // 이 화면: home 차량 목록, rec 운행일지, mgr 관리일지, car 운행 시작·종료
 /** 오른쪽 위 전환 버튼 [e-싸인][차량관리][DID]: 누른 쪽에 불이 들어오며 그 화면으로 (urls 값은 함수)
  *  지금 켜진 버튼(업무차량관리)을 누르면 업무차량관리 첫 화면으로 */
 function appSwitch(sw, here, urls) {
@@ -241,7 +243,7 @@ function appSwitch(sw, here, urls) {
   });
 }
 ctx.on(window, 'pageshow', function (e) { if (e.persisted) location.reload(); });   // 다른 페이지에서 뒤로 오기: 버튼 불·목록 새로
-/** 화면 안 링크(?car=·?rec=·sign.html): 페이지를 새로 열지 않고 같은 화면 안에서 */
+/** 화면 안 링크(?car=·?rec=·?mgr=·sign.html): 페이지를 새로 열지 않고 같은 화면 안에서 */
 R.addEventListener('click', function (e) {
   if (e.defaultPrevented || e.button || e.ctrlKey || e.metaKey || e.shiftKey || e.altKey) return;
   var a = e.target.closest && e.target.closest('a[href]');
@@ -288,8 +290,8 @@ function showHome() {
     $('carList2').innerHTML = (d.cars || []).map(function (c) {
       var sub = c.last ? fmt(c.last.km) + ' km' : '운행 기록 없음';      // 주행거리만 (운전자·날짜·시각은 운행 기록에서)
       return '<div class="carSw"><div class="carAct carActL"><button type="button" class="carDel" data-car="' + esc(c.no) + '"' + (c.run ? ' data-run="1"' : '') + '>' + carIc('del') + '<span>차량<br>삭제</span></button></div>' +
-        '<div class="carAct carActR"><a class="carRec" href="?rec=' + encodeURIComponent(c.no) + '" aria-label="' + esc(c.no) + ' 운행 기록">' + carIc('rec') + '<span>운행<br>기록</span></a>' +
-        '<button type="button" class="carRc" data-car="' + esc(c.no) + '" data-model="' + esc(c.model || '') + '">' + carIc('rc') + '<span>전표<br>등록</span></button></div>' +
+        '<div class="carAct carActR"><a class="carRec" href="?rec=' + encodeURIComponent(c.no) + '" aria-label="' + esc(c.no) + ' 운행일지">' + carIc('rec') + '<span>운행<br>일지</span></a>' +
+        '<a class="carRc" href="?mgr=' + encodeURIComponent(c.no) + '" aria-label="' + esc(c.no) + ' 관리일지">' + carIc('rc') + '<span>관리<br>일지</span></a></div>' +
         '<div class="carItem card" style="margin:0;box-shadow:none;border:1px solid var(--line)"><span class="ci"><b>' + esc(c.no) + (c.model ? '<span class="carModel">' + esc(c.model) + '</span>' : '') + '</b><small>' + stateTag(c.run) + sub + '</small></span>' +
         '<span class="carBtns"><a class="camBtn big" href="?car=' + encodeURIComponent(c.no) + '" aria-label="' + esc(c.no) + ' 주행거리 촬영">' +
         '<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>주행거리 촬영</a></span></div></div>';
@@ -298,8 +300,8 @@ function showHome() {
 }
 
 /* ---------- 차량 등록(누구나) · 삭제(관리자 사번 + 개인 코드) ---------- */
-/** 목록 위 패널(차량 삭제 확인·전표 등록) 하나만 보이기. 차량 등록 박스는 목록 아래에 늘 있음 */
-function carPanel(id) { ['carDelBox', 'carRcBox'].forEach(function (x) { $(x).classList.toggle('hidden', x !== id); }); }
+/** 목록 위 패널(차량 삭제 확인) 보이기·숨기기. 차량 등록 박스는 목록 아래에 늘 있음 */
+function carPanel(id) { $('carDelBox').classList.toggle('hidden', id !== 'carDelBox'); }
 /** 패널 닫고 입력칸 비우기 */
 function carReset() {
   carSwClose(); carPanel('');
@@ -318,7 +320,7 @@ $('carAddOk').onclick = function () {
   call('carAdd', { car: no, model: model }).then(function (d) { $('carAddOk').disabled = false; carDone(d); },
     function (e) { $('carAddOk').disabled = false; $('carAddMsg').textContent = errText(e); });
 };
-/* 차량 카드 밀기: 왼쪽 → [운행 기록]·[전표 등록], 오른쪽 → [차량 삭제] (한 번에 한 카드). 민 직후의 누르기와, 열린 카드를 누르면 닫기만 */
+/* 차량 카드 밀기: 왼쪽 → [운행일지]·[관리일지], 오른쪽 → [차량 삭제] (한 번에 한 카드). 민 직후의 누르기와, 열린 카드를 누르면 닫기만 */
 var SW = null, swAt = 0;
 function carSwClose(except) { [].forEach.call(R.querySelectorAll('#carList2 .carSw.open, #carList2 .carSw.openR'), function (x) { if (x !== except) x.classList.remove('open', 'openR'); }); }
 $('carList2').addEventListener('pointerdown', function (e) {
@@ -375,39 +377,92 @@ $('carDelOk').onclick = function () {
     function (e) { $('carDelOk').disabled = false; $('carDelMsg').textContent = errText(e); });
 };
 
-/* ---------- 전표 등록 (차량 카드를 왼쪽으로 밀기): 운행 고르기 → 관리일지 칸(구분·계기판 km·세부내용·금액·비고) → 촬영 → 사번·개인 코드
- * 등록하면 차량관리일지(별지 제3호)에 한 줄. 위 [관리일지 PDF]: 고른 달의 차량관리일지 ---------- */
-var CRC = { car: '', id: '', img: '', rows: [], all: [], fuel: [], pics: {} };   // rows: 최근 운행 15개, all: 전체, fuel: 최근 주유 3개, pics: 받아 둔 전표 사진
+/* ---------- 관리일지 (차량 카드를 왼쪽으로 밀기 → ?mgr=차량번호): 연도 단위 표·금액 합계·[PDF](그 해 전체 차량관리일지, 별지 제3호)
+ * 위 [전표 등록]: 운행 고르기 → 관리일지 칸(구분·계기판 km·세부내용·금액·비고) → 촬영 → 사번·개인 코드 → 그 운행 줄에 관리일지 한 줄 ---------- */
+var MGR = { req: '', car: '', model: '', data: null, year: '', years: [] };
+var CRC = { id: '', img: '', rows: [], all: [], fuel: [], pics: {}, drawn: false };   // rows: 최근 운행 15개, all: 전체, fuel: 최근 주유 3개, pics: 받아 둔 전표 사진
+var RC_ON = false;                                    // 전표 등록 칸이 열려 있음 (뒤로가기 = 닫기)
+function showMgr(car) {
+  show('mgr');
+  $('bandTitle').textContent = '관리일지'; $('bandCar').textContent = car || '…';
+  loadMgr(car);
+}
+/** 운행 기록을 받아(저장본 먼저) 표를 그림. 운행일지 화면과 같은 저장본(bglCar:recs:차량)을 씀 */
+function loadMgr(car) {
+  MGR.req = car;
+  cachedGet('recs', car, function (d) {
+    if (MGR.req !== car) return;
+    var keep = MGR.year;                               // 저장본을 보다가 최신 값이 오면 보던 해 그대로
+    MGR.data = d; MGR.car = d.car; MGR.model = d.model || '';
+    if (!ctx.dead()) try { history.replaceState(history.state, '', '?mgr=' + encodeURIComponent(d.car)); } catch (x) {}   // 기록 칸(ci)은 그대로
+    $('bandCar').textContent = carLabel(d.car, d.model);
+    // 연도 단위 조회: 올해 + 관리일지가 있는 해 (최근 해가 위)
+    var cur = String(new Date().getFullYear()), ys = [cur];
+    (d.rows || []).forEach(function (r) { var y = String(r.date || '').slice(0, 4); if (r.mgr && y && ys.indexOf(y) < 0) ys.push(y); });
+    ys.sort().reverse();
+    MGR.years = ys; MGR.year = keep && ys.indexOf(keep) > -1 ? keep : cur;
+    $('mYear').innerHTML = ys.map(function (y) { return '<option value="' + y + '">' + y + '년</option>'; }).join('');
+    crcData(); drawMgr();
+  }, function (e) { if (MGR.req === car) $('mRows').innerHTML = '<div class="msg">' + esc(errText(e)) + '</div>'; });
+}
+function mgrRows() { var y = MGR.year; return (MGR.data ? MGR.data.rows : []).filter(function (r) { return r.mgr && String(r.date || '').slice(0, 4) === y; }); }
+/** 관리일지 표 (PDF와 같은 열 + 전표 사진) · 아래 그 해 합계 */
+function drawMgr() {
+  var rows = mgrRows(), i = MGR.years.indexOf(MGR.year), sum = 0;
+  $('mYear').value = MGR.year;
+  $('mPrev').disabled = i >= MGR.years.length - 1; $('mNext').disabled = i <= 0;
+  $('mPdf').disabled = !rows.length;
+  rows.forEach(function (r) { sum += Number(r.mgr.amt) || 0; });
+  $('mRows').innerHTML = rows.length ? '<div class="recTbl"><table><thead><tr><th>날짜</th><th>처리자</th><th>계기판 km</th><th>구분</th><th>세부내용</th><th>금액(원)</th><th>비고</th><th>전표</th></tr></thead><tbody>' +
+    rows.map(function (r) {
+      var g = r.mgr;
+      return '<tr><td>' + esc(dayText(r)) + '</td><td>' + esc(g.by) + '</td><td class="n">' + fmt(g.km) + '</td><td class="c">' + esc(g.kind) + '</td>' +
+        '<td>' + esc(g.detail) + '</td><td class="n"><b>' + fmt(g.amt) + '</b></td><td>' + esc(g.note) + '</td>' +
+        '<td class="c">' + (r.receipt ? '<button type="button" class="crcPic" data-id="' + esc(r.id) + '" aria-label="전표 사진 보기">' + carIc('rc') + '전표</button>' : '') + '</td></tr>';
+    }).join('') + '</tbody><tfoot><tr><td>합계</td><td colspan="4">' + rows.length + '건</td><td class="n"><b>' + fmt(sum) + '</b></td><td colspan="2"></td></tr></tfoot></table></div>'
+    : '<div style="padding:14px 0;color:var(--sub);font-size:14px">' + esc(MGR.year) + '년 관리일지 기록이 없습니다.</div>';
+}
+$('mYear').addEventListener('change', function () { MGR.year = this.value; drawMgr(); });
+$('mPrev').addEventListener('click', function () { var i = MGR.years.indexOf(MGR.year); if (i < MGR.years.length - 1) { MGR.year = MGR.years[i + 1]; drawMgr(); } });
+$('mNext').addEventListener('click', function () { var i = MGR.years.indexOf(MGR.year); if (i > 0) { MGR.year = MGR.years[i - 1]; drawMgr(); } });
+$('mPdf').addEventListener('click', function () { if (MGR.car && MGR.year) getPdf('mgr', MGR.car, MGR.year, this); });
+$('mRows').addEventListener('click', function (e) { var p = e.target.closest('.crcPic'); if (p) crcPicOpen(p.getAttribute('data-id')); });
+
+/* 전표 등록 칸 */
 function crcSync() {
   $('crcForm').classList.toggle('hidden', !CRC.id);
   $('crcThumb').classList.toggle('hidden', !CRC.img); if (CRC.img) $('crcThumb').src = CRC.img;
   $('crcShot').firstChild.nodeValue = CRC.img ? '다시 촬영' : '전표 촬영';
   $('crcOk').disabled = !(CRC.id && CRC.img);
 }
-$('carList2').addEventListener('click', function (e) {
-  var b = e.target.closest('.carRc'); if (!b) return;
-  carSwClose();
-  CRC = { car: b.getAttribute('data-car'), id: '', img: '', rows: [], all: [], fuel: [], pics: {} };
+/** 운행 고르기에 쓸 목록 (받은 운행 기록에서). 칸이 열려 있는데 아직 못 그렸으면 그림 */
+function crcData() {
+  CRC.all = MGR.data && MGR.data.rows || []; CRC.rows = CRC.all.slice(0, 15);   // 최근 운행
+  CRC.fuel = CRC.all.filter(function (r) { return r.fuel; }).slice(0, 3);     // 최근 주유 기록 3개 (운행목적 또는 전표 구분이 주유)
+  if (RC_ON && !CRC.drawn) { CRC.drawn = true; crcDraw(false); }
+}
+function crcOpen() {
+  if (!MGR.car && !MGR.req) return;
+  CRC.id = ''; CRC.img = ''; CRC.drawn = false;
   ['crcKm', 'crcDetail', 'crcAmt', 'crcNote'].forEach(function (id) { $(id).value = ''; }); $('crcKind').value = '주유';
-  $('crcMonth').innerHTML = monthOpts([]); $('crcPdf').disabled = false;
-  $('crcTitle').textContent = carLabel(CRC.car, b.getAttribute('data-model')) + ' 기록 선택';
   $('crcPin').value = loadMe(); $('crcPc').value = '';     // 사번만 자동 완성, 코드는 직접 입력
-  $('crcMsg').textContent = ''; $('carNote').textContent = ''; $('crcList').textContent = '운행 기록을 불러오는 중…';
-  carPanel('carRcBox'); crcSync();
-  var car = CRC.car;
-  apiGet('recs', car).then(function (d) {
-    if (CRC.car !== car) return;
-    CRC.all = d.rows || []; CRC.rows = CRC.all.slice(0, 15);   // 최근 운행
-    CRC.fuel = CRC.all.filter(function (r) { return r.fuel; }).slice(0, 3);   // 최근 주유 기록 3개 (운행목적 또는 전표 구분이 주유)
-    $('crcMonth').innerHTML = monthOpts(CRC.all);
-    crcDraw(false);
-  }, function (e) { $('crcList').textContent = errText(e); });
-});
+  $('crcMsg').textContent = ''; $('mNote').textContent = '';
+  RC_ON = true; $('carRcBox').classList.remove('hidden'); $('mAdd').classList.add('hidden');
+  if (MGR.data) { CRC.drawn = true; crcDraw(false); } else $('crcList').textContent = '운행 기록을 불러오는 중…';
+  crcSync(); navSync();
+}
+function crcClose() {
+  if (!RC_ON) return;
+  RC_ON = false; CRC.id = ''; CRC.img = ''; $('crcPc').value = '';
+  $('carRcBox').classList.add('hidden'); $('mAdd').classList.remove('hidden');
+  navSync();
+}
+$('mAdd').addEventListener('click', crcOpen);
 /** 운행 고르기 목록: 처음엔 최근 주유 기록 3개, [다른 운행 고르기]를 누르면 최근 운행 15개. 전표가 있으면 [전표] 버튼 (누르면 사진 크게) */
 function crcDraw(all) {
   var rows = all ? CRC.rows : CRC.fuel;
   var row = function (r) {
-    return '<div class="crcItem"><button type="button" class="crcRow' + (r.id === CRC.id ? ' on' : '') + '" data-id="' + esc(r.id) + '">' + esc(r.date + ' ' + r.time + ' · ' + r.driver + ' · ' + r.reason) + '</button>' +
+    return '<div class="crcItem"><button type="button" class="crcRow' + (r.id === CRC.id ? ' on' : '') + '" data-id="' + esc(r.id) + '">' + esc(r.date + ' ' + r.time + ' · ' + r.driver + ' · ' + r.reason + (r.mgr ? ' · 관리일지 있음' : '')) + '</button>' +
       (r.receipt ? '<button type="button" class="crcPic" data-id="' + esc(r.id) + '" aria-label="전표 사진 보기">' + carIc('rc') + '전표</button>' : '') + '</div>';
   };
   $('crcList').innerHTML = '<div class="crcSub">' + (all ? '최근 운행' : '최근 주유 기록') + '</div>' +
@@ -419,11 +474,11 @@ var PIC_ON = false;
 function crcPicOpen(id) {
   var show = function (src) { $('crcPopImg').src = src; $('crcPop').classList.remove('hidden'); PIC_ON = true; navSync(); };
   if (CRC.pics[id]) return show(CRC.pics[id]);
-  var car = CRC.car;
+  var car = MGR.car;
   busyWrap(api('carReceipt', [id, car]), '사진 불러오는 중').then(function (d) {
-    if (CRC.car !== car) return;
+    if (MGR.car !== car) return;
     if (d.img) { CRC.pics[id] = d.img; show(d.img); } else if (d.url) window.open(d.url, '_blank'); else throw new Error('전표 사진이 없습니다.');
-  }).catch(function (e) { $('crcMsg').textContent = errText(e); });
+  }).catch(function (e) { var m = $(RC_ON ? 'crcMsg' : 'mNote'); m.style.color = ''; m.textContent = errText(e); });
 }
 function crcPicClose() { if (!PIC_ON) return; PIC_ON = false; $('crcPop').classList.add('hidden'); $('crcPopImg').removeAttribute('src'); navSync(); }
 $('crcPop').addEventListener('click', crcPicClose);
@@ -434,7 +489,10 @@ $('crcList').addEventListener('click', function (e) {
   [].forEach.call($('crcList').querySelectorAll('.crcRow'), function (x) { x.classList.toggle('on', x === b); });
   CRC.id = b.getAttribute('data-id');
   var r = CRC.all.filter(function (x) { return x.id === CRC.id; })[0];
-  if (r) { $('crcKm').value = r.endKm === '' || r.endKm == null ? '' : String(r.endKm); $('crcKind').value = r.reason === '주유' ? '주유' : $('crcKind').value; }
+  if (r && r.mgr) {                                    // 이미 등록한 운행: 그때 적은 값 (다시 등록하면 바뀜)
+    var g = r.mgr;
+    $('crcKind').value = g.kind; $('crcKm').value = g.km === '' ? '' : String(g.km); $('crcDetail').value = g.detail; $('crcAmt').value = g.amt === '' ? '' : String(g.amt); $('crcNote').value = g.note;
+  } else if (r) { $('crcKm').value = r.endKm === '' || r.endKm == null ? '' : String(r.endKm); $('crcKind').value = r.reason === '주유' ? '주유' : $('crcKind').value; }
   crcSync();
 });
 function crcFileChange() {
@@ -451,8 +509,7 @@ function crcFileChange() {
 }
 $('crcFile').addEventListener('change', crcFileChange);
 $('crcFile2').addEventListener('change', crcFileChange);
-$('crcNo').onclick = function () { CRC = { car: '', id: '', img: '', rows: [] }; carPanel(''); };
-$('crcPdf').onclick = function () { if (CRC.car && $('crcMonth').value) getPdf('mgr', CRC.car, $('crcMonth').value, this); };
+$('crcNo').onclick = crcClose;
 $('crcOk').onclick = function () {
   var pc = $('crcPc').value.trim(), pin = $('crcPin').value.trim();
   var m = { kind: $('crcKind').value, km: digits($('crcKm').value), detail: $('crcDetail').value.trim(), amount: digits($('crcAmt').value), note: $('crcNote').value.trim() };
@@ -460,21 +517,22 @@ $('crcOk').onclick = function () {
   if (!m.amount) { $('crcMsg').textContent = '금액을 입력하세요.'; $('crcAmt').focus(); return; }
   if (!pin || !pc) { $('crcMsg').textContent = '사번과 개인 코드를 입력하세요.'; return; }
   $('crcOk').disabled = true; $('crcMsg').textContent = '저장 중…';
-  call('carReceiptAdd', { car: CRC.car, id: CRC.id, receipt: CRC.img, pcode: pc, pin: pin, device: device(), mgr: m }).then(function (r) {
+  var car = MGR.car;
+  call('carReceiptAdd', { car: car, id: CRC.id, receipt: CRC.img, pcode: pc, pin: pin, device: device(), mgr: m }).then(function (r) {
     $('crcOk').disabled = false;
     if (r.unregistered) { $('crcMsg').textContent = unregText(r); return; }
     if (r.needCode) { $('crcMsg').textContent = '코드를 입력해 주세요.'; $('crcPc').focus(); return; }
-    saveMe(pin);
-    var car = CRC.car; CRC = { car: '', id: '', img: '', rows: [] };
-    carReset(); $('carNote').style.color = 'var(--ok)'; $('carNote').textContent = car + ' 전표를 등록했습니다.';
+    saveMe(pin); crcClose();
+    $('mNote').style.color = 'var(--ok)'; $('mNote').textContent = '전표를 등록했습니다.';
+    loadMgr(car);                                      // 표 새로 (저장본 먼저, 최신 값이 오면 다시)
   }, function (e) { $('crcOk').disabled = false; $('crcMsg').textContent = errText(e); });
 };
 
-/* ---------- 운행기록: 차량별 월 단위 보기 · 운행일지 PDF ---------- */
+/* ---------- 운행일지: 차량별 월 단위 보기 · 운행일지 PDF ---------- */
 var REC = { car: '', data: null, month: '', months: [] };
 function showRec(car) {
   show('rec');
-  $('bandTitle').textContent = '운행기록'; $('bandCar').textContent = car || '…';
+  $('bandTitle').textContent = '운행일지'; $('bandCar').textContent = car || '…';
   loadRec(car);
 }
 function loadRec(car) {
@@ -497,14 +555,7 @@ function loadRec(car) {
     drawRec();
   }, function (e) { if (REC.req === car) $('rRows').innerHTML = '<div class="msg">' + esc(errText(e)) + '</div>'; });
 }
-/** 달 고르기 칸: 이번 달 + 기록이 있는 달 (최근 달이 위) */
-function monthOpts(rows) {
-  var now = new Date(), cur = now.getFullYear() + '-' + ('0' + (now.getMonth() + 1)).slice(-2), ms = [cur];
-  rows.forEach(function (r) { var m = String(r.date || '').slice(0, 7); if (m && ms.indexOf(m) < 0) ms.push(m); });
-  ms.sort().reverse();
-  return ms.map(function (m) { return '<option value="' + m + '">' + m.slice(2, 4) + '년 ' + Number(m.slice(5)) + '월</option>'; }).join('');
-}
-/** 양식 모양 PDF 받기: kind run 차량운행일지 / mgr 차량관리일지 (서버가 기준 양식 탭으로 만듦) */
+/** 양식 모양 PDF 받기: kind run 차량운행일지(month yyyy-MM) / mgr 차량관리일지(month 자리에 연도 yyyy) (서버가 기준 양식 탭으로 만듦) */
 function getPdf(kind, car, month, btn) {
   var t = btn.textContent; btn.disabled = true;
   busyWrap(api('carPdf', [car, kind, month]), 'PDF 만드는 중').then(function (d) {
