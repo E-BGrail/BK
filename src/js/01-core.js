@@ -199,5 +199,15 @@ appSwitch(document.getElementById('appSw'), { car: function () { CARAPP.go('?car
     if (st.s === 's3' && st.done) { $('doneWho').textContent = st.done.who; $('doneMsg').textContent = st.done.msg; show('s3'); return; }
     if (edu.guest) show('sp'); else enterList();
   }
-  function msg(el, text, color) { el.style.color = color || ''; el.textContent = text || ''; }
+  function msg(el, text, color) {
+    el.style.color = color || ''; el.textContent = text || '';
+    if (text && color === '#12833b') toast(text);    // 결과(완료·저장) 알림은 화면 아래에도 잠깐 (스크롤해 둔 곳에서도 보이게). 오류·진행 중은 칸 옆에만
+  }
+  var toastT = null;
+  function toast(text) {
+    var t = $('toast');
+    if (!t) { t = document.createElement('div'); t.id = 'toast'; t.setAttribute('role', 'status'); t.onclick = function () { t.classList.remove('on'); }; document.body.appendChild(t); }
+    t.textContent = text; t.classList.remove('on'); void t.offsetWidth; t.classList.add('on');
+    clearTimeout(toastT); toastT = setTimeout(function () { t.classList.remove('on'); }, 3000);
+  }
 

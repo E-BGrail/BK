@@ -199,7 +199,17 @@ appSwitch(document.getElementById('appSw'), { car: function () { CARAPP.go('?car
     if (st.s === 's3' && st.done) { $('doneWho').textContent = st.done.who; $('doneMsg').textContent = st.done.msg; show('s3'); return; }
     if (edu.guest) show('sp'); else enterList();
   }
-  function msg(el, text, color) { el.style.color = color || ''; el.textContent = text || ''; }
+  function msg(el, text, color) {
+    el.style.color = color || ''; el.textContent = text || '';
+    if (text && color === '#12833b') toast(text);    // 결과(완료·저장) 알림은 화면 아래에도 잠깐 (스크롤해 둔 곳에서도 보이게). 오류·진행 중은 칸 옆에만
+  }
+  var toastT = null;
+  function toast(text) {
+    var t = $('toast');
+    if (!t) { t = document.createElement('div'); t.id = 'toast'; t.setAttribute('role', 'status'); t.onclick = function () { t.classList.remove('on'); }; document.body.appendChild(t); }
+    t.textContent = text; t.classList.remove('on'); void t.offsetWidth; t.classList.add('on');
+    clearTimeout(toastT); toastT = setTimeout(function () { t.classList.remove('on'); }, 3000);
+  }
 
   /* ---------- 1단계: 교육 목록 + 접속 코드 ---------- */
   /** 환불 등록 QR 주소: 이 화면 주소?e=건 */
@@ -378,6 +388,20 @@ appSwitch(document.getElementById('appSw'), { car: function () { CARAPP.go('?car
       else b.onclick = function () { openCode(e); };   // 누르면 접속 코드 창
       put(e, b);
     });
+    eswNudge();
+  }
+  // 카드 밀기 첫 사용 힌트: 이 휴대폰에서 처음 한 번, 밀 수 있는 첫 카드가 왼쪽으로 살짝 밀렸다 돌아옴 (목록이 화면에 보일 때만)
+  var nudgeT = null;
+  function eswNudge() {
+    try { if (localStorage.getItem('bglSwHint')) return; } catch (x) { return; }
+    clearTimeout(nudgeT);
+    nudgeT = setTimeout(function () {
+      var w = document.querySelector('#edus .esw');
+      if (!w || !w.offsetParent || document.querySelector('#edus .esw.open, #edus .esw.openR')) return;
+      try { localStorage.setItem('bglSwHint', '1'); } catch (x) {}
+      w.classList.add('nudge');
+      setTimeout(function () { w.classList.remove('nudge'); }, 1000);
+    }, 600);
   }
   /* ---------- 관리자: 카드 밀기 → 마감 / 다시 열기·삭제 (마감·삭제는 두 번 눌러 실행), 정보 수정·내보내기 ---------- */
   function eswWrap(e, el) {

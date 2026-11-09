@@ -175,6 +175,20 @@
       else b.onclick = function () { openCode(e); };   // 누르면 접속 코드 창
       put(e, b);
     });
+    eswNudge();
+  }
+  // 카드 밀기 첫 사용 힌트: 이 휴대폰에서 처음 한 번, 밀 수 있는 첫 카드가 왼쪽으로 살짝 밀렸다 돌아옴 (목록이 화면에 보일 때만)
+  var nudgeT = null;
+  function eswNudge() {
+    try { if (localStorage.getItem('bglSwHint')) return; } catch (x) { return; }
+    clearTimeout(nudgeT);
+    nudgeT = setTimeout(function () {
+      var w = document.querySelector('#edus .esw');
+      if (!w || !w.offsetParent || document.querySelector('#edus .esw.open, #edus .esw.openR')) return;
+      try { localStorage.setItem('bglSwHint', '1'); } catch (x) {}
+      w.classList.add('nudge');
+      setTimeout(function () { w.classList.remove('nudge'); }, 1000);
+    }, 600);
   }
   /* ---------- 관리자: 카드 밀기 → 마감 / 다시 열기·삭제 (마감·삭제는 두 번 눌러 실행), 정보 수정·내보내기 ---------- */
   function eswWrap(e, el) {

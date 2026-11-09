@@ -37,7 +37,7 @@
   .txtBtn { border:0; background:transparent; color:#fff; font-size:14px; text-decoration:underline; min-height:44px; padding:0 6px; }
   .fallback { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:14px; padding:24px; text-align:center; }
   .fallback p { margin:0; font-size:15px; line-height:1.6; }
-  .fallback .why { font-size:12px; color:#c9cfdc; line-height:1.5; max-width:320px; }
+  .fallback .why { font-size:13px; color:#c9cfdc; line-height:1.5; max-width:320px; }
   .cropper { position:absolute; inset:0; background:#111318; }
   .cropStage { position:absolute; left:0; right:0; top:44px; bottom:150px; touch-action:none; overflow:hidden; }
   .cropStage img { position:absolute; inset:0; width:100%; height:100%; object-fit:contain; user-select:none; -webkit-user-drag:none; pointer-events:none; }
@@ -94,7 +94,7 @@
   .grid2 { display:grid; grid-template-columns:repeat(2, minmax(0,1fr)); gap:8px; }
   .fld { display:flex; flex-direction:column; gap:4px; margin-top:12px; }
   .fld label, .lbl { font-size:14px; font-weight:700; }
-  .lbl small { font-weight:400; font-size:12px; color:var(--sub); margin-left:4px; }
+  .lbl small { font-weight:400; font-size:13px; color:var(--sub); margin-left:4px; }
   input[type=text], input[type=tel] { width:100%; font-size:17px; padding:11px 12px; border:1px solid var(--line); border-radius:10px; min-width:0; }
   input:focus { outline:none; border-color:var(--pri); box-shadow:0 0 0 3px rgba(50,78,179,.15); }
   .secret { -webkit-text-security:disc; letter-spacing:4px; }
@@ -152,7 +152,7 @@
   .crcItem { display:flex; gap:6px; } .crcItem .crcRow { flex:1; min-width:0; }
   .crcPic { flex:none; display:flex; align-items:center; gap:4px; padding:0 10px; border:1px solid #f0c27a; border-radius:10px; background:#fff7e0; color:#9a5b00; font-size:13px; font-weight:800; font-family:inherit; }   /* 전표 있음: 누르면 사진 크게 */
   .crcPic svg { width:15px; height:15px; }
-  .crcSub { font-size:12px; font-weight:700; color:var(--sub); }
+  .crcSub { font-size:13px; font-weight:700; color:var(--sub); }
   .crcMore { border:0; background:none; color:var(--pri); font-size:14px; font-weight:700; text-decoration:underline; padding:6px 0; align-self:flex-start; font-family:inherit; }
   .crcPop { position:fixed; inset:0; z-index:60; background:rgba(10,12,18,.92); display:flex; align-items:center; justify-content:center; padding:16px; }
   .crcPop img { max-width:100%; max-height:100%; object-fit:contain; border-radius:6px; background:#fff; }
