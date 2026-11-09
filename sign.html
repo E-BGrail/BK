@@ -708,9 +708,9 @@
   .carSw .carActR { right:0; padding-left:8px; } .carSw .carActL { left:0; padding-right:8px; }
   .carSw.open .carActR, .carSw.openR .carActL, .carSw.drag .carAct { visibility:visible; }   /* 닫힌 카드는 둥근 모서리 뒤로 색이 비치지 않게 */
   .carSw.open .carActL, .carSw.openR .carActR { visibility:hidden; }
-  .carAct > * { flex:1; min-height:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px; border:0; border-radius:12px; color:#fff; font-size:13px; font-weight:800; font-family:inherit; line-height:1.2; text-decoration:none; padding:4px; text-align:center; }
+  .carSw .carAct > * { flex:1; min-height:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px; border:0; border-radius:12px; color:#fff; font-size:13px; font-weight:800; font-family:inherit; line-height:1.2; text-decoration:none; padding:4px; text-align:center; }
   .carAct > * svg { width:18px; height:18px; flex:none; }
-  .carActR > * { flex-direction:row; gap:4px; } .carActR > * svg { width:15px; height:15px; }   /* 위아래 두 버튼: 아이콘 옆에 글자 */
+  .carSw .carActR > * { flex-direction:row; gap:4px; } .carActR > * svg { width:15px; height:15px; }   /* 위아래 두 버튼: 아이콘 옆에 글자 */
   .carAct .carDel { background:#b42318; } .carAct .carRec { background:var(--pri); } .carAct .carRc { background:#4a66c9; }
   .carSw .carItem { position:relative; background:#fff; transition:transform .2s ease-out; touch-action:pan-y; }
   .carSw.open .carItem { transform:translateX(-96px); } .carSw.openR .carItem { transform:translateX(96px); }
