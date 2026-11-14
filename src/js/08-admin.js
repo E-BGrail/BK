@@ -214,7 +214,7 @@
   };
 
   /* 양식 미리보기: 머릿글과 줄 몇 개만 작게 그림 */
-  function esc(t) { return String(t).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+  function esc(t) { return String(t).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
   function tplPreview(box, name) {
     var t = admData && admData.tplPrev && admData.tplPrev[name];
     box.classList.toggle('hidden', !t);

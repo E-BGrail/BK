@@ -152,13 +152,19 @@ R.addEventListener('select', function (e) { var el = e.target; if (el && el.clas
 function carLabel(no, model) { return (no || '') + (model ? ' ' + model : ''); }
 /** 기기 열쇠: 이 휴대폰으로 e-싸인에 로그인한 적이 있으면 있음 (같은 GitHub 주소라 e-싸인 화면과 같이 씀) */
 function devKey() { try { return localStorage.getItem('bglDev') || ''; } catch (e) { return ''; } }
+/** e-싸인 로그인 토큰 (같은 탭에서 넘어온 경우) */
+function staffTok() { try { var s = JSON.parse(sessionStorage.getItem('bglStaff') || 'null'); return (s && s.token) || ''; } catch (e) { return ''; } }
+/** 읽기 서버 호출에 붙이는 확인 값: 기기 열쇠·직원 로그인 토큰 (서버가 둘 중 하나를 확인) */
+function authArgs() { return [devKey(), staffTok()]; }
+/** 서버가 로그인 필요라고 한 오류인지 */
+function isNeedErr(e) { return /로그인/.test(errText(e) || ''); }
 /** 운행 시작 전: 로그인 기록이 없으면 사진을 찍기 전에 안내 */
-var NEED_FROM = '';                                    // 'boot': 사진 찍기 전 → 로그인 뒤 카메라, 'submit': 확인 화면에서 → 로그인 뒤 확인 화면
+var NEED_FROM = '';                                    // 'boot': 사진 찍기 전 → 로그인 뒤 카메라, 'submit': 확인 화면에서 → 로그인 뒤 확인 화면, 'init': 차량 정보를 받기 전 → 로그인 뒤 차량 정보부터 다시
 var IOS = /iPhone|iPad|iPod/.test(navigator.userAgent) || (/Macintosh/.test(navigator.userAgent) && navigator.maxTouchPoints > 1);
 function showNeed(from) {
   NEED_FROM = from || 'boot';
-  if (NEED_FROM === 'boot') stopCam();
-  $('bandTitle').textContent = '운행 시작'; $('bandCar').textContent = carLabel(INIT.car, INIT.model);
+  if (NEED_FROM === 'boot' || NEED_FROM === 'init') stopCam();
+  $('bandTitle').textContent = NEED_FROM === 'init' ? '로그인' : '운행 시작'; $('bandCar').textContent = carLabel(INIT.car, INIT.model);
   $('needIos').classList.toggle('hidden', !IOS);
   $('ndPin').value = loadMe(); $('ndPc').value = ''; $('ndMsg').textContent = ''; $('ndReg').classList.add('hidden'); $('ndOk').disabled = false;
   show('need');
@@ -175,6 +181,7 @@ function needLogin() {
     try { localStorage.setItem('bglDev', r.dev); } catch (x) {}
     saveMe(pin); $('ndPc').value = '';
     if (NEED_FROM === 'submit') { show('cf'); msg(r.name + ' 님 확인되었습니다. [운행 시작]을 눌러 주세요.'); return; }
+    if (NEED_FROM === 'init') { var c0 = INIT.car; show('cam'); startCam(); carLoad(c0); return; }   // 차량 정보부터 다시 받음 (운행 시작·종료는 그 결과로)
     show('cam'); startCam(); openCam();
   }).catch(function (e) { $('ndOk').disabled = false; $('ndPc').value = ''; m.textContent = errText(e); });
 }
@@ -203,10 +210,15 @@ function boot() {
   shRows([['이전 종료 km', '…'], ['최근 운행', '…']]);   // 정보가 와도 칸 높이가 그대로이도록 2줄을 미리
   show('cam');
   if (car) startCam();
-  api('carInit', [car])
+  carLoad(car);
+}
+/** 차량 정보 받기 (차량 QR 첫 화면). 로그인이 안 된 휴대폰이면 로그인 화면부터 */
+function carLoad(car) {
+  api('carInit', [car].concat(authArgs()))
     .catch(function (e) { return { error: errText(e) }; })   // 서버 오류·연결 안 됨 → 차량 고르기 화면에 그 글
     .then(function (d) {
       if (ctx.dead()) return;
+      if (d && d.needLogin) { INIT = { car: car, model: '', url: location.origin + location.pathname }; return showNeed('init'); }   // 이 휴대폰 로그인 기록이 없음: 차량 정보도 로그인 뒤에
       INIT = d;
       INIT.url = location.origin + location.pathname;
       if (INIT.error || INIT.needCar) { stopCam(); return showPick(); }
@@ -259,7 +271,7 @@ R.addEventListener('click', function (e) {
 /* ===================== 차량 목록 · 운행 기록 ===================== */
 /** 보기용 서버 호출: list 차량 목록, recs 운행 기록 (이름은 이 휴대폰 저장본 열쇠로도 씀) */
 function apiGet(fn, car, quiet) {
-  var pr = fn === 'list' ? api('carListInfo') : api('carRecs', [car]);
+  var pr = fn === 'list' ? api('carListInfo', authArgs()) : api('carRecs', [car].concat(authArgs()));
   return quiet ? pr : busyWrap(pr, '데이터 불러오는 중');   // quiet: 저장본을 먼저 그렸으면 뒤에서 조용히
 }
 /** 빠른 화면: 지난번 받은 값(이 휴대폰에 저장)으로 바로 그리고, 서버 응답이 오면 최신 값으로 다시 그림.
@@ -272,7 +284,10 @@ function cachedGet(fn, car, draw, fail) {
     var s = JSON.stringify(d);
     try { localStorage.setItem(key, s); } catch (x) {}
     if (s !== old) draw(d, false);
-  }).catch(function (e) { if (!had) fail(e); });
+  }).catch(function (e) {
+    if (isNeedErr(e)) { try { localStorage.removeItem(key); } catch (x) {} fail(e); return; }   // 로그인이 풀림: 저장본도 지우고 안내
+    if (!had) fail(e);
+  });
 }
 function stateTag(run) { return run ? '<span class="tag run">운행 중</span>' : '<span class="tag idle">대기 중</span>'; }
 /* ---------- 업무차량관리 첫 화면: 차량 목록 (카드마다 주행거리 촬영 · 운행 기록) ---------- */
@@ -286,6 +301,7 @@ function carIc(k) { return '<svg viewBox="0 0 24 24" fill="none" stroke="current
 function showHome() {
   show('home');
   $('bandTitle').textContent = '업무차량관리'; $('bandCar').textContent = '';
+  if (!$('carAddPin').value) $('carAddPin').value = loadMe();
   cachedGet('list', '', function (d) {
     $('carList2').innerHTML = (d.cars || []).map(function (c) {
       var sub = c.last ? fmt(c.last.km) + ' km' : '운행 기록 없음';      // 주행거리만 (운전자·날짜·시각은 운행 기록에서)
@@ -305,7 +321,7 @@ function carPanel(id) { $('carDelBox').classList.toggle('hidden', id !== 'carDel
 /** 패널 닫고 입력칸 비우기 */
 function carReset() {
   carSwClose(); carPanel('');
-  $('carNote').textContent = ''; $('carNo').value = ''; $('carAddMsg').textContent = ''; $('carDelPw').value = '';
+  $('carNote').textContent = ''; $('carNo').value = ''; $('carAddMsg').textContent = ''; $('carDelPw').value = ''; $('carAddPw').value = '';
 }
 function carDone(d) {                                  // 서버가 돌려준 최신 목록으로 저장본을 바꾸고 다시 그림
   try { localStorage.setItem('bglCar:list:', JSON.stringify(d)); } catch (x) {}
@@ -316,9 +332,12 @@ $('carAddOk').onclick = function () {
   if (!m) { $('carAddMsg').textContent = '차량번호를 바르게 입력하세요. (예: 12가1234 스타리아)'; $('carNo').focus(); return; }
   if (!m[2]) { $('carAddMsg').textContent = '차종도 함께 입력하세요. (예: 12가1234 스타리아)'; $('carNo').focus(); return; }
   var no = m[1].replace(/\s/g, ''), model = m[2];
+  var pin = $('carAddPin').value.trim(), pw = $('carAddPw').value.trim();
+  if (!pin) { $('carAddMsg').textContent = '관리자 사번을 입력하세요.'; $('carAddPin').focus(); return; }
+  if (!pw) { $('carAddMsg').textContent = '개인 코드를 입력하세요.'; $('carAddPw').focus(); return; }
   $('carAddOk').disabled = true; $('carAddMsg').textContent = '';
-  call('carAdd', { car: no, model: model }).then(function (d) { $('carAddOk').disabled = false; carDone(d); },
-    function (e) { $('carAddOk').disabled = false; $('carAddMsg').textContent = errText(e); });
+  call('carAdd', { car: no, model: model, pin: pin, pcode: pw }).then(function (d) { $('carAddOk').disabled = false; $('carAddPw').value = ''; carDone(d); },
+    function (e) { $('carAddOk').disabled = false; $('carAddPw').value = ''; $('carAddMsg').textContent = errText(e); });
 };
 /* 차량 카드 밀기: 왼쪽 → [운행일지]·[관리일지], 오른쪽 → [차량 삭제] (한 번에 한 카드). 민 직후의 누르기와, 열린 카드를 누르면 닫기만 */
 var SW = null, swAt = 0;
@@ -475,7 +494,7 @@ function crcPicOpen(id) {
   var show = function (src) { $('crcPopImg').src = src; $('crcPop').classList.remove('hidden'); PIC_ON = true; navSync(); };
   if (CRC.pics[id]) return show(CRC.pics[id]);
   var car = MGR.car;
-  busyWrap(api('carReceipt', [id, car]), '사진 불러오는 중').then(function (d) {
+  busyWrap(api('carReceipt', [id, car].concat(authArgs())), '사진 불러오는 중').then(function (d) {
     if (MGR.car !== car) return;
     if (d.img) { CRC.pics[id] = d.img; show(d.img); } else if (d.url) window.open(d.url, '_blank'); else throw new Error('전표 사진이 없습니다.');
   }).catch(function (e) { var m = $(RC_ON ? 'crcMsg' : 'mNote'); m.style.color = ''; m.textContent = errText(e); });
@@ -558,7 +577,7 @@ function loadRec(car) {
 /** 양식 모양 PDF 받기: kind run 차량운행일지(month yyyy-MM) / mgr 차량관리일지(month 자리에 연도 yyyy) (서버가 기준 양식 탭으로 만듦) */
 function getPdf(kind, car, month, btn) {
   var t = btn.textContent; btn.disabled = true;
-  busyWrap(api('carPdf', [car, kind, month]), 'PDF 만드는 중').then(function (d) {
+  busyWrap(api('carPdf', [car, kind, month].concat(authArgs())), 'PDF 만드는 중').then(function (d) {
     btn.disabled = false; btn.textContent = t;
     var bin = atob(d.b64), u8 = new Uint8Array(bin.length);
     for (var i = 0; i < bin.length; i++) u8[i] = bin.charCodeAt(i);

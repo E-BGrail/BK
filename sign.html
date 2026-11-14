@@ -166,7 +166,7 @@
       <div class="nhead" id="gstHead"><b>배포용 아이디</b></div>
       <div class="ebody">
         <div class="note">외부 참석자가 함께 쓰는 아이디입니다. 사번 칸에 이 아이디만 넣으면 로그인되고(개인 코드 없음), 본인 확인 없는 서명지만 보입니다. 아이디를 바꾸면 기존 로그인은 끊깁니다. 비우고 저장하면 사용하지 않습니다.</div>
-        <div class="field"><label>아이디 (숫자 4자리 이상)</label><input type="tel" id="gstId" autocomplete="off" inputmode="numeric" pattern="[0-9]*" maxlength="20"></div>
+        <div class="field"><label>아이디 (숫자 6자리 이상)</label><input type="tel" id="gstId" autocomplete="off" inputmode="numeric" pattern="[0-9]*" maxlength="20"></div>
         <div class="row"><button class="btn pri" id="gstSave" type="button">저장</button></div>
         <div class="msg" id="gstMsg"></div>
       </div>
@@ -699,7 +699,9 @@
   .carPanel { margin-bottom:12px; padding:12px; border:1px solid var(--line); border-radius:12px; font-size:14px; }
   .carPanel input { width:100%; font-size:17px; padding:11px 12px; border:1px solid var(--line); border-radius:10px; min-width:0; margin-top:8px; }
   .carAddRow { display:flex; gap:8px; } .carAddRow input { flex:1; width:auto; margin-top:0; }
-  #carAddOk { flex:none; width:84px; padding:0; font-size:15px; }
+  #carAddBox input { font-size:17px; padding:11px 12px; border:1px solid var(--line); border-radius:10px; min-width:0; }
+  #carAddBox .carAddRow input { width:100%; } #carAddBox .carDelRow input { flex:1; width:auto; margin-top:0; }
+  #carAddOk { padding:13px; font-size:16px; }
   .carDelRow { display:flex; gap:8px; } .carDelRow input { flex:1; }
   .carPanelBtns { display:flex; gap:8px; margin-top:8px; } .carPanelBtns .btn { flex:1; padding:12px; font-size:15px; }
   .carPanel .btn.gray { background:#e4e7ec; color:var(--text); } .carPanel .btn.del { background:#b42318; color:#fff; }
@@ -911,7 +913,10 @@
     </div>
     <div class="card" id="carAddBox">
       <div class="carHead"><h2>차량 등록</h2></div>
-      <div class="carAddRow"><input type="text" id="carNo" placeholder="예: 12가1234 스타리아" autocomplete="off" maxlength="40"><button type="button" class="btn pri" id="carAddOk">등록</button></div>
+      <div class="carHint" style="margin:-6px 0 10px">관리자만 등록할 수 있습니다. 관리자 사번과 개인 코드를 함께 입력하세요.</div>
+      <div class="carAddRow"><input type="text" id="carNo" placeholder="예: 12가1234 스타리아" autocomplete="off" maxlength="40"></div>
+      <div class="carDelRow" style="margin-top:8px"><input type="tel" id="carAddPin" placeholder="관리자 사번" inputmode="numeric" maxlength="20" autocomplete="off"><input type="text" id="carAddPw" class="secret" placeholder="개인 코드" inputmode="numeric" maxlength="6" autocomplete="off"></div>
+      <div style="margin-top:8px"><button type="button" class="btn pri" id="carAddOk" style="width:100%">등록</button></div>
       <div class="msg" id="carAddMsg"></div>
     </div>
   </main>
@@ -980,7 +985,7 @@
   <main>
     <div class="card">
       <h2>처음 한 번 로그인이 필요합니다</h2>
-      <div style="font-size:14px;color:var(--sub)">이 휴대폰으로 운행을 시작하려면 사번과 개인 코드를 한 번 입력하세요. 다음부터는 QR만 찍으면 바로 운행을 시작합니다.</div>
+      <div style="font-size:14px;color:var(--sub)">이 휴대폰으로 차량을 쓰려면 사번과 개인 코드를 한 번 입력하세요. 다음부터는 QR만 찍으면 바로 이어집니다.</div>
       <div class="hidden" id="needIos" style="font-size:13.5px;margin-top:10px;padding:10px 12px;border-radius:10px;background:#fff6e5;color:#7a4b00;line-height:1.5"><b>아이폰 안내</b><br>사파리는 이 화면을 오래(사파리를 쓴 날로 7일 넘게) 열지 않으면 로그인 기록을 지울 수 있습니다. 그때는 이 화면에서 사번과 개인 코드를 한 번 더 입력하면 됩니다.</div>
       <div class="grid2" style="margin-top:4px">
         <div class="fld"><label for="ndPin">사번</label><input type="tel" id="ndPin" autocomplete="off" inputmode="numeric" pattern="[0-9]*" maxlength="20"></div>
@@ -1003,7 +1008,7 @@
   </main>
 </section>
 </template>
-<script src="assets/sign.js?v=5e958a4de3"></script>
-<script src="assets/car.js?v=3f5e079645"></script>
+<script src="assets/sign.js?v=921c6d9171"></script>
+<script src="assets/car.js?v=40f4377632"></script>
 </body>
 </html>
